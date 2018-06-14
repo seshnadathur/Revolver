@@ -1,4 +1,0 @@
-#!/bin/bash
-./profiler.py --par ../datasets/stackOptions/Main1_stackOptions.py
-./profiler.py --par ../datasets/stackOptions/Main2_stackOptions.py
-./profiler.py --par ../datasets/stackOptions/LOWZ_stackOptions.py

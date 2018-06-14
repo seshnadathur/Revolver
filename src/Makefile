@@ -13,7 +13,7 @@ QINC = -I../qhull/src/
 ###############
 # I've removed the mpi executables from install, which is what is called by the parent Makefile... I did this because mpicc doesn't work on chadwick
 
-EXES = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol vozisol voz1b1_mpi writeBox checkedges
+EXES = vozinit voz1b1_mpi voztie jovoz boz jozov jozovtrvol vozisol voz1b1_mpi writeBox checkedges
 EXES_NOMPI = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol vozisol writeBox checkedges
 
 all: $(EXES)

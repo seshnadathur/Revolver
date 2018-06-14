@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ZOBOVwrapper.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/classes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/post-production/corr.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/post-production/erebos_profiler.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/post-production/fig_tools.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/post-production/getmetrics.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/post-production/misc_tools.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/post-production/more_fig_tools.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/post-production/profiler.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/post-production/snippets.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/post-production/survey_profiler.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/postprocess.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/runprofiler" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/writebox.par" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/BigMDPl.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/BigMDPl_RSD.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/CLUES.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/DES-MICE.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/DES-SDSS.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/Jubilee.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/MDR1_z0Box.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/Magneticum.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/Poisson.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/RSD_runparams.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/SDSS_DR11.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/SDSS_DR12.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/SDSS_DR7.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/SDSS_uDR12.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/WMAP5_SDSS_DR11.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/defaults.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/fR.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/BigMDPl_survey_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/CMASS_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/DM_Dense_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/DM_LOWZ_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/DM_Main1_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/DM_Main2_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/DM_stack.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/LOWZ_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/LRGD_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/Main1_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/Main2_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/SDSS_DR11_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/cutouts_stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/stackOptions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/velocity_stack.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/src/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/readme.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/writeBox.c" beforeDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf>
+      <file leaf-file-name="classes.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="810">
+              <caret line="483" column="27" selection-start-line="483" selection-start-column="27" selection-end-line="483" selection-end-column="27" />
+              <folding>
+                <element signature="e#0#37#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="params.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/runparams/params.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="465">
+              <caret line="31" column="84" selection-start-line="31" selection-start-column="84" selection-end-line="31" selection-end-column="84" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="tools.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/python_tools/tools.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="582">
+              <caret line="791" column="65" lean-forward="true" selection-start-line="791" selection-start-column="65" selection-end-line="791" selection-end-column="65" />
+              <folding>
+                <element signature="e#0#37#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="run_revolver.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/run_revolver.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="450">
+              <caret line="30" column="14" lean-forward="true" selection-start-line="30" selection-start-column="14" selection-end-line="30" selection-end-column="14" />
+              <folding>
+                <element signature="e#0#15#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Makefile" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/Makefile">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="225">
+              <caret line="15" column="25" selection-start-line="15" selection-start-column="25" selection-end-line="15" selection-end-column="25" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="voz1b1.c" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/voz1b1.c">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-403" />
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Makefile" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Makefile">
+          <provider selected="true" editor-type-id="text-editor" />
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>zMax</find>
+      <find>mockFile</find>
+      <find>mockDe</find>
+      <find>mockDensRatio</find>
+      <find>minDensCut</find>
+      <find>nMinV</find>
+      <find>useBaryC</find>
+      <find>prefixV</find>
+      <find>voidPrefix</find>
+      <find>doSC</find>
+      <find>findClusters</find>
+      <find>maxDensCut</find>
+      <find>nMinC</find>
+      <find>clusterPre</find>
+      <find>clusterPrefix</find>
+      <find>fSky</find>
+      <find>numTracers</find>
+      <find>numT</find>
+      <find>numMocks</find>
+      <find>numM</find>
+      <find>numNonEdge</find>
+      <find>tracerDens</find>
+      <find>tracerD</find>
+      <find>selFnFile</find>
+      <find>numPartTotal</find>
+      <find>numPa</find>
+      <find>useIsol</find>
+      <find>numZobovDivisions</find>
+      <find>zobovBufferSize</find>
+      <find>posnFile</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>box_length</replace>
+      <replace>omega_m</replace>
+      <replace>ang_coords</replace>
+      <replace>observer_posn</replace>
+      <replace>mask_file</replace>
+      <replace>use_z_wts</replace>
+      <replace>use_ang_wts</replace>
+      <replace>z_min</replace>
+      <replace>mock_file</replace>
+      <replace>z_max</replace>
+      <replace>mock_dens_ratio</replace>
+      <replace>min_dens_cut</replace>
+      <replace>void_min_num</replace>
+      <replace>use_barycentres</replace>
+      <replace>void_prefix</replace>
+      <replace>find_clusters</replace>
+      <replace>max_dens_cut</replace>
+      <replace>cluster_min_n</replace>
+      <replace>f_sky</replace>
+      <replace>num_tracers</replace>
+      <replace>num_mocks</replace>
+      <replace>cluster_prefix</replace>
+      <replace>num_non_edge</replace>
+      <replace>tracer_dens</replace>
+      <replace>selection_fn_file</replace>
+      <replace>num_part_total</replace>
+      <replace>use_vozisol</replace>
+      <replace>zobov_box_div</replace>
+      <replace>zobov_buffer</replace>
+      <replace>posn_file</replace>
+    </replaceStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/python_tools/__init__.py" />
+        <option value="$PROJECT_DIR$/ZOBOVwrapper.py" />
+        <option value="$PROJECT_DIR$/python_tools/tools.py" />
+        <option value="$PROJECT_DIR$/src/Makefile" />
+        <option value="$PROJECT_DIR$/runparams/RSD_runparams.py" />
+        <option value="$PROJECT_DIR$/runparams/params.py" />
+        <option value="$PROJECT_DIR$/python_tools/classes.py" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="136" />
+    <option name="y" value="44" />
+    <option name="width" value="1476" />
+    <option name="height" value="1245" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
+              <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
+              <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
+              <item name="python_tools" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
+              <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
+              <item name="runparams" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
+              <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="preferences.sourceCode" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="" />
+      <created>1528733152009</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1528733152009</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="136" y="44" width="1476" height="1245" extended-state="0" />
+    <editor active="true" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.23712738" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Version Control" />
+      <window_info anchor="bottom" id="Python Console" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="bottom" id="Terminal" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info id="Favorites" side_tool="true" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Message" order="0" />
+    </layout>
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/writeBox.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-320" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/voz1b1_serial.c">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/voz1b1_mpi.c">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/jozovtrvol.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="6976">
+          <caret line="502" column="25" selection-start-line="502" selection-start-column="19" selection-end-line="502" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/checkedges.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-551">
+          <caret line="116" column="21" selection-start-line="116" selection-start-column="16" selection-end-line="116" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python_tools/postprocess.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-11715">
+          <caret line="40" column="28" lean-forward="true" selection-start-line="40" selection-start-column="28" selection-end-line="40" selection-end-column="28" />
+          <folding>
+            <element signature="e#0#19#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python_tools/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="30">
+          <caret line="2" lean-forward="true" selection-start-line="2" selection-end-line="2" />
+          <folding>
+            <element signature="e#0#21#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python_tools/post-production/snippets.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python_tools/post-production/survey_profiler.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-4009" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python_tools/post-production/misc_tools.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-111">
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ZOBOVwrapper.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="6" column="26" lean-forward="true" selection-start-line="6" selection-start-column="26" selection-end-line="6" selection-end-column="26" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python_tools/tools.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="582">
+          <caret line="791" column="65" lean-forward="true" selection-start-line="791" selection-start-column="65" selection-end-line="791" selection-end-column="65" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/readme.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Makefile">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/Makefile">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="15" column="25" selection-start-line="15" selection-start-column="25" selection-end-line="15" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/voz1b1.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-403" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/run_revolver.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="450">
+          <caret line="30" column="14" lean-forward="true" selection-start-line="30" selection-start-column="14" selection-end-line="30" selection-end-column="14" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/runparams/RSD_runparams.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="630">
+          <caret line="42" column="80" lean-forward="true" selection-start-line="42" selection-start-column="80" selection-end-line="42" selection-end-column="80" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="810">
+          <caret line="483" column="27" selection-start-line="483" selection-start-column="27" selection-end-line="483" selection-end-column="27" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/runparams/params.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="465">
+          <caret line="31" column="84" selection-start-line="31" selection-start-column="84" selection-end-line="31" selection-end-column="84" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>
