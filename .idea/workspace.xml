@@ -2,59 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ZOBOVwrapper.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/classes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/post-production/corr.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/post-production/erebos_profiler.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/post-production/fig_tools.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/post-production/getmetrics.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/post-production/misc_tools.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/post-production/more_fig_tools.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/post-production/profiler.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/post-production/snippets.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/post-production/survey_profiler.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/postprocess.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/runprofiler" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/tools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/writebox.par" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/BigMDPl.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/BigMDPl_RSD.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/CLUES.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/DES-MICE.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/DES-SDSS.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/Jubilee.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/MDR1_z0Box.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/Magneticum.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/Poisson.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/RSD_runparams.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/SDSS_DR11.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/SDSS_DR12.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/SDSS_DR7.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/SDSS_uDR12.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/WMAP5_SDSS_DR11.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/defaults.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/fR.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/BigMDPl_survey_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/CMASS_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/DM_Dense_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/DM_LOWZ_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/DM_Main1_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/DM_Main2_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/DM_stack.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/LOWZ_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/LRGD_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/Main1_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/Main2_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/SDSS_DR11_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/cutouts_stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/stackOptions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runparams/stackOptions/velocity_stack.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/src/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/readme.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/writeBox.c" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -77,7 +25,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="params.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="params.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/runparams/params.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="465">
@@ -110,11 +58,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Makefile" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Makefile" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/Makefile">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="225">
-              <caret line="15" column="25" selection-start-line="15" selection-start-column="25" selection-end-line="15" selection-end-column="25" />
+              <caret line="15" column="21" lean-forward="true" selection-start-line="15" selection-start-column="21" selection-end-line="15" selection-end-column="21" />
             </state>
           </provider>
         </entry>
@@ -122,7 +70,7 @@
       <file leaf-file-name="voz1b1.c" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/voz1b1.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-403" />
+            <state relative-caret-position="-452" />
           </provider>
         </entry>
       </file>
@@ -208,10 +156,10 @@
         <option value="$PROJECT_DIR$/python_tools/__init__.py" />
         <option value="$PROJECT_DIR$/ZOBOVwrapper.py" />
         <option value="$PROJECT_DIR$/python_tools/tools.py" />
-        <option value="$PROJECT_DIR$/src/Makefile" />
         <option value="$PROJECT_DIR$/runparams/RSD_runparams.py" />
         <option value="$PROJECT_DIR$/runparams/params.py" />
         <option value="$PROJECT_DIR$/python_tools/classes.py" />
+        <option value="$PROJECT_DIR$/src/Makefile" />
       </list>
     </option>
   </component>
@@ -396,21 +344,6 @@
     <entry file="file://$PROJECT_DIR$/src/readme.txt">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/Makefile">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/Makefile">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="15" column="25" selection-start-line="15" selection-start-column="25" selection-end-line="15" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/voz1b1.c">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-403" />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/run_revolver.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="450">
@@ -442,6 +375,21 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="465">
           <caret line="31" column="84" selection-start-line="31" selection-start-column="84" selection-end-line="31" selection-end-column="84" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/voz1b1.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-452" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Makefile">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/Makefile">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="15" column="21" lean-forward="true" selection-start-line="15" selection-start-column="21" selection-end-line="15" selection-end-column="21" />
         </state>
       </provider>
     </entry>
