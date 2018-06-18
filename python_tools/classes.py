@@ -5,6 +5,8 @@ import numpy as np
 import healpy as hp
 import random
 import imp
+from scipy.spatial import cKDTree
+from scipy.integrate import quad
 
 
 class Cosmology:
@@ -13,11 +15,10 @@ class Cosmology:
         print('Initializing cosmology with omega_m = %.2f' % omega_m)
         c = 299792.458
         omega_l = 1.-omega_m
-        ztab = np.linspace(0., 4., 10000)
-        e_z = np.sqrt(omega_l + omega_m*(1+ztab)**3)
+        ztab = np.linspace(0, 4, 10000)
         rtab = np.zeros_like(ztab)
-        for i in range(1, len(ztab)):
-            rtab[i] = rtab[i-1] + c * (1/e_z[i-1]+1/e_z[i])/2. * (ztab[i]-ztab[i-1]) / 100.
+        for i in range(len(ztab)):
+            rtab[i] = quad(lambda x: 0.01 * c / np.sqrt(omega_m * (1 + x) ** 3 + omega_l), 0, ztab[i])[0]
 
         self.h = h
         self.c = c
@@ -68,7 +69,7 @@ class Sample:
             sys.exit("Not enough columns, need 3D position information. Aborting")
         if not len(posn_cols) == 3:
             sys.exit("You must specify 3 columns containing tracer position information. Aborting")
-        print("%d tracers in input file %s" % (self.num_tracers, self.tracer_file))
+        print("%d tracers found" % self.num_tracers)
 
         # keep only the tracer position information
         tracers = tracers[:, posn_cols]
@@ -94,6 +95,7 @@ class Sample:
 
             self.num_mocks = 0
             self.num_part_total = self.num_tracers
+            self.tracers = tracers
         else:
             # set cosmology
             self.omega_m = omega_m
@@ -119,8 +121,13 @@ class Sample:
 
             self.z_min = z_min
             self.z_max = z_max
-            self.r_near = self.cosmo.get_comoving_distance(z_min)
-            self.r_far = self.cosmo.get_comoving_distance(z_max)
+            # check that the provided redshift limits are reasonable
+            if np.min(self.tracers[:, 5]) < self.z_min:
+                self.z_min = np.min(self.tracers[:, 5])
+            if np.max(self.tracers[:, 5]) > self.z_max:
+                self.z_max = np.max(self.tracers[:, 5])
+            self.r_near = self.cosmo.get_comoving_distance(self.z_min)
+            self.r_far = self.cosmo.get_comoving_distance(self.z_max)
             survey_volume = self.f_sky*4*np.pi*(self.r_far**3. - self.r_near**3.)/3.
             self.tracer_dens = self.num_tracers/survey_volume
 
@@ -128,8 +135,7 @@ class Sample:
             self.use_z_wts = use_z_wts
             if use_z_wts:
                 self.selection_fn_file = self.output_folder + self.handle + '_selFn.txt'
-                if not os.access(self.selection_fn_file, os.F_OK):
-                    self.generate_selfn(nbins=20)
+                self.generate_selfn(nbins=15)
             self.use_ang_wts = use_ang_wts
 
             if run_zobov:
@@ -137,13 +143,13 @@ class Sample:
                 if mock_file == '':
                     # no buffer mocks provided, so generate new
                     print('Generating buffer mocks around survey edges ...')
-                    print('\t buffer mocks will have %0.1f x the galaxy number density' % mock_dens_ratio)
+                    print('\tbuffer mocks will have %0.1f x the galaxy number density' % mock_dens_ratio)
                     self.mock_dens_ratio = mock_dens_ratio
                     self.generate_buffer()
                 elif not os.access(mock_file, os.F_OK):
                     print('Could not find file %s containing buffer mocks!' % mock_file)
                     print('Generating buffer mocks around survey edges ...')
-                    print('\t buffer mocks will have %0.1f x the galaxy number density' % mock_dens_ratio)
+                    print('\tbuffer mocks will have %0.1f x the galaxy number density' % mock_dens_ratio)
                     self.mock_dens_ratio = mock_dens_ratio
                     self.generate_buffer()
                 else:
@@ -153,14 +159,17 @@ class Sample:
                     else:
                         buffers = np.loadtxt(mock_file)
                     # recalculate the box length
-                    self.box_length = 2.0 * np.max(np.abs(buffers[:, :3]))
+                    self.box_length = 2.0 * np.max(np.abs(buffers[:, :3])) + 1
                     self.num_mocks = buffers.shape[0]
                     # join the buffers to the galaxy tracers
                     self.tracers = np.vstack([self.tracers, buffers])
                     self.num_part_total = self.num_tracers + self.num_mocks
                     self.mock_file = mock_file
-                # shift Cartesian positions by half a box length to ensure correct sign for ZOBOV
+                # shift Cartesian positions from observer to box coordinates
                 self.tracers[:, :3] += 0.5 * self.box_length
+
+        # for easy debugging: write all tracer positions to file
+        np.save(self.posn_file.replace('pos.dat', 'pos.npy'), self.tracers)
 
         self.num_non_edge = self.num_tracers
 
@@ -261,13 +270,14 @@ class Sample:
             boundary: a binary Healpix map with the survey mask boundary"""
 
         mask = hp.read_map(self.mask_file, verbose=False)
+        mask = hp.ud_grade(mask, 512)
         nside = hp.get_nside(mask)
         npix = hp.nside2npix(nside)
         boundary = np.zeros(npix)
 
         # find pixels outside the mask that neighbour pixels within it
         # do this step in a loop, to get a thicker boundary layer
-        for j in range(1+2*nside/128):
+        for j in range(2 + nside/128):
             if j == 0:
                 filled_inds = np.nonzero(mask > completeness_limit)[0]
             else:
@@ -278,7 +288,11 @@ class Sample:
                 outsiders = neigh_pix[(mask[neigh_pix[:, i]] <= completeness_limit) & (neigh_pix[:, i] > -1)
                                       & (boundary[neigh_pix[:, i]] == 0), i]
                 # >-1 condition takes care of special case where neighbour wasn't found
-                boundary[outsiders] = 1
+                if j == 0:
+                    boundary[outsiders] = 2
+                else:
+                    boundary[outsiders] = 1
+        boundary[boundary == 2] = 0
 
         if nside <= 128:
             # upgrade the boundary to aid placement of buffer mocks
@@ -308,8 +322,8 @@ class Sample:
 
         # define the radial extents of the layer in which we will place the buffer particles
         # these choices are somewhat arbitrary, and could be optimized
-        r_low = self.cosmo.get_comoving_distance(z_high) + 0.5 * mean_nn_distance
-        r_high = r_low + 2.5 * mean_nn_distance
+        r_low = self.cosmo.get_comoving_distance(z_high) + mean_nn_distance * self.mock_dens_ratio**(-1./3)
+        r_high = r_low + mean_nn_distance
         cap_volume = self.f_sky*4.*np.pi*(r_high**3. - r_low**3.)/3.
 
         # how many buffer particles fit in this cap
@@ -351,8 +365,8 @@ class Sample:
         if z_low > 0:
             # define the radial extents of the layer in which we will place the buffer particles
             # these choices are somewhat arbitrary, and could be optimized
-            r_high = self.cosmo.get_comoving_distance(z_low) - 0.5 * mean_nn_distance
-            r_low = r_high - 2.5 * mean_nn_distance
+            r_high = self.cosmo.get_comoving_distance(z_low) - mean_nn_distance * self.mock_dens_ratio**(-1./3)
+            r_low = r_high - mean_nn_distance
             if r_high < 0:
                 r_high = self.cosmo.get_comoving_distance(z_low)
             if r_low < 0:
@@ -398,7 +412,7 @@ class Sample:
         # ------ Step 3: buffer particles along the survey edges-------- #
         if self.f_sky < 1.0:
             # get the survey boundary
-            boundary = self.find_mask_boundary(completeness_limit=0.2)
+            boundary = self.find_mask_boundary(completeness_limit=0.0)
 
             # where we will place the buffer mocks
             boundary_pix = np.nonzero(boundary)[0]
@@ -407,7 +421,8 @@ class Sample:
             boundary_nside = hp.get_nside(boundary)
 
             # how many buffer particles
-            boundary_volume = boundary_f_sky * 4. * np.pi * (self.r_far ** 3. - self.r_near ** 3.) / 3.
+            # boundary_volume = boundary_f_sky * 4. * np.pi * (self.r_far ** 3. - self.r_near ** 3.) / 3.
+            boundary_volume = boundary_f_sky * 4. * np.pi * quad(lambda y: y**2, self.r_near, self.r_far)[0]
             num_bound_mocks = int(np.ceil(buffer_dens * boundary_volume))
             bound_mocks = np.zeros((num_bound_mocks, 6))
 
@@ -423,7 +438,7 @@ class Sample:
                 boundary_pix = np.nonzero(boundary)[0]
                 numpix = len(boundary_pix)
             rand_pix = boundary_pix[random.sample(np.arange(numpix), num_bound_mocks)]
-            theta, phi = hp.pix2ang(nside, rand_pix)
+            theta, phi = hp.pix2ang(boundary_nside, rand_pix)
 
             # convert to standard format
             bound_mocks[:, 0] = rdist * np.sin(theta) * np.cos(phi)
@@ -436,36 +451,38 @@ class Sample:
             print("\tplaced %d buffer mocks along the survey boundary edges" % num_bound_mocks)
 
             buffers = np.vstack([buffers, bound_mocks])
+            mock_file = self.posn_file.replace('pos.dat', 'mocks.npy')
+            np.save(mock_file, buffers)
             self.num_mocks += num_bound_mocks
         else:
             print("\tdata covers the full sky, no buffer mocks required along edges")
         # ------------------------------------------------------------- #
 
-        # ------ Step 4: guard buffers to stabilize the tessellation-------- #
-        # first determine the size of the cubic box required
-        self.box_length = 2.0 * np.max(np.abs(buffers[:, :3]))
-        # (strictly speaking, this gives a lot of redundancy as the box is very big;
-        # but, it doesn't slow the tessellation too much and keeps coding simpler)
+        # determine the size of the cubic box required
+        self.box_length = 2.0 * np.max(np.abs(buffers[:, :3])) + 1.
         print("\tUsing box length %0.2f" % self.box_length)
 
+        # ------ Step 4: guard buffers to stabilize the tessellation-------- #
+        # (strictly speaking, this gives a lot of redundancy as the box is very big;
+        # but it doesn't slow the tessellation too much and keeps coding simpler)
+
         # generate guard particle positions
-        x = np.linspace(0.1, self.box_length - 0.1, 50)
+        x = np.linspace(0.1, self.box_length - 0.1, 20)
         guards = np.vstack(np.meshgrid(x, x, x)).reshape(3, -1).T
-        guards = guards - self.box_length/2.    # in observer coordinates
 
-        # equivalent guard sky positions
-        theta = np.arccos(guards[:, 2] / rdist)
-        ra = np.degrees(np.arctan2(guards[:, 1], guards[:, 0]))
-        ra[ra < 0] += 360  # to ensure RA is in the range 0 to 360
-        phi = ra * np.pi / 180.
-        pixels = hp.ang2pix(nside, theta, phi)
-        # equivalent guard observer distances
-        rdist = np.linalg.norm(guards, axis=1)
+        # make a kdTree instance using all the galaxies and buffer mocks
+        all_positions = np.vstack([self.tracers[:, :3], buffers[:, :3]])
+        all_positions += self.box_length/2.  # from observer to box coordinates
+        tree = cKDTree(all_positions, boxsize=self.box_length)
 
-        # sift out those guards that lie within the survey region
-        guardslice = np.logical_or(rdist < self.r_near, rdist > self.r_far)
-        guardslice = np.logical_or(guardslice, mask[pixels] == 0)
-        guards = guards[guardslice]
+        # find the nearest neighbour distance for each of the guard particles
+        nn_dist = np.empty(len(guards))
+        for i in range(len(guards)):
+            nn_dist[i], nnind = tree.query(guards[i, :], k=1)
+
+        # drop all guards that are too close to existing points
+        guards = guards[nn_dist > (self.box_length - 0.2)/20.]
+        guards = guards - self.box_length/2.    # guard positions back in observer coordinates
 
         # convert to standard format
         num_guard_mocks = len(guards)
@@ -480,7 +497,7 @@ class Sample:
         # ------------------------------------------------------------------ #
 
         # write the buffer information to file for later reference
-        mock_file = self.posn_file.replace('posn.dat', 'mocks.npy')
+        mock_file = self.posn_file.replace('pos.dat', 'mocks.npy')
         print('Buffer mocks written to file %s' % mock_file)
         np.save(mock_file, buffers)
         self.mock_file = mock_file
@@ -501,7 +518,9 @@ class Sample:
         print('Determining survey redshift selection function ...')
 
         # first determine the equal volume bins
-        rvals = np.linspace(self.r_near**3, self.r_far**3, nbins+1)
+        r_near = self.cosmo.get_comoving_distance(self.z_min)
+        r_far = self.cosmo.get_comoving_distance(self.z_max)
+        rvals = np.linspace(r_near**3, r_far**3, nbins+1)
         rvals = rvals**(1./3)
         zsteps = self.cosmo.get_redshift(rvals)
         volumes = self.f_sky*4*np.pi*(rvals[1:]**3. - rvals[:-1]**3.)/3.
@@ -528,26 +547,16 @@ class Sample:
     def write_box_zobov(self):
         """Writes the tracer and mock position information to file in a ZOBOV-readable format"""
 
-        if self.is_box:  # no buffer mocks; only require XYZ positions
-            with open(self.posn_file, 'w') as F:
-                npart = np.array(self.num_tracers, dtype=np.int32)
-                npart.tofile(F, format='%d')
-                data = self.tracers[:, 0]
-                data.tofile(F, format='%f')
-                data = self.tracers[:, 1]
-                data.tofile(F, format='%f')
-                data = self.tracers[:, 2]
-                data.tofile(F, format='%f')
-        else:   # include buffer mocks; write RA, Dec and redshift too
-            with open(self.posn_file, 'w') as F:
-                npart = np.array(self.num_part_total, dtype=np.int32)
-                npart.tofile(F, format='%d')
-                data = self.tracers[:, 0]
-                data.tofile(F, format='%f')
-                data = self.tracers[:, 1]
-                data.tofile(F, format='%f')
-                data = self.tracers[:, 2]
-                data.tofile(F, format='%f')
+        with open(self.posn_file, 'w') as F:
+            npart = np.array(self.num_part_total, dtype=np.int32)
+            npart.tofile(F, format='%d')
+            data = self.tracers[:, 0]
+            data.tofile(F, format='%f')
+            data = self.tracers[:, 1]
+            data.tofile(F, format='%f')
+            data = self.tracers[:, 2]
+            data.tofile(F, format='%f')
+            if not self.is_box:  # write RA, Dec and redshift too
                 data = self.tracers[:, 3]
                 data.tofile(F, format='%f')
                 data = self.tracers[:, 4]
@@ -563,26 +572,16 @@ class Sample:
     def reread_tracer_info(self):
         """re-reads tracer information from file if required after previous deletion"""
 
-        if self.is_box:
-            self.tracers = np.empty((self.num_tracers, 3))
-            with open(self.posn_file, 'r') as F:
-                nparts = np.fromfile(F, dtype=np.int32, count=1)[0]
-                if not nparts == self.num_tracers:  # sanity check
-                    sys.exit("nparts = %d in %s_pos.dat file does not match num_tracers = %d!"
-                             % (nparts, self.handle, self.num_tracers))
-                self.tracers[:, 0] = np.fromfile(F, dtype=np.float64, count=nparts)
-                self.tracers[:, 1] = np.fromfile(F, dtype=np.float64, count=nparts)
-                self.tracers[:, 2] = np.fromfile(F, dtype=np.float64, count=nparts)
-        else:
-            self.tracers = np.empty((self.num_part_total, 6))
-            with open(self.posn_file, 'r') as F:
-                nparts = np.fromfile(F, dtype=np.int32, count=1)[0]
-                if not nparts == self.num_part_total:  # sanity check
-                    sys.exit("nparts = %d in %s_pos.dat file does not match num_part_total = %d!"
-                             % (nparts, self.handle, self.num_part_total))
-                self.tracers[:, 0] = np.fromfile(F, dtype=np.float64, count=nparts)
-                self.tracers[:, 1] = np.fromfile(F, dtype=np.float64, count=nparts)
-                self.tracers[:, 2] = np.fromfile(F, dtype=np.float64, count=nparts)
+        self.tracers = np.empty((self.num_part_total, 6))
+        with open(self.posn_file, 'r') as F:
+            nparts = np.fromfile(F, dtype=np.int32, count=1)[0]
+            if not nparts == self.num_part_total:  # sanity check
+                sys.exit("nparts = %d in %s_pos.dat file does not match num_part_total = %d!"
+                         % (nparts, self.handle, self.num_part_total))
+            self.tracers[:, 0] = np.fromfile(F, dtype=np.float64, count=nparts)
+            self.tracers[:, 1] = np.fromfile(F, dtype=np.float64, count=nparts)
+            self.tracers[:, 2] = np.fromfile(F, dtype=np.float64, count=nparts)
+            if not self.is_box:
                 self.tracers[:, 3] = np.fromfile(F, dtype=np.float64, count=nparts)
                 self.tracers[:, 4] = np.fromfile(F, dtype=np.float64, count=nparts)
                 self.tracers[:, 5] = np.fromfile(F, dtype=np.float64, count=nparts)

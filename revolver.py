@@ -33,11 +33,11 @@ sample = Sample(run_zobov=parms.run_zobov, tracer_file=parms.tracer_file, handle
 if parms.run_zobov:
     # write the tracer information to ZOBOV-readable format
     sample.write_box_zobov()
+    # write a config file
+    sample.write_config()
     # run ZOBOV
     zobov_wrapper(sample, use_vozisol=parms.use_vozisol, zobov_box_div=parms.zobov_box_div,
                   zobov_buffer=parms.zobov_buffer)
-    # write a config file
-    sample.write_config()
 else:
     # read the config file from a previous run
     sample.read_config()

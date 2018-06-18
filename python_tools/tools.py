@@ -67,7 +67,7 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
 
-        print("Tessellation done.")
+    print("Tessellation done.\n")
 
     # ---prepare files for running jozov--- #
     if sample.is_box:
@@ -84,7 +84,7 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
         # ---Step 2: renormalize volumes in units of mean volume per galaxy--- #
         # (this step is necessary because otherwise the buffer mocks affect the calculation)
         edgemask = modvols == 1.0/0.9e30
-        modvols[np.logical_not(edgemask)] *= (sample.tracer_dens * sample.box_length ** 3.) / sample.numPartTot
+        modvols[np.logical_not(edgemask)] *= (sample.tracer_dens * sample.box_length ** 3.) / sample.num_part_total
 
         # ---Step 3: scale volumes accounting for z-dependent selection--- #
         if sample.use_z_wts:
@@ -156,8 +156,6 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
         cmd = ["mv", fileName, "%s." % raw_dir]
         subprocess.call(cmd)
 
-    # Done!
-
 
 def postprocess_voids(sample):
     """Method to post-process raw ZOBOV output to obtain discrete set of non-overlapping voids. This method
@@ -178,7 +176,7 @@ def postprocess_voids(sample):
     # --------------------------------- #
     dont_merge = True
     use_r_threshold = False
-    r_threshold = 2.
+    r_threshold = 1.
     use_link_density_threshold = False
     link_density_threshold = 1.
     count_all_voids = True
@@ -237,9 +235,9 @@ def postprocess_voids(sample):
     # load the VTFE density information
     with open(densities_file, 'r') as File:
         npart = np.fromfile(File, dtype=np.int32, count=1)[0]
-        if not npart == sample.numTracer:  # sanity check
+        if not npart == sample.num_tracers:  # sanity check
             sys.exit("npart = %d in %s.vol file does not match num_tracers = %d!"
-                     % (npart, sample.handle,sample.num_tracers))
+                     % (npart, sample.handle, sample.num_tracers))
         densities = np.fromfile(File, dtype=np.float64, count=npart)
         densities = 1. / densities
 
@@ -299,8 +297,11 @@ def postprocess_voids(sample):
                             finalpos = pos + num_zones_to_add + 1
 
                     counted_zones = np.append(counted_zones, zonelist)
-                    member_ids = np.logical_and(np.logical_or(use_stripping, densities[:] < strip_density_threshold),
-                                                np.in1d(zonedata, zonelist))
+                    if use_stripping:
+                        member_ids = np.logical_and(densities[:] < strip_density_threshold,
+                                                    np.in1d(zonedata, zonelist))
+                    else:
+                        member_ids = np.in1d(zonedata, zonelist)
 
                     # if using void "stripping" functionality, recalculate void volume and number of particles
                     if use_stripping:
@@ -378,7 +379,7 @@ def find_void_circumcentres(sample, num_struct, wtd_avg_dens, edge_flag):
     # load the VTFE density information
     with open(densities_file, 'r') as File:
         npart = np.fromfile(File, dtype=np.int32, count=1)[0]
-        if not npart == sample.numTracer:  # sanity check
+        if not npart == sample.num_tracers:  # sanity check
             sys.exit("npart = %d in %s.vol file does not match num_tracers = %d!"
                      % (npart, sample.handle, sample.num_tracers))
         densities = np.fromfile(File, dtype=np.float64, count=npart)
@@ -398,7 +399,8 @@ def find_void_circumcentres(sample, num_struct, wtd_avg_dens, edge_flag):
     with open(adjacency_file, 'r') as AdjFile:
         npfromadj = np.fromfile(AdjFile, dtype=np.int32, count=1)
         if not npfromadj == sample.num_tracers:
-            sys.exit("npart = %d from adjacency file does not match numTracer = %d!" % (npfromadj, sample.numTracer))
+            sys.exit("npart = %d from adjacency file does not match num_tracers = %d!"
+                     % (npfromadj, sample.num_tracers))
         partadjs = [[] for i in range(npfromadj)]  # list of lists to record adjacencies - is there a better way?
         partadjcount = np.zeros(npfromadj, dtype=np.int32)  # counter to monitor adjacencies
         nadj = np.fromfile(AdjFile, dtype=np.int32, count=npfromadj)  # number of adjacencies for each particle
@@ -416,7 +418,8 @@ def find_void_circumcentres(sample, num_struct, wtd_avg_dens, edge_flag):
                 partadjs[i][oldcount:newcount] = adjpartnumbers
                 # now also assign the reverse adjacencies
                 # (ZOBOV records only (i adj j) or (j adj i), not both)
-                for index in adjpartnumbers: partadjs[index].append(i)
+                for index in adjpartnumbers:
+                    partadjs[index].append(i)
                 partadjcount[adjpartnumbers] += 1
 
     if sample.is_box:
@@ -574,7 +577,7 @@ def find_void_barycentres(sample, num_struct, edge_flag, use_stripping=False, st
     # load the VTFE density information
     with open(dens_file, 'r') as File:
         npart = np.fromfile(File, dtype=np.int32, count=1)[0]
-        if not npart == sample.numTracer:  # sanity check
+        if not npart == sample.num_tracers:  # sanity check
             sys.exit("npart = %d in %s.vol file does not match num_tracers = %d!"
                      % (npart, sample.handle, sample.num_tracers))
         densities = np.fromfile(File, dtype=np.float64, count=npart)
@@ -781,7 +784,7 @@ def postprocess_clusters(sample):
     # load the VTFE density information
     with open(dens_file, 'r') as File:
         npart = np.fromfile(File, dtype=np.int32, count=1)[0]
-        if not npart == sample.numTracer:  # sanity check
+        if not npart == sample.num_tracers:  # sanity check
             sys.exit("npart = %d in %s.cvol file does not match num_tracers = %d!"
                      % (npart, sample.handle, sample.num_tracers))
         densities = np.fromfile(File, dtype=np.float64, count=npart)
