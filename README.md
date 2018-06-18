@@ -21,4 +21,4 @@ Requirements:
 To run:
    - in the top-level directory, do 'make clean', then 'make'
    - edit parameters/params.py
-   - run revolver.py
+   - python revolver.py --par parameters/params.py
