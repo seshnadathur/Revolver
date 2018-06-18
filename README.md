@@ -1,4 +1,4 @@
-# Revolver
+# REVOLVER
 
 ### REal-space VOid Locations from surVEy Reconstruction
 (until/unless a better name is found!)
