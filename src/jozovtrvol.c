@@ -146,7 +146,7 @@ int main(int argc,char **argv) {
     borderdens = 0.9e30; /* EDITED BY SHAUN */
   }
   invborderdens = 1./borderdens;
-  printf("borderdens = %lf\n",borderdens);
+  printf("borderdens = %0.2e\n",borderdens);
 
   /*Read the adjacencies from file*/
   adj = fopen(adjfile, "r");

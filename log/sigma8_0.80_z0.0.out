@@ -1,0 +1,328 @@
+s = 0.0119048, bf = 0.1, g = 0.0992863.
+b=(0,0,0), c=(0.25,0.25,0.25), nvp=54228, nvpbuf=149435
+b=(0,0,1), c=(0.25,0.25,0.75), nvp=56055, nvpbuf=151227
+b=(0,1,0), c=(0.25,0.75,0.25), nvp=52427, nvpbuf=149528
+b=(0,1,1), c=(0.25,0.75,0.75), nvp=53229, nvpbuf=151266
+b=(1,0,0), c=(0.75,0.25,0.25), nvp=55168, nvpbuf=148309
+b=(1,0,1), c=(0.75,0.25,0.75), nvp=56600, nvpbuf=150875
+b=(1,1,0), c=(0.75,0.75,0.25), nvp=54752, nvpbuf=149726
+b=(1,1,1), c=(0.75,0.75,0.75), nvp=55428, nvpbuf=152929
+Nvp range: 52427,56600
+Nvpbuf range: 148309,152929
+Writing script file to scrsigma8_0.80_z0.0.
+437887 particles
+s = 0.0119048, bf = 0.1, g = 0.0992863.
+c: 0.25,0.25,0.25
+nvp = 54228, after count
+nvpbuf = 149435, after count
+nvp = 54228
+x: -0.249996,0.249988; y: -0.249994,0.249998; z:-0.249993,0.249999
+nvp = 54228, after assignment
+nvpbuf = 149435, after assignment
+x: -0.349997,0.349997; y: -0.349998,0.349994; z:-0.35,0.349991
+There should be ~ 150195 points; there are 149435
+Added guard points to total 160529 points (should be 160529)
+x: -0.349286,0.349286; y: -0.349286,0.349286; z:-0.349286,0.349286
+File read.  Tessellating ...
+
+Delaunay triangulation by the convex hull of 160529 points in 4-d:
+
+  Number of input sites: 160529
+  Number of Delaunay regions: 1052711
+  Number of triangulated facets: 20030
+
+Statistics for:  | qhull Qt s d
+
+  Number of points processed: 160529
+  Number of hyperplanes created: 3821282
+  Number of facets in hull: 1053309
+  Number of distance tests for qhull: 20525519
+  Number of distance tests for merging: 20617440
+  Number of distance tests for checking: 15933892
+  Number of merged facets: 39262
+  CPU seconds to compute hull (after input): 7.435
+  Maximum distance of point above facet: 1.4e-15 (0.2x)
+  Maximum distance of vertex below facet: -1.4e-15 (0.2x)
+
+Now finding volumes ...
+Average volume = 1.00751
+Output to part.sigma8_0.80_z0.0.00.00.00
+
+nvp = 54228
+437887 particles
+s = 0.0119048, bf = 0.1, g = 0.0992863.
+c: 0.25,0.25,0.75
+nvp = 56055, after count
+nvpbuf = 151227, after count
+nvp = 56055
+x: -0.249976,0.249994; y: -0.249982,0.249997; z:-0.249995,0.249991
+nvp = 56055, after assignment
+nvpbuf = 151227, after assignment
+x: -0.349997,0.349998; y: -0.349998,0.349999; z:-0.349999,0.349998
+There should be ~ 150195 points; there are 151227
+Added guard points to total 162321 points (should be 162321)
+x: -0.349286,0.349286; y: -0.349286,0.349286; z:-0.349286,0.349286
+File read.  Tessellating ...
+
+Delaunay triangulation by the convex hull of 162321 points in 4-d:
+
+  Number of input sites: 162321
+  Number of Delaunay regions: 1064731
+  Number of triangulated facets: 19798
+
+Statistics for:  | qhull Qt s d
+
+  Number of points processed: 162321
+  Number of hyperplanes created: 3871108
+  Number of facets in hull: 1065245
+  Number of distance tests for qhull: 21977655
+  Number of distance tests for merging: 20845087
+  Number of distance tests for checking: 16115738
+  Number of merged facets: 38124
+  CPU seconds to compute hull (after input): 7.463
+  Maximum distance of point above facet: 1.5e-15 (0.2x)
+  Maximum distance of vertex below facet: -1.4e-15 (0.2x)
+
+Now finding volumes ...
+Average volume = 0.978117
+Output to part.sigma8_0.80_z0.0.00.00.01
+
+nvp = 56055
+437887 particles
+s = 0.0119048, bf = 0.1, g = 0.0992863.
+c: 0.25,0.75,0.25
+nvp = 52427, after count
+nvpbuf = 149528, after count
+nvp = 52427
+x: -0.25,0.249998; y: -0.24999,0.249994; z:-0.249989,0.249975
+nvp = 52427, after assignment
+nvpbuf = 149528, after assignment
+x: -0.349997,0.349997; y: -0.349998,0.34999; z:-0.35,0.35
+There should be ~ 150195 points; there are 149528
+Added guard points to total 160622 points (should be 160622)
+x: -0.349286,0.349286; y: -0.349286,0.349286; z:-0.349286,0.349286
+File read.  Tessellating ...
+
+Delaunay triangulation by the convex hull of 160622 points in 4-d:
+
+  Number of input sites: 160622
+  Number of Delaunay regions: 1053609
+  Number of triangulated facets: 19958
+
+Statistics for:  | qhull Qt s d
+
+  Number of points processed: 160622
+  Number of hyperplanes created: 3822380
+  Number of facets in hull: 1054137
+  Number of distance tests for qhull: 20327585
+  Number of distance tests for merging: 20613924
+  Number of distance tests for checking: 15944008
+  Number of merged facets: 38304
+  CPU seconds to compute hull (after input): 8.713
+  Maximum distance of point above facet: 1.4e-15 (0.2x)
+  Maximum distance of vertex below facet: -1.5e-15 (0.2x)
+
+Now finding volumes ...
+Average volume = 1.04344
+Output to part.sigma8_0.80_z0.0.00.01.00
+
+nvp = 52427
+437887 particles
+s = 0.0119048, bf = 0.1, g = 0.0992863.
+c: 0.25,0.75,0.75
+nvp = 53229, after count
+nvpbuf = 151266, after count
+nvp = 53229
+x: -0.25,0.24999; y: -0.249978,0.249986; z:-0.249987,0.249993
+nvp = 53229, after assignment
+nvpbuf = 151266, after assignment
+x: -0.349997,0.349998; y: -0.349998,0.349997; z:-0.349999,0.349998
+There should be ~ 150195 points; there are 151266
+Added guard points to total 162360 points (should be 162360)
+x: -0.349286,0.349286; y: -0.349286,0.349286; z:-0.349286,0.349286
+File read.  Tessellating ...
+
+Delaunay triangulation by the convex hull of 162360 points in 4-d:
+
+  Number of input sites: 162360
+  Number of Delaunay regions: 1065277
+  Number of triangulated facets: 19884
+
+Statistics for:  | qhull Qt s d
+
+  Number of points processed: 162360
+  Number of hyperplanes created: 3873424
+  Number of facets in hull: 1065728
+  Number of distance tests for qhull: 21174425
+  Number of distance tests for merging: 20853343
+  Number of distance tests for checking: 16123900
+  Number of merged facets: 38174
+  CPU seconds to compute hull (after input): 7.604
+  Maximum distance of vertex below facet: -1.5e-15 (0.2x)
+
+Now finding volumes ...
+Average volume = 1.02839
+Output to part.sigma8_0.80_z0.0.00.01.01
+
+nvp = 53229
+437887 particles
+s = 0.0119048, bf = 0.1, g = 0.0992863.
+c: 0.75,0.25,0.25
+nvp = 55168, after count
+nvpbuf = 148309, after count
+nvp = 55168
+x: -0.25,0.249989; y: -0.249989,0.25; z:-0.249997,0.24998
+nvp = 55168, after assignment
+nvpbuf = 148309, after assignment
+x: -0.349996,0.349998; y: -0.349998,0.349994; z:-0.35,0.349996
+There should be ~ 150195 points; there are 148309
+Added guard points to total 159403 points (should be 159403)
+x: -0.349286,0.349286; y: -0.349286,0.349286; z:-0.349286,0.349286
+File read.  Tessellating ...
+
+Delaunay triangulation by the convex hull of 159403 points in 4-d:
+
+  Number of input sites: 159403
+  Number of Delaunay regions: 1045328
+  Number of triangulated facets: 19896
+
+Statistics for:  | qhull Qt s d
+
+  Number of points processed: 159403
+  Number of hyperplanes created: 3799786
+  Number of facets in hull: 1045872
+  Number of distance tests for qhull: 22694862
+  Number of distance tests for merging: 20489782
+  Number of distance tests for checking: 15821376
+  Number of merged facets: 38719
+  CPU seconds to compute hull (after input): 7.55
+  Maximum distance of vertex below facet: -1.5e-15 (0.2x)
+
+Now finding volumes ...
+Average volume = 0.99225
+Output to part.sigma8_0.80_z0.0.01.00.00
+
+nvp = 55168
+437887 particles
+s = 0.0119048, bf = 0.1, g = 0.0992863.
+c: 0.75,0.25,0.75
+nvp = 56600, after count
+nvpbuf = 150875, after count
+nvp = 56600
+x: -0.249987,0.249995; y: -0.249994,0.249998; z:-0.25,0.249999
+nvp = 56600, after assignment
+nvpbuf = 150875, after assignment
+x: -0.349996,0.349999; y: -0.349998,0.349999; z:-0.349999,0.35
+There should be ~ 150195 points; there are 150875
+Added guard points to total 161969 points (should be 161969)
+x: -0.349286,0.349286; y: -0.349286,0.349286; z:-0.349286,0.349286
+File read.  Tessellating ...
+
+Delaunay triangulation by the convex hull of 161969 points in 4-d:
+
+  Number of input sites: 161969
+  Number of Delaunay regions: 1061748
+  Number of triangulated facets: 19860
+
+Statistics for:  | qhull Qt s d
+
+  Number of points processed: 161969
+  Number of hyperplanes created: 3855212
+  Number of facets in hull: 1062231
+  Number of distance tests for qhull: 21135431
+  Number of distance tests for merging: 20742309
+  Number of distance tests for checking: 16072858
+  Number of merged facets: 38014
+  CPU seconds to compute hull (after input): 7.754
+  Maximum distance of point above facet: 1.4e-15 (0.2x)
+
+Now finding volumes ...
+Average volume = 0.966919
+Output to part.sigma8_0.80_z0.0.01.00.01
+
+nvp = 56600
+437887 particles
+s = 0.0119048, bf = 0.1, g = 0.0992863.
+c: 0.75,0.75,0.25
+nvp = 54752, after count
+nvpbuf = 149726, after count
+nvp = 54752
+x: -0.249997,0.249973; y: -0.249993,0.249991; z:-0.249988,0.249996
+nvp = 54752, after assignment
+nvpbuf = 149726, after assignment
+x: -0.349998,0.349996; y: -0.349998,0.349992; z:-0.35,0.35
+There should be ~ 150195 points; there are 149726
+Added guard points to total 160820 points (should be 160820)
+x: -0.349286,0.349286; y: -0.349286,0.349286; z:-0.349286,0.349286
+File read.  Tessellating ...
+
+Delaunay triangulation by the convex hull of 160820 points in 4-d:
+
+  Number of input sites: 160820
+  Number of Delaunay regions: 1054072
+  Number of triangulated facets: 19844
+
+Statistics for:  | qhull Qt s d
+
+  Number of points processed: 160820
+  Number of hyperplanes created: 3827522
+  Number of facets in hull: 1054658
+  Number of distance tests for qhull: 20833168
+  Number of distance tests for merging: 20583471
+  Number of distance tests for checking: 15960122
+  Number of merged facets: 37705
+  CPU seconds to compute hull (after input): 7.587
+  Maximum distance of point above facet: 1.4e-15 (0.2x)
+  Maximum distance of vertex below facet: -1.4e-15 (0.2x)
+
+Now finding volumes ...
+Average volume = 1.001
+Output to part.sigma8_0.80_z0.0.01.01.00
+
+nvp = 54752
+437887 particles
+s = 0.0119048, bf = 0.1, g = 0.0992863.
+c: 0.75,0.75,0.75
+nvp = 55428, after count
+nvpbuf = 152929, after count
+nvp = 55428
+x: -0.249987,0.249999; y: -0.25,0.249988; z:-0.249992,0.249994
+nvp = 55428, after assignment
+nvpbuf = 152929, after assignment
+x: -0.349998,0.349999; y: -0.349998,0.349995; z:-0.349999,0.35
+There should be ~ 150195 points; there are 152929
+Added guard points to total 164023 points (should be 164023)
+x: -0.349286,0.349286; y: -0.349286,0.349286; z:-0.349286,0.349286
+File read.  Tessellating ...
+
+Delaunay triangulation by the convex hull of 164023 points in 4-d:
+
+  Number of input sites: 164023
+  Number of Delaunay regions: 1075390
+  Number of triangulated facets: 19818
+
+Statistics for:  | qhull Qt s d
+
+  Number of points processed: 164023
+  Number of hyperplanes created: 3908412
+  Number of facets in hull: 1075913
+  Number of distance tests for qhull: 22533587
+  Number of distance tests for merging: 21035453
+  Number of distance tests for checking: 16281812
+  Number of merged facets: 38112
+  CPU seconds to compute hull (after input): 7.57
+  Maximum distance of vertex below facet: -1.4e-15 (0.2x)
+
+Now finding volumes ...
+Average volume = 0.98694
+Output to part.sigma8_0.80_z0.0.01.01.01
+
+nvp = 55428
+We have 437887 particles to tie together.
+The maximum number of particles in a file is 56600.
+0 1 0 1 0 1 0 1 
+0 particles done more than once.
+Average # adjacencies = 15.2351 (15.535460 for Poisson)
+Average volume = 1
+Outputting to sigma8_0.80_z0.0.adj, sigma8_0.80_z0.0.vol
+
