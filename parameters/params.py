@@ -11,14 +11,14 @@ zobov_box_div = 2   # no. of subdivisions of ZOBOV box to save memory; only used
 zobov_buffer = 0.1  # fraction of box length overlap between subdivisions; only used if use_voz_isol is False
 
 # file handling
-handle = 'sigma8_0.80_z0.0'         # string; used to identify the sample and set filenames
-output_folder = '/Users/seshadri/Workspace/structures/' + handle  # path to folder where output should be placed
+handle = ''         # string; used to identify the sample and set filenames
+output_folder = ''  # path to folder where output should be placed
 
 # basic tracer data description
-tracer_file = '/Users/seshadri/Workspace/Sims/sigma8/s8_0.8/HOD_s8_0.8_z0.0_extended.txt'  # input tracer data
-posn_cols = np.array([2, 3, 4]) # which columns of tracer input array contain position information
+tracer_file = ''  # input tracer data
+posn_cols = np.array([0, 1, 2]) # which columns of tracer input array contain position information
 is_box = True       # True if tracers cover a cubic simulation box with periodic boundaries; False for survey data
-box_length = 1024.  # if is_box is True, the box side length; if is_box is False it is ignored
+box_length = 2500.  # if is_box is True, the box side length; if is_box is False it is ignored
 
 # survey data options - only used if is_box is False
 omega_m = 0.308     # cosmology, needed for distance-redshift relation (code assumes flat Universe!)
@@ -37,7 +37,7 @@ mock_dens_ratio = 10.   # if computing buffer mock positions, the ratio of buffe
 min_dens_cut = 1.0  # void minimum galaxy number density (in units of mean density) reqd to qualify
 void_min_num = 1    # minimum number of void member galaxies reqd to qualify (for surveys, set = 5 to be safe)
 use_barycentres = True # if True, additionally calculate void barycentre positions
-void_prefix = 'rVoids'   # prefix used for naming void catalogue files
+void_prefix = 'Voids'   # prefix used for naming void catalogue files
 
 # 'supercluster'-finding options
 find_clusters = False   # set to False unless really needed, finding superclusters is slow
