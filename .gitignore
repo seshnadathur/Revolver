@@ -1,1 +1,15 @@
 bin/*
+src/*.o
+qhull/qconvex
+qhull/qdelaunay
+qhull/qhalf
+qhull/qhull
+qhull/qvoronoi
+qhull/rbox
+qhull/src/*.o
+qhull/src/qconvex
+qhull/src/qdelaunay
+qhull/src/qhalf
+qhull/src/qhull
+qhull/src/qvoronoi
+qhull/src/libqhull.a

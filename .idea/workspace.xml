@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="" />
+    <list default="true" id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -210,6 +213,17 @@
               <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
               <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
               <item name="python_tools" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
+              <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
+              <item name="qhull" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
+              <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
+              <item name="qhull" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
