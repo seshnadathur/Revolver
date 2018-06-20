@@ -2,12 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/sigma8_0.80_z0.0.out" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/sigma8_0.80_z0.42.out" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/sigma8_0.83_z0.0.out" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/sigma8_0.83_z0.42.out" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/classes.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -31,7 +26,7 @@
         <entry file="file://$USER_HOME$/Workspace/ZOBOV/runparams/s8_params.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="600">
-              <caret line="40" lean-forward="true" selection-start-line="40" selection-end-line="40" />
+              <caret line="40" selection-start-line="40" selection-end-line="40" />
             </state>
           </provider>
         </entry>
@@ -40,7 +35,7 @@
         <entry file="file://$PROJECT_DIR$/revolver.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="225">
-              <caret line="15" column="36" lean-forward="true" selection-start-line="15" selection-start-column="4" selection-end-line="15" selection-end-column="36" />
+              <caret line="15" column="36" selection-start-line="15" selection-start-column="4" selection-end-line="15" selection-end-column="36" />
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
               </folding>
@@ -48,11 +43,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="classes.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="classes.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1113">
-              <caret line="324" column="59" lean-forward="true" selection-start-line="324" selection-start-column="59" selection-end-line="324" selection-end-column="59" />
+            <state relative-caret-position="604">
+              <caret line="172" lean-forward="true" selection-start-line="172" selection-end-line="172" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -60,11 +55,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="tools.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="tools.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python_tools/tools.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="364">
-              <caret line="42" column="11" selection-start-line="42" selection-start-column="8" selection-end-line="42" selection-end-column="11" />
+            <state relative-caret-position="779">
+              <caret line="99" column="17" selection-start-line="99" selection-start-column="17" selection-end-line="99" selection-end-column="17" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -76,8 +71,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>findClusters</find>
-      <find>maxDensCut</find>
       <find>nMinC</find>
       <find>clusterPre</find>
       <find>clusterPrefix</find>
@@ -106,6 +99,8 @@
       <find>max t</find>
       <find>bounda</find>
       <find>self.tracer_dens = self.num_tracers/survey_volume</find>
+      <find>log</find>
+      <find>.npy</find>
     </findStrings>
     <replaceStrings>
       <replace>box_length</replace>
@@ -179,13 +174,13 @@
         <option value="$PROJECT_DIR$/src/Makefile" />
         <option value="$PROJECT_DIR$/revolver.py" />
         <option value="$USER_HOME$/Workspace/ZOBOV/python_tools/tools.py" />
-        <option value="$PROJECT_DIR$/python_tools/classes.py" />
         <option value="$PROJECT_DIR$/src/jozovtrvol.c" />
         <option value="$PROJECT_DIR$/parameters/s8_params.py" />
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/parameters/params.py" />
         <option value="$USER_HOME$/Workspace/ZOBOV/runparams/s8_params.py" />
         <option value="$PROJECT_DIR$/python_tools/tools.py" />
+        <option value="$PROJECT_DIR$/python_tools/classes.py" />
       </list>
     </option>
   </component>
@@ -429,24 +424,14 @@
     <entry file="file://$USER_HOME$/Workspace/ZOBOV/runparams/s8_params.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="600">
-          <caret line="40" lean-forward="true" selection-start-line="40" selection-end-line="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1113">
-          <caret line="324" column="59" lean-forward="true" selection-start-line="324" selection-start-column="59" selection-end-line="324" selection-end-column="59" />
-          <folding>
-            <element signature="e#0#37#0" expanded="true" />
-          </folding>
+          <caret line="40" selection-start-line="40" selection-end-line="40" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/revolver.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="225">
-          <caret line="15" column="36" lean-forward="true" selection-start-line="15" selection-start-column="4" selection-end-line="15" selection-end-column="36" />
+          <caret line="15" column="36" selection-start-line="15" selection-start-column="4" selection-end-line="15" selection-end-column="36" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
@@ -455,8 +440,18 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/python_tools/tools.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="364">
-          <caret line="42" column="11" selection-start-line="42" selection-start-column="8" selection-end-line="42" selection-end-column="11" />
+        <state relative-caret-position="779">
+          <caret line="99" column="17" selection-start-line="99" selection-start-column="17" selection-end-line="99" selection-end-column="17" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="604">
+          <caret line="172" lean-forward="true" selection-start-line="172" selection-end-line="172" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>

@@ -169,7 +169,7 @@ class Sample:
                 self.tracers[:, :3] += 0.5 * self.box_length
 
         # for easy debugging: write all tracer positions to file
-        np.save(self.posn_file.replace('pos.dat', 'pos.npy'), self.tracers)
+        # np.save(self.posn_file.replace('pos.dat', 'pos.npy'), self.tracers)
 
         self.num_non_edge = self.num_tracers
 
@@ -451,8 +451,6 @@ class Sample:
             print("\tplaced %d buffer mocks along the survey boundary edges" % num_bound_mocks)
 
             buffers = np.vstack([buffers, bound_mocks])
-            mock_file = self.posn_file.replace('pos.dat', 'mocks.npy')
-            np.save(mock_file, buffers)
             self.num_mocks += num_bound_mocks
         else:
             print("\tdata covers the full sky, no buffer mocks required along edges")
