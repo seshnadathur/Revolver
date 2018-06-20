@@ -23,7 +23,10 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
     # ---run the tessellation--- #
     if use_vozisol:
         print("Calling vozisol to do the tessellation...")
-        logfile = "./log/" + sample.handle + ".out"
+        logfolder = sample.output_folder + 'log/'
+        if not os.access(logfolder, os.F_OK):
+            os.makedirs(logfolder)
+        logfile = logfolder + sample.handle + '.out'
         log = open(logfile, "w")
         cmd = ["./bin/vozisol", sample.posn_file, sample.handle, str(sample.box_length),
                str(sample.num_tracers), str(0.9e30)]
@@ -33,7 +36,10 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
         print("Calling vozinit, voz1b1 and voztie to do the tessellation...")
 
         # ---Step 1: call vozinit to write the script used to call voz1b1 and voztie--- #
-        logfile = "./log/" + sample.handle + ".out"
+        logfolder = sample.output_folder + 'log/'
+        if not os.access(logfolder, os.F_OK):
+            os.makedirs(logfolder)
+        logfile = logfolder + sample.handle + '.out'
         log = open(logfile, "w")
         cmd = ["./bin/vozinit", sample.posn_file, str(zobov_buffer), str(sample.box_length),
                str(zobov_box_div), sample.handle]
