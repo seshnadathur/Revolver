@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/python_tools/classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/classes.py" afterDir="false" />
-    </list>
+    <list default="true" id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -46,8 +44,8 @@
       <file leaf-file-name="classes.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="604">
-              <caret line="172" lean-forward="true" selection-start-line="172" selection-end-line="172" />
+            <state relative-caret-position="-3228">
+              <caret line="324" column="59" selection-start-line="324" selection-start-column="59" selection-end-line="324" selection-end-column="59" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -270,7 +268,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="690" y="51" width="1476" height="1245" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.23712738" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -450,8 +447,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="604">
-          <caret line="172" lean-forward="true" selection-start-line="172" selection-end-line="172" />
+        <state relative-caret-position="-3228">
+          <caret line="324" column="59" selection-start-line="324" selection-start-column="59" selection-end-line="324" selection-end-column="59" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
