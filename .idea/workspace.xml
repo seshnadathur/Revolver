@@ -2,8 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/python_tools/recon.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/classes.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -24,10 +27,22 @@
         </entry>
       </file>
       <file leaf-file-name="s8_params.py" pinned="false" current-in-tab="false">
-        <entry file="file://$USER_HOME$/Workspace/ZOBOV/runparams/s8_params.py">
+        <entry file="file://$PROJECT_DIR$/parameters/s8_params.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="600">
-              <caret line="40" selection-start-line="40" selection-end-line="40" />
+            <state relative-caret-position="255">
+              <caret line="17" column="75" selection-start-line="17" selection-start-column="75" selection-end-line="17" selection-end-column="75" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/python_tools/__init__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="30">
+              <caret line="2" column="19" selection-start-line="2" selection-start-column="19" selection-end-line="2" selection-end-column="19" />
+              <folding>
+                <element signature="e#0#21#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -47,10 +62,23 @@
       <file leaf-file-name="classes.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-3228">
-              <caret line="324" column="59" selection-start-line="324" selection-start-column="59" selection-end-line="324" selection-end-column="59" />
+            <state relative-caret-position="379">
+              <caret line="124" column="94" selection-start-line="124" selection-start-column="94" selection-end-line="124" selection-end-column="94" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="recon.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/python_tools/recon.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-948">
+              <caret line="238" lean-forward="true" selection-start-line="238" selection-end-line="238" />
+              <folding>
+                <element signature="e#0#37#0" expanded="true" />
+                <element signature="e#7397#7430#0" />
               </folding>
             </state>
           </provider>
@@ -59,8 +87,8 @@
       <file leaf-file-name="tools.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python_tools/tools.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="779">
-              <caret line="99" column="17" selection-start-line="99" selection-start-column="17" selection-end-line="99" selection-end-column="17" />
+            <state relative-caret-position="3158">
+              <caret line="380" column="8" selection-start-line="380" selection-start-column="4" selection-end-line="380" selection-end-column="8" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -72,11 +100,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>nMinC</find>
-      <find>clusterPre</find>
-      <find>clusterPrefix</find>
-      <find>fSky</find>
-      <find>numTracers</find>
       <find>numT</find>
       <find>numMocks</find>
       <find>numM</find>
@@ -101,10 +124,14 @@
       <find>bounda</find>
       <find>self.tracer_dens = self.num_tracers/survey_volume</find>
       <find>log</find>
+      <find>json</find>
+      <find>jit</find>
+      <find>plotit</find>
+      <find>bias</find>
+      <find>adja</find>
       <find>.npy</find>
     </findStrings>
     <replaceStrings>
-      <replace>box_length</replace>
       <replace>omega_m</replace>
       <replace>ang_coords</replace>
       <replace>observer_posn</replace>
@@ -134,6 +161,7 @@
       <replace>zobov_buffer</replace>
       <replace>posn_file</replace>
       <replace>num_part_total</replace>
+      <replace>np.</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -168,7 +196,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/python_tools/__init__.py" />
         <option value="$PROJECT_DIR$/ZOBOVwrapper.py" />
         <option value="$PROJECT_DIR$/runparams/RSD_runparams.py" />
         <option value="$PROJECT_DIR$/runparams/params.py" />
@@ -181,13 +208,15 @@
         <option value="$PROJECT_DIR$/parameters/params.py" />
         <option value="$USER_HOME$/Workspace/ZOBOV/runparams/s8_params.py" />
         <option value="$PROJECT_DIR$/python_tools/tools.py" />
+        <option value="$PROJECT_DIR$/python_tools/__init__.py" />
+        <option value="$PROJECT_DIR$/python_tools/recon.py" />
         <option value="$PROJECT_DIR$/python_tools/classes.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="690" />
-    <option name="y" value="51" />
+    <option name="x" value="694" />
+    <option name="y" value="23" />
     <option name="width" value="1476" />
     <option name="height" value="1245" />
   </component>
@@ -207,23 +236,17 @@
             <path>
               <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
               <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
+              <item name="masks" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
+              <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
               <item name="parameters" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
               <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
               <item name="python_tools" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
-              <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
-              <item name="qhull" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
-              <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
-              <item name="qhull" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -281,7 +304,8 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="690" y="51" width="1476" height="1245" extended-state="0" />
+    <frame x="694" y="23" width="1476" height="1245" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.23712738" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -347,13 +371,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/python_tools/postprocess.py" />
-    <entry file="file://$PROJECT_DIR$/python_tools/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" lean-forward="true" selection-start-line="2" selection-end-line="2" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/python_tools/post-production/snippets.py" />
     <entry file="file://$PROJECT_DIR$/python_tools/post-production/survey_profiler.py" />
     <entry file="file://$PROJECT_DIR$/python_tools/post-production/misc_tools.py" />
@@ -403,13 +420,6 @@
     <entry file="file://$PROJECT_DIR$/.gitattributes">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/parameters/s8_params.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="17" column="75" selection-start-line="17" selection-start-column="75" selection-end-line="17" selection-end-column="75" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/README.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="SPLIT">
@@ -422,13 +432,6 @@
       <provider editor-type-id="text-editor">
         <state relative-caret-position="45">
           <caret line="3" column="40" lean-forward="true" selection-start-line="2" selection-end-line="3" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/parameters/params.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="24" column="49" selection-start-line="24" selection-start-column="49" selection-end-line="24" selection-end-column="49" />
         </state>
       </provider>
     </entry>
@@ -449,10 +452,45 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/parameters/params.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="24" column="49" selection-start-line="24" selection-start-column="49" selection-end-line="24" selection-end-column="49" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/parameters/s8_params.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="17" column="75" selection-start-line="17" selection-start-column="75" selection-end-line="17" selection-end-column="75" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python_tools/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="30">
+          <caret line="2" column="19" selection-start-line="2" selection-start-column="19" selection-end-line="2" selection-end-column="19" />
+          <folding>
+            <element signature="e#0#21#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python_tools/recon.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-948">
+          <caret line="238" lean-forward="true" selection-start-line="238" selection-end-line="238" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+            <element signature="e#7397#7430#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/python_tools/tools.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="779">
-          <caret line="99" column="17" selection-start-line="99" selection-start-column="17" selection-end-line="99" selection-end-column="17" />
+        <state relative-caret-position="3158">
+          <caret line="380" column="8" selection-start-line="380" selection-start-column="4" selection-end-line="380" selection-end-column="8" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
@@ -461,8 +499,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3228">
-          <caret line="324" column="59" selection-start-line="324" selection-start-column="59" selection-end-line="324" selection-end-column="59" />
+        <state relative-caret-position="379">
+          <caret line="124" column="94" selection-start-line="124" selection-start-column="94" selection-end-line="124" selection-end-column="94" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>

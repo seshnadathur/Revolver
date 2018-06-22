@@ -13,3 +13,4 @@ qhull/src/qhalf
 qhull/src/qhull
 qhull/src/qvoronoi
 qhull/src/libqhull.a
+parameters/s8_params*

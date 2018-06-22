@@ -116,6 +116,13 @@ class Sample:
             else:
                 mask = hp.read_map(mask_file, verbose=False)
                 self.mask_file = mask_file
+                # check whether the mask is correct
+                ra = self.tracers[:, 3]
+                dec = self.tracers[:, 4]
+                nside = hp.get_nside(mask)
+                pixels = hp.ang2pix(nside, np.deg2rad(90-dec), np.deg2rad(ra))
+                if np.any(mask[pixels] == 0):
+                    sys.exit('Sky mask provided is incorrect! Galaxies exist where mask=0!?!\nAborting.')
                 # effective sky fraction
                 self.f_sky = 1.0*np.sum(mask)/len(mask)
 
