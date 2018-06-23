@@ -2,11 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/python_tools/recon.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/python_tools/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/python_tools/classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/classes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/tools.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -35,11 +33,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/python_tools/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="30">
-              <caret line="2" column="19" selection-start-line="2" selection-start-column="19" selection-end-line="2" selection-end-column="19" />
+            <state>
+              <caret lean-forward="true" />
               <folding>
                 <element signature="e#0#21#0" expanded="true" />
               </folding>
@@ -59,11 +57,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="classes.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="classes.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="379">
-              <caret line="124" column="94" selection-start-line="124" selection-start-column="94" selection-end-line="124" selection-end-column="94" />
+            <state relative-caret-position="2010">
+              <caret line="134" column="54" lean-forward="true" selection-start-line="134" selection-start-column="54" selection-end-line="134" selection-end-column="54" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -87,8 +85,8 @@
       <file leaf-file-name="tools.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python_tools/tools.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3158">
-              <caret line="380" column="8" selection-start-line="380" selection-start-column="4" selection-end-line="380" selection-end-column="8" />
+            <state relative-caret-position="-12416">
+              <caret line="124" column="81" selection-start-line="124" selection-start-column="81" selection-end-line="124" selection-end-column="81" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -100,7 +98,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>numT</find>
       <find>numMocks</find>
       <find>numM</find>
       <find>numNonEdge</find>
@@ -127,9 +124,10 @@
       <find>json</find>
       <find>jit</find>
       <find>plotit</find>
-      <find>bias</find>
-      <find>adja</find>
       <find>.npy</find>
+      <find>self.num_tracers</find>
+      <find>adja</find>
+      <find>bias</find>
     </findStrings>
     <replaceStrings>
       <replace>omega_m</replace>
@@ -207,18 +205,17 @@
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/parameters/params.py" />
         <option value="$USER_HOME$/Workspace/ZOBOV/runparams/s8_params.py" />
-        <option value="$PROJECT_DIR$/python_tools/tools.py" />
-        <option value="$PROJECT_DIR$/python_tools/__init__.py" />
         <option value="$PROJECT_DIR$/python_tools/recon.py" />
+        <option value="$PROJECT_DIR$/python_tools/tools.py" />
         <option value="$PROJECT_DIR$/python_tools/classes.py" />
+        <option value="$PROJECT_DIR$/python_tools/__init__.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="694" />
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="y" value="23" />
-    <option name="width" value="1476" />
-    <option name="height" value="1245" />
+    <option name="width" value="1280" />
+    <option name="height" value="697" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -232,11 +229,6 @@
             <path>
               <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
               <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
-              <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
-              <item name="masks" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
@@ -304,10 +296,10 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="694" y="23" width="1476" height="1245" extended-state="0" />
+    <frame x="0" y="23" width="1280" height="697" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.23712738" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2734375" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="7" />
@@ -442,16 +434,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/revolver.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="15" column="36" selection-start-line="15" selection-start-column="4" selection-end-line="15" selection-end-column="36" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/parameters/params.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="360">
@@ -466,12 +448,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/python_tools/__init__.py">
+    <entry file="file://$PROJECT_DIR$/python_tools/tools.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="19" selection-start-line="2" selection-start-column="19" selection-end-line="2" selection-end-column="19" />
+        <state relative-caret-position="-12416">
+          <caret line="124" column="81" selection-start-line="124" selection-start-column="81" selection-end-line="124" selection-end-column="81" />
           <folding>
-            <element signature="e#0#21#0" expanded="true" />
+            <element signature="e#0#37#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -487,22 +469,32 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/python_tools/tools.py">
+    <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3158">
-          <caret line="380" column="8" selection-start-line="380" selection-start-column="4" selection-end-line="380" selection-end-column="8" />
+        <state relative-caret-position="2010">
+          <caret line="134" column="54" lean-forward="true" selection-start-line="134" selection-start-column="54" selection-end-line="134" selection-end-column="54" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/python_tools/classes.py">
+    <entry file="file://$PROJECT_DIR$/revolver.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="379">
-          <caret line="124" column="94" selection-start-line="124" selection-start-column="94" selection-end-line="124" selection-end-column="94" />
+        <state relative-caret-position="225">
+          <caret line="15" column="36" selection-start-line="15" selection-start-column="4" selection-end-line="15" selection-end-column="36" />
           <folding>
-            <element signature="e#0#37#0" expanded="true" />
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/python_tools/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret lean-forward="true" />
+          <folding>
+            <element signature="e#0#21#0" expanded="true" />
           </folding>
         </state>
       </provider>

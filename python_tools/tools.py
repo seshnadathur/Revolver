@@ -32,6 +32,10 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
                str(sample.num_tracers), str(0.9e30)]
         subprocess.call(cmd, stdout=log, stderr=log)
         log.close()
+
+        # check the tessellation was successful
+        if not os.access("%s.vol" % sample.handle, os.F_OK):
+            sys.exit("Something went wrong with the tessellation. Aborting ...")
     else:
         print("Calling vozinit, voz1b1 and voztie to do the tessellation...")
 
@@ -77,7 +81,7 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
 
     # ---prepare files for running jozov--- #
     if sample.is_box:
-        # no preparation is required for void-finding (no buffer mocks, no z-weights, no angular-weights)
+        # no preparation is required for void-finding (no buffer mocks, no z-weights, no angular weights)
         if sample.find_clusters:
             cmd = ["cp", "%s.vol" % sample.handle, "%sc.vol" % sample.handle]
             subprocess.call(cmd)
@@ -117,6 +121,10 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
             pixels = hp.ang2pix(nside, np.deg2rad(90 - dec), np.deg2rad(ra))
             modfactors = mask[pixels]
             modvols[np.logical_not(edgemask)] *= modfactors[np.logical_not(edgemask)]
+
+        # check for failures! (should not be required due to previous checks ...)
+        if np.any(modvols[np.logical_not(edgemask)] == 0):
+            sys.exit('Some tracers with zero-volume Voronoi cells found!!\nAborting...')
 
         # ---Step 5: write the scaled volumes to file--- #
         with open("./%s.vol" % sample.handle, 'w') as F:

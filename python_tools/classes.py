@@ -108,6 +108,14 @@ class Sample:
             else:
                 self.coords_cartesian2std(tracers, observer_posn)
 
+            self.z_min = z_min
+            self.z_max = z_max
+            # check and cut on the provided redshift limits
+            if np.min(self.tracers[:, 5]) < self.z_min or np.max(self.tracers[:, 5]) > self.z_max:
+                print('Cutting galaxies outside the redshift limits')
+                zselect = self.z_min < self.tracers[:, 5] < self.z_max
+                self.tracers = self.tracers[zselect, :]
+
             # sky mask file (should be in Healpy FITS format)
             if not os.access(mask_file, os.F_OK):
                 print("Sky mask not provided or not found, generating approximate one")
@@ -122,17 +130,20 @@ class Sample:
                 nside = hp.get_nside(mask)
                 pixels = hp.ang2pix(nside, np.deg2rad(90-dec), np.deg2rad(ra))
                 if np.any(mask[pixels] == 0):
-                    sys.exit('Sky mask provided is incorrect! Galaxies exist where mask=0!?!\nAborting.')
+                    print('Galaxies exist where mask=0. Removing these to avoid errors later.')
+                    good_inds = np.array([])
+                    for i in range(len(self.tracers)):
+                        if mask[pixels[i]] > 0:
+                            good_inds = np.hstack([good_inds, i])
+                    self.tracers = self.tracers[good_inds, :]
+
                 # effective sky fraction
                 self.f_sky = 1.0*np.sum(mask)/len(mask)
 
-            self.z_min = z_min
-            self.z_max = z_max
-            # check that the provided redshift limits are reasonable
-            if np.min(self.tracers[:, 5]) < self.z_min:
-                self.z_min = np.min(self.tracers[:, 5])
-            if np.max(self.tracers[:, 5]) > self.z_max:
-                self.z_max = np.max(self.tracers[:, 5])
+            # update galaxy stats
+            self.num_tracers = self.tracers.shape[0]
+            print('Kept %d tracers after cuts' % self.num_tracers)
+            # calculate mean density
             self.r_near = self.cosmo.get_comoving_distance(self.z_min)
             self.r_far = self.cosmo.get_comoving_distance(self.z_max)
             survey_volume = self.f_sky*4*np.pi*(self.r_far**3. - self.r_near**3.)/3.
