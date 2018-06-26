@@ -35,7 +35,7 @@ class Cosmology:
         return np.interp(r, self.rtab, self.ztab)
 
 
-class Sample:
+class VoidSample:
 
     def __init__(self, run_zobov=True, tracer_file="", handle="", output_folder="", posn_cols=np.array([0, 1, 2]),
                  is_box=True, box_length=2500.0, omega_m=0.308, ang_coords=True, observer_posn=np.array([0, 0, 0]),
@@ -622,3 +622,108 @@ class Sample:
         self.num_non_edge = parms.num_non_edge
         self.box_length = parms.box_length
         self.tracer_dens = parms.tracer_dens
+
+
+class GalaxyCatalogue:
+
+    def __init__(self, catalogue_file, boss_like=True, randoms=False, is_box=False, box_length=1000.,
+                 posn_cols=[0, 1, 2], wts_col=3, ang_coords=True, obs_posn=[0, 0 ,0], omega_m=0.308):
+
+        print('=== Loading galaxy data from file ====')
+        if '.npy' in catalogue_file:
+            data = np.load(catalogue_file)
+        else:
+            data = np.loadtxt(catalogue_file)
+
+        if boss_like:  # input data formatted like the BOSS VAC data release files
+            self.ra = data[:, 0]
+            self.dec = data[:, 1]
+            self.redshift = data[:, 2]
+            if randoms:
+                self.wfkp = 1. / (10000 * data[:, 3])
+                self.veto = data[:, 5]
+                self.weight_collision = data[:, 6]
+            else:  # BOSS data/PATCHY mock files have different columns to randoms files
+                self.wfkp = 1. / (10000 * data[:, 4])
+                self.veto = data[:, 6]
+                self.weight_collision = data[:, 7]
+
+            self.weights = np.zeros_like(self.ra)
+            self.x = np.zeros_like(self.ra)
+            self.y = np.zeros_like(self.ra)
+            self.z = np.zeros_like(self.ra)
+            self.newx = np.zeros_like(self.ra)
+            self.newy = np.zeros_like(self.ra)
+            self.newz = np.zeros_like(self.ra)
+            self.dist = np.zeros_like(self.ra)
+            self.size = self.ra.size
+        elif is_box:  # data from a simulation box with periodic boundary conditions
+            self.box_length = box_length
+            self.x = data[:, posn_cols[0]]
+            self.y = data[:, posn_cols[1]]
+            self.z = data[:, posn_cols[2]]
+            self.newx = 1.0 * self.x
+            self.newy = 1.0 * self.y
+            self.newz = 1.0 * self.z
+            # for a uniform box, there is no weighting of galaxies
+            self.wfkp = np.ones_like(self.x)
+            self.weight_collision = np.ones_like(self.x)
+            self.size = self.x.size
+        else:  # survey data, but not in the BOSS format
+            if ang_coords:
+                self.ra = data[:, posn_cols[0]]
+                self.dec = data[:, posn_cols[1]]
+                self.redshift = data[:, posn_cols[2]]
+                self.wfkp = data[:, wts_col]  # this contains the total weight, including collisions if applicable
+                self.weight_collision = np.ones_like(self.wfkp)
+                self.x = np.zeros_like(self.ra)
+                self.y = np.zeros_like(self.ra)
+                self.z = np.zeros_like(self.ra)
+                self.newx = np.zeros_like(self.ra)
+                self.newy = np.zeros_like(self.ra)
+                self.newz = np.zeros_like(self.ra)
+                self.dist = np.zeros_like(self.ra)
+                self.size = self.ra.size
+            else:
+                self.cosmo = Cosmology(omega_m=omega_m)
+                self.x = data[:, posn_cols[0]] - obs_posn[0]
+                self.y = data[:, posn_cols[1]] - obs_posn[1]
+                self.z = data[:, posn_cols[2]] - obs_posn[2]
+                self.newx = 1.0 * self.x
+                self.newy = 1.0 * self.y
+                self.newz = 1.0 * self.z
+                self.wfkp = data[:, wts_col]  # this contains the total weight, including collisions if applicable
+                self.weight_collision = np.ones_like(self.wfkp)
+                ra, dec, redshift, dist = self.cart_to_radecz(self.x, self.y, self.z)
+                self.ra = ra
+                self.dec = dec
+                self.redshift = redshift
+                self.dist = dist
+                self.size = self.x.size
+
+    def cut(self, w):
+        ''' Trim catalog columns using a boolean array'''
+
+        size = self.size
+        for f in self.__dict__.items():
+            if hasattr(f[1], 'size') and f[1].size % size == 0:
+                self.__dict__[f[0]] = f[1][w]
+        self.size = self.x.size
+
+    def get_weights(self, fkp=1, cp=1):
+        ''' Multiplicative weights '''
+
+        if cp == 1:
+            weights = self.weight_collision
+        if fkp:
+            weights *= self.wfkp
+
+        return weights
+
+    def cart_to_radecz(self, x, y, z):
+
+        dist = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+        dec = np.arcsin(z / dist) * 180. / N.pi
+        ra = np.arctan(x / y) * 180. / N.pi + 180
+        redshift = self.cosmo.get_redshift(dist)
+        return ra, dec, redshift, dist
