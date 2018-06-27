@@ -2,8 +2,6 @@
 # however, depending on options chosen, not all quantities may be used in the code
 # distance units in this code are calculated in Mpc/h by default
 
-import numpy as np
-
 # ========= file handling options ========= #
 handle = ''         # string; used to identify the sample and set filenames
 output_folder = ''  # path to folder where output should be placed
@@ -25,23 +23,37 @@ niter = 3       # number of iterations in the FFT reconstruction method
 # ========================================= #
 
 # ======= input tracer data options =========== #
-tracer_file = ''    # path to file with input tracer data; either ASCII or numpy NPY format
+tracer_file = ''    # path to file with input data
 is_box = False      # True if tracers cover a cubic simulation box with periodic boundaries; False for survey data
 box_length = 1500.  # if is_box, the box side length in Mpc/h; else ignored
-posn_cols = np.array([0, 1, 2])  # which columns of tracer input array contain position information
+boss_like = True    # True if the input data file is in FITS format with same data fields as BOSS data
+# if not boss_like, data file must contain array data in ASCII or NPY format
+posn_cols = [0, 1, 2]  # columns of tracer input array containing 3D position information
+# if is_box == True, these columns should contain x,y,z Cartesian coordinates; otherwise RA, Dec, redshift
 # NOTE: for box data, reconstruction assumes plane-parallel approximation with single l-o-s along the box z-axis!!
-# for box data, the next 5 options are ignored:
-randoms_file = ''   # path to file containing randoms; required for reconstruction of survey data
-boss_like = True    # are data columns formatted as for BOSS DR12 value-added catalogues?
-# if not is_box and not boss_like, further information is required:
-ang_coords = True   # True if posn_cols contain ra, dec, redshift information; False if they contain x, y, z
-observer_posn = np.array([0, 0, 0])  # if ang_coords==False, the Cartesian coords of the observer position
-wts_col = 3  # column in tracer input array specifying weights (combination of FKP and fibre collision weights)
-# (weights are only required for reconstruction!)
+special_patchy = False  # set True if input array is in the special PATCHY format provided by Hector
 # ============================================= #
 
-# ========== void-finding options ============= #
+# ======= weights options ========= #
+# the following options are used to identify the correct weights information in ASCII/NPY formatted input arrays
+# if provided, weights are only used in the reconstruction step; if is_box is True, they are ignored even if provided
+# a special case is hard-coded for use if special_patchy == True, in which case these options are ignored
+fkp = True  # are FKP weights (WEIGHT_FKP) provided?
+cp = True   # are fibre collision weights (WEIGHT_CP) provided?
+noz = False  # are noz weights (WEIGHT_NOZ) provided?
+systot = False  # are total systematic weights (WEIGHT_SYSTOT) provided?
+veto = True  # is a vetomask column provided? (data is dropped if veto != 1)
+# if any of the above weights are provided, they must start from the column immediately after redshift data
+# any weights provided MUST be in consecutive columns and with column numbers in the order fkp<cp<noz<systot<veto
+# ================================= #
 
+# ====== randoms file ======= #
+randoms_file = ''   # path to file containing randoms data: must be formatted similarly to input data
+# NOTE: for randoms, only FKP weights are used, other weights and vetos are ignored (except in the
+# special case where special_patchy == True)
+# =========================== #
+
+# ========== void-finding options ============= #
 # -- Tessellation options -- #
 run_zobov = True    # if True, does tessellation; if False, only post-processes a previous run
 # vozisol code performs entire tessellation in one shot: more memory-intensive, but handles survey data better
@@ -74,6 +86,6 @@ use_barycentres = True  # if True, additionally calculate void barycentre positi
 find_clusters = False   # set to False unless really needed, finding superclusters is slow
 cluster_prefix = 'Clusters'  # prefix used for naming supercluster catalogue files
 max_dens_cut = 1.0  # cluster maximum galaxy density (in units of mean density) reqd to qualify
-cluster_min_n = 5   # minimum number of void member galaxies reqd to qualify
+cluster_min_num = 5   # minimum number of void member galaxies reqd to qualify
 # ---------------------------------------------- #
 # ============================================= #

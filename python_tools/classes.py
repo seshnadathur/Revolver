@@ -7,7 +7,7 @@ import random
 import imp
 from scipy.spatial import cKDTree
 from scipy.integrate import quad
-
+from astropy.io import fits
 
 class Cosmology:
 
@@ -37,11 +37,11 @@ class Cosmology:
 
 class VoidSample:
 
-    def __init__(self, run_zobov=True, tracer_file="", handle="", output_folder="", posn_cols=np.array([0, 1, 2]),
-                 is_box=True, box_length=2500.0, omega_m=0.308, ang_coords=True, observer_posn=np.array([0, 0, 0]),
-                 mask_file="", use_z_wts=True, use_ang_wts=True, z_min=0.43, z_max=0.7, mock_file="",
-                 mock_dens_ratio=10, min_dens_cut=1.0, void_min_num=1, use_barycentres=True, void_prefix="",
-                 find_clusters=False, max_dens_cut=1.0, cluster_min_n=1, cluster_prefix=""):
+    def __init__(self, run_zobov=True, tracer_file="", handle="", output_folder="", is_box=True, boss_like=False, 
+                 posn_cols=np.array([0, 1, 2]), box_length=2500.0, omega_m=0.308, mask_file="", use_z_wts=True, 
+                 use_ang_wts=True, z_min=0.43, z_max=0.7, mock_file="", mock_dens_ratio=10, min_dens_cut=1.0, 
+                 void_min_num=1, use_barycentres=True, void_prefix="", find_clusters=False, max_dens_cut=1.0, 
+                 cluster_min_num=1, cluster_prefix=""):
 
         # the prefix/handle used for all output file names
         self.handle = handle
@@ -57,26 +57,42 @@ class VoidSample:
         # check input file exists ...
         if not os.access(tracer_file, os.F_OK):
             sys.exit("Can't find tracer file %s, aborting" % tracer_file)
-        # load tracer information from input file
-        print("Loading tracer positions from file %s" % tracer_file)
-        if '.npy' in tracer_file:
-            tracers = np.load(tracer_file)
-        else:
-            tracers = np.loadtxt(tracer_file)
-        self.num_tracers = tracers.shape[0]
-        # test that tracer information is valid
-        if not tracers.shape[1] >= 3:
-            sys.exit("Not enough columns, need 3D position information. Aborting")
-        if not len(posn_cols) == 3:
-            sys.exit("You must specify 3 columns containing tracer position information. Aborting")
-        print("%d tracers found" % self.num_tracers)
-
-        # keep only the tracer position information
-        tracers = tracers[:, posn_cols]
 
         # (Boolean) choice between cubic simulation box and sky survey
         self.is_box = is_box
 
+        # load tracer information
+        print("Loading tracer positions from file %s" % tracer_file)
+        if boss_like:  # FITS format input file
+            if self.is_box:
+                print('Both boss_like and is_box cannot be simultaneously True! Setting is_box = False')
+                self.is_box = False
+            input_data = fits.open(self.tracer_file)[1].data
+            ra = input_data.RA
+            dec = input_data.DEC
+            redshift = input_data.Z
+            self.num_tracers = len(ra)
+            tracers = np.empty((self.num_tracers, 3))
+            tracers[:, 0] = ra
+            tracers[:, 1] = dec
+            tracers[:, 2] = redshift
+        else:
+            if '.npy' in tracer_file:
+                tracers = np.load(tracer_file)
+            else:
+                tracers = np.loadtxt(tracer_file)
+            self.num_tracers = tracers.shape[0]
+            # test that tracer information is valid
+            if not tracers.shape[1] >= 3:
+                sys.exit("Not enough columns, need 3D position information. Aborting")
+            if not len(posn_cols) == 3:
+                sys.exit("You must specify 3 columns containing tracer position information. Aborting")
+            print("%d tracers found" % self.num_tracers)
+
+            # keep only the tracer position information
+            tracers = tracers[:, posn_cols]
+
+        # now complete the rest of the data preparation
         if self.is_box:  # dealing with cubic simulation box
             if box_length <= 0:
                 sys.exit("Zero or negative box length, aborting")
@@ -103,13 +119,11 @@ class VoidSample:
             self.cosmo = cosmo
 
             # convert input tracer information to standard format
-            if ang_coords:
-                self.coords_ang2std(tracers)
-            else:
-                self.coords_cartesian2std(tracers, observer_posn)
+            self.coords_radecz2std(tracers[:, 0], tracers[:, 1], tracers[:, 2])
 
             self.z_min = z_min
             self.z_max = z_max
+
             # check and cut on the provided redshift limits
             if np.min(self.tracers[:, 5]) < self.z_min or np.max(self.tracers[:, 5]) > self.z_max:
                 print('Cutting galaxies outside the redshift limits')
@@ -143,6 +157,7 @@ class VoidSample:
             # update galaxy stats
             self.num_tracers = self.tracers.shape[0]
             print('Kept %d tracers after cuts' % self.num_tracers)
+
             # calculate mean density
             self.r_near = self.cosmo.get_comoving_distance(self.z_min)
             self.r_far = self.cosmo.get_comoving_distance(self.z_max)
@@ -202,21 +217,21 @@ class VoidSample:
         # options for finding 'superclusters'
         self.find_clusters = find_clusters
         if find_clusters:
-            self.cluster_min_n = cluster_min_n
+            self.cluster_min_num = cluster_min_num
             self.max_dens_cut = max_dens_cut
             self.cluster_prefix = cluster_prefix
 
-    def coords_ang2std(self, tracers):
+    def coords_radecz2std(self, ra, dec, redshift):
         """Converts sky coordinates in (RA,Dec,redshift) to standard form, including comoving
         Cartesian coordinate information
         """
 
         # convert galaxy redshifts to comoving distances
-        rdist = self.cosmo.get_comoving_distance(tracers[:, 2])
+        rdist = self.cosmo.get_comoving_distance(redshift)
 
         # convert RA, Dec angles in degrees to theta, phi in radians
-        phi = tracers[:, 0]*np.pi/180.
-        theta = np.pi/2. - tracers[:, 1]*np.pi/180.
+        phi = ra*np.pi/180.
+        theta = np.pi/2. - dec*np.pi/180.
 
         # obtain Cartesian coordinates
         galaxies = np.zeros((self.num_tracers, 6))
@@ -224,32 +239,9 @@ class VoidSample:
         galaxies[:, 1] = rdist*np.sin(theta)*np.sin(phi)  # r*sin(ra)*cos(dec)
         galaxies[:, 2] = rdist*np.cos(theta)  # r*sin(dec)
         # standard format includes RA, Dec, redshift info
-        galaxies[:, 3:] = tracers[:, :3]
-
-        self.tracers = galaxies
-
-    def coords_cartesian2std(self, tracers, observer_posn):
-        """Converts galaxy Cartesian coordinates to standard form, including (ra,Dec,redshift) information
-        """
-
-        # first convert coordinates to observer frame
-        tracers -= observer_posn
-
-        # now obtain ra and Dec
-        rdist = np.linalg.norm(tracers[:, :3], axis=1)
-        dec = 90 - np.degrees(np.arccos(tracers[:, 2] / rdist))
-        ra = np.degrees(np.arctan2(tracers[:, 1], tracers[:, 0]))
-        ra[ra < 0] += 360  # to ensure ra is in the range 0 to 360
-
-        # build interpolating function to calculate redshifts
-        redshifts = self.cosmo.get_redshift(rdist)
-
-        # convert to standard format
-        galaxies = np.zeros((self.num_tracers, 6))
-        galaxies[:, :3] = tracers[:, :3]
         galaxies[:, 3] = ra
         galaxies[:, 4] = dec
-        galaxies[:, 5] = redshifts
+        galaxies[:, 5] = redshift
 
         self.tracers = galaxies
 
@@ -626,29 +618,30 @@ class VoidSample:
 
 class GalaxyCatalogue:
 
-    def __init__(self, catalogue_file, boss_like=True, randoms=False, is_box=False, box_length=1000.,
-                 posn_cols=[0, 1, 2], wts_col=3, ang_coords=True, obs_posn=[0, 0 ,0], omega_m=0.308):
+    def __init__(self, catalogue_file, is_box=False, box_length=1000., randoms=False, boss_like=True,
+                 special_patchy=False, posn_cols=np.array([0, 1, 2]), fkp=1, noz=1, cp=1, systot=1, veto=1):
 
-        print('=== Loading galaxy data from file ====')
-        if '.npy' in catalogue_file:
-            data = np.load(catalogue_file)
+        if randoms:
+            print('=== Loading randoms data from file ====')
         else:
-            data = np.loadtxt(catalogue_file)
+            print('=== Loading galaxy data from file ====')
 
-        if boss_like:  # input data formatted like the BOSS VAC data release files
-            self.ra = data[:, 0]
-            self.dec = data[:, 1]
-            self.redshift = data[:, 2]
-            if randoms:
-                self.wfkp = 1. / (10000 * data[:, 3])
-                self.veto = data[:, 5]
-                self.weight_collision = data[:, 6]
-            else:  # BOSS data/PATCHY mock files have different columns to randoms files
-                self.wfkp = 1. / (10000 * data[:, 4])
-                self.veto = data[:, 6]
-                self.weight_collision = data[:, 7]
+        if boss_like:
+            a = fits.open(catalogue_file)[1].data
+            for f in a.names:
+                self.__dict__[f.lower()] = a.field(f)
+            # NOTE: this takes the weights, in particular the FKP weights, directly from file.
+            # If a different FKP weighting is desired (e.g., to work better on smaller scales)
+            # this would need to be recalculated!
 
-            self.weights = np.zeros_like(self.ra)
+            self.size = self.ra.size
+            self.names = a.names
+            self.veto = np.ones(self.size)  # all vetoes have already been applied!
+
+            # change the name 'z'-->'redshift' to avoid confusion
+            self.redshift = self.z
+
+            # initialize Cartesian positions and observer distance
             self.x = np.zeros_like(self.ra)
             self.y = np.zeros_like(self.ra)
             self.z = np.zeros_like(self.ra)
@@ -656,53 +649,80 @@ class GalaxyCatalogue:
             self.newy = np.zeros_like(self.ra)
             self.newz = np.zeros_like(self.ra)
             self.dist = np.zeros_like(self.ra)
-            self.size = self.ra.size
-        elif is_box:  # data from a simulation box with periodic boundary conditions
-            self.box_length = box_length
-            self.x = data[:, posn_cols[0]]
-            self.y = data[:, posn_cols[1]]
-            self.z = data[:, posn_cols[2]]
-            self.newx = 1.0 * self.x
-            self.newy = 1.0 * self.y
-            self.newz = 1.0 * self.z
-            # for a uniform box, there is no weighting of galaxies
-            self.wfkp = np.ones_like(self.x)
-            self.weight_collision = np.ones_like(self.x)
-            self.size = self.x.size
-        else:  # survey data, but not in the BOSS format
-            if ang_coords:
-                self.ra = data[:, posn_cols[0]]
-                self.dec = data[:, posn_cols[1]]
-                self.redshift = data[:, posn_cols[2]]
-                self.wfkp = data[:, wts_col]  # this contains the total weight, including collisions if applicable
-                self.weight_collision = np.ones_like(self.wfkp)
-                self.x = np.zeros_like(self.ra)
-                self.y = np.zeros_like(self.ra)
-                self.z = np.zeros_like(self.ra)
-                self.newx = np.zeros_like(self.ra)
-                self.newy = np.zeros_like(self.ra)
-                self.newz = np.zeros_like(self.ra)
-                self.dist = np.zeros_like(self.ra)
-                self.size = self.ra.size
+
+        else:
+            # ASCII and NPY formatted input files are supported
+            if '.npy' in catalogue_file:
+                data = np.load(catalogue_file)
             else:
-                self.cosmo = Cosmology(omega_m=omega_m)
-                self.x = data[:, posn_cols[0]] - obs_posn[0]
-                self.y = data[:, posn_cols[1]] - obs_posn[1]
-                self.z = data[:, posn_cols[2]] - obs_posn[2]
+                data = np.loadtxt(catalogue_file)
+
+            if is_box:
+                # for uniform box, galaxy weights, vetos, ra, dec, redshift, distance information are not used!
+                self.box_length = box_length
+
+                # for uniform box, position data is in Cartesian format
+                self.x = data[:, posn_cols[0]]
+                self.y = data[:, posn_cols[1]]
+                self.z = data[:, posn_cols[2]]
                 self.newx = 1.0 * self.x
                 self.newy = 1.0 * self.y
                 self.newz = 1.0 * self.z
-                self.wfkp = data[:, wts_col]  # this contains the total weight, including collisions if applicable
-                self.weight_collision = np.ones_like(self.wfkp)
-                ra, dec, redshift, dist = self.cart_to_radecz(self.x, self.y, self.z)
-                self.ra = ra
-                self.dec = dec
-                self.redshift = redshift
-                self.dist = dist
                 self.size = self.x.size
+            else:
+                # position information is ra, dec and redshift
+                self.ra = data[:, posn_cols[0]]
+                self.dec = data[:, posn_cols[1]]
+                self.redshift = data[:, posn_cols[2]]
+                self.size = self.ra.size
+
+                # Cartesian positions and observer distance initialized to zero, calculated later
+                self.x = np.zeros(self.size)
+                self.y = np.zeros(self.size)
+                self.z = np.zeros(self.size)
+                self.newx = np.zeros(self.size)
+                self.newy = np.zeros(self.size)
+                self.newz = np.zeros(self.size)
+                self.dist = np.zeros(self.size)
+
+                # by default, set all weights and veto to 1
+                self.weight_fkp = np.ones(self.size)
+                self.weight_cp = np.ones(self.size)
+                self.weight_noz = np.ones(self.size)
+                self.weight_syst = np.ones(self.size)
+                self.veto = np.ones(self.size)
+
+                if special_patchy:  # special routine for dealing with unusual PATCHY mock data formatting
+                    if randoms:  # randoms are not formatted the same way as data
+                        self.weight_fkp = 1./(10000 * data[:, 3])
+                        self.veto = data[:, 5]
+                        self.weight_cp = data[:, 6]
+                    else:
+                        self.weight_fkp = 1. / (10000 * data[:, 4])
+                        self.veto = data[:, 6]
+                        self.weight_cp = data[:, 7]
+                # NOTE: this calculation of FKP weights takes P0=10000, which is optimized for
+                # case of (a) BOSS CMASS/LOWZ galaxies and (b) BAO reconstruction. For better performance
+                # at smaller scales, or for different galaxy samples, this may need to be re-calculated!
+                else:
+                    count = 1
+                    if fkp:
+                        self.weight_fkp = data[:, posn_cols[2] + count]
+                        count += 1
+                    if cp:
+                        self.weight_cp = data[:, posn_cols[2] + count]
+                        count += 1
+                    if noz:
+                        self.weight_noz = data[:, posn_cols[2] + count]
+                        count += 1
+                    if systot:
+                        self.weight_syst = data[:, posn_cols[2] + count]
+                        count += 1
+                    if veto:
+                        self.veto = data[:, posn_cols[2] + count]
 
     def cut(self, w):
-        ''' Trim catalog columns using a boolean array'''
+        """Trim catalog columns using a boolean array"""
 
         size = self.size
         for f in self.__dict__.items():
@@ -710,20 +730,21 @@ class GalaxyCatalogue:
                 self.__dict__[f[0]] = f[1][w]
         self.size = self.x.size
 
-    def get_weights(self, fkp=1, cp=1):
-        ''' Multiplicative weights '''
+    def get_weights(self, fkp=1, noz=1, cp=1, syst=0):
+        """Combine different galaxy weights"""
 
-        if cp == 1:
-            weights = self.weight_collision
+        if cp == 1 and noz == 1:
+            weights = (self.weight_cp + self.weight_noz - 1)
+        elif cp == 1:
+            weights = 1.*self.weight_cp
+        elif noz == 1:
+            weights = 1.*self.weight_noz
+        else:
+            weights = np.ones(self.size)
+
         if fkp:
-            weights *= self.wfkp
+            weights *= self.weight_fkp
+        if syst:
+            weights *= self.weight_syst
 
         return weights
-
-    def cart_to_radecz(self, x, y, z):
-
-        dist = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-        dec = np.arcsin(z / dist) * 180. / N.pi
-        ra = np.arctan(x / y) * 180. / N.pi + 180
-        redshift = self.cosmo.get_redshift(dist)
-        return ra, dec, redshift, dist
