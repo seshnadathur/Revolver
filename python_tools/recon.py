@@ -4,7 +4,6 @@ import os
 import json
 from scipy.ndimage.filters import gaussian_filter
 from scipy.fftpack import fftfreq
-# from ebosscat import Catalog
 from classes import Cosmology
 import pyfftw
 
