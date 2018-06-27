@@ -18,7 +18,7 @@ other weight/veto information) are not necessary but should be provided for best
 
 For galaxy survey data, an optional path to an appropriate survey mask file (in HEALPix FITS format) combining 
 the survey geometry, completeness, missing pixels etc. should be provided for best performance of the 
-void-finding step.
+void-finding step. Masks for the BOSS DR12 public data releases are provided with this code.
 
 Requirements:
    - python 2.7 or python 3
