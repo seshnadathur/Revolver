@@ -32,6 +32,8 @@ posn_cols = [0, 1, 2]  # columns of tracer input array containing 3D position in
 # if is_box == True, these columns should contain x,y,z Cartesian coordinates; otherwise RA, Dec, redshift
 # NOTE: for box data, reconstruction assumes plane-parallel approximation with single l-o-s along the box z-axis!!
 special_patchy = False  # set True if input array is in the special PATCHY format provided by Hector
+z_min = 0.15        # minimum redshift extent of survey data (ignored if not survey)
+z_max = 0.43        # maximum redshift extent of survey data (ignored if not survey)
 # ============================================= #
 
 # ======= weights options ========= #
@@ -66,8 +68,6 @@ zobov_buffer = 0.1  # fraction of box length overlap between subdivisions
 
 # -- survey data handling options -- #
 # (if is_box==True, these options are ignored)
-z_min = 0.15        # minimum redshift extent of survey data
-z_max = 0.43        # maximum redshift extent of survey data
 mask_file = ''      # path to Healpix FITS file containing the survey mask (geometry, completeness, missing pixels etc.)
 use_z_wts = True    # if True, densities are weighted by survey n(z) selection function
 use_ang_wts = True  # if True, densities are weighted by survey angular completeness function
