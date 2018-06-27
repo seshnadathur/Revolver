@@ -5,8 +5,8 @@
 
 Repository containing code to:
 
-   - reconstruct pseudo-real space tracer positions by subtracting RSD through reconstruction (optional)
-   - apply void-finding algorithm to create catalogue of voids
+   - reconstruct real space positions from redshift-space tracer data, by subtracting RSD through reconstruction (optional)
+   - apply void-finding algorithm to create catalogue of voids in these tracers
    
 The tracers used will normally be galaxies from a redshift survey, but could also be halos or dark matter 
 particles from a simulation box.
@@ -27,7 +27,7 @@ Requirements:
    - healpy 1.9.0
    - pyfftw 0.10.3
 
-Earlier versions may lack some required functionality (especially numpy and scipy). 
+Earlier versions of these packages may lack some required functionality (especially numpy and scipy). 
    
 To run:
    - in the top-level directory, do 'make clean', then 'make'
