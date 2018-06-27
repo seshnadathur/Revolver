@@ -145,10 +145,9 @@ class VoidSample:
                 pixels = hp.ang2pix(nside, np.deg2rad(90-dec), np.deg2rad(ra))
                 if np.any(mask[pixels] == 0):
                     print('Galaxies exist where mask=0. Removing these to avoid errors later.')
-                    good_inds = np.array([])
-                    for i in range(len(self.tracers)):
-                        if mask[pixels[i]] > 0:
-                            good_inds = np.hstack([good_inds, i])
+                    all_indices = np.arange(len(self.tracers))
+                    bad_inds = np.where(mask[pixels] == 0)[0]
+                    good_inds = all_indices[np.logical_not(np.in1d(all_indices, bad_inds))]
                     self.tracers = self.tracers[good_inds, :]
 
                 # effective sky fraction
