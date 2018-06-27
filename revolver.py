@@ -58,12 +58,10 @@ if parms.do_recon:
     recon.apply_shifts_rsd()
     if not parms.is_box:
         cat.ra, cat.dec, cat.redshift = recon.get_new_radecz(recon.cat)
-        ran.ra, ran.dec, ran.redshift = recon.get_new_radecz(recon.ran)
 
     # save real-space positions to file
     root = parms.tracer_file.replace('.txt', '').replace('.dat', '').replace('.npy', '')
-    rand_root = parms.randoms_file.replace('.txt', '').replace('.dat', '').replace('.npy', '')
-    recon.export_shift_pos(root, rand_root)
+    recon.export_shift_pos(root, rsd_only=True)
 
     # initialize the void sample
     sample = VoidSample(run_zobov=parms.run_zobov, tracer_file=root + '_shift.npy', handle=parms.handle,
@@ -78,9 +76,9 @@ if parms.do_recon:
 else:
     sample = VoidSample(run_zobov=parms.run_zobov, tracer_file=parms.tracer_file, handle=parms.handle,
                         output_folder=parms.output_folder, is_box=parms.is_box, boss_like=parms.boss_like,
-                        posn_cols=parms.posn_cols, box_length=parms.box_length, omega_m=parms.omega_m,
-                        mask_file=parms.mask_file, use_z_wts=parms.use_z_wts, use_ang_wts=parms.use_ang_wts,
-                        z_min=parms.z_min, z_max=parms.z_max, mock_file=parms.mock_file,
+                        special_patchy=parms.special_patchy, posn_cols=parms.posn_cols, box_length=parms.box_length,
+                        omega_m=parms.omega_m, mask_file=parms.mask_file, use_z_wts=parms.use_z_wts,
+                        use_ang_wts=parms.use_ang_wts, z_min=parms.z_min, z_max=parms.z_max, mock_file=parms.mock_file,
                         mock_dens_ratio=parms.mock_dens_ratio, min_dens_cut=parms.min_dens_cut,
                         void_min_num=parms.void_min_num, use_barycentres=parms.use_barycentres,
                         void_prefix=parms.void_prefix, find_clusters=parms.find_clusters,

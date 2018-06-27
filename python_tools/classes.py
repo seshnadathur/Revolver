@@ -38,10 +38,10 @@ class Cosmology:
 class VoidSample:
 
     def __init__(self, run_zobov=True, tracer_file="", handle="", output_folder="", is_box=True, boss_like=False, 
-                 posn_cols=np.array([0, 1, 2]), box_length=2500.0, omega_m=0.308, mask_file="", use_z_wts=True, 
-                 use_ang_wts=True, z_min=0.43, z_max=0.7, mock_file="", mock_dens_ratio=10, min_dens_cut=1.0, 
-                 void_min_num=1, use_barycentres=True, void_prefix="", find_clusters=False, max_dens_cut=1.0, 
-                 cluster_min_num=1, cluster_prefix=""):
+                 special_patchy=False, posn_cols=np.array([0, 1, 2]), box_length=2500.0, omega_m=0.308, mask_file="",
+                 use_z_wts=True, use_ang_wts=True, z_min=0.43, z_max=0.7, mock_file="", mock_dens_ratio=10,
+                 min_dens_cut=1.0, void_min_num=1, use_barycentres=True, void_prefix="", find_clusters=False,
+                 max_dens_cut=1.0, cluster_min_num=1, cluster_prefix=""):
 
         # the prefix/handle used for all output file names
         self.handle = handle
@@ -81,12 +81,18 @@ class VoidSample:
                 tracers = np.load(tracer_file)
             else:
                 tracers = np.loadtxt(tracer_file)
-            self.num_tracers = tracers.shape[0]
             # test that tracer information is valid
             if not tracers.shape[1] >= 3:
                 sys.exit("Not enough columns, need 3D position information. Aborting")
             if not len(posn_cols) == 3:
                 sys.exit("You must specify 3 columns containing tracer position information. Aborting")
+
+            if special_patchy:
+                # if the special PATCHY mock format is used and the vetomask has not already been applied
+                # during reconstruction, apply it now
+                veto_cut = tracers[:, 6] == 1
+                tracers = tracers[veto_cut, :]
+            self.num_tracers = tracers.shape[0]
             print("%d tracers found" % self.num_tracers)
 
             # keep only the tracer position information
@@ -153,9 +159,14 @@ class VoidSample:
                 # effective sky fraction
                 self.f_sky = 1.0*np.sum(mask)/len(mask)
 
+            # finally, remove any instances of two galaxies at the same location otherwise tessellation will fail
+            # (this is a problem with PATCHY mocks, not seen any such instances in real survey data ...)
+            unique_tracers = np.unique(self.tracers, axis=0)
+            self.tracers = unique_tracers
+
             # update galaxy stats
             self.num_tracers = self.tracers.shape[0]
-            print('Kept %d tracers after cuts' % self.num_tracers)
+            print('Kept %d tracers after all cuts' % self.num_tracers)
 
             # calculate mean density
             self.r_near = self.cosmo.get_comoving_distance(self.z_min)
@@ -495,7 +506,8 @@ class VoidSample:
         num_guard_mocks = len(guards)
         guard_mocks = np.zeros((num_guard_mocks, 6))
         guard_mocks[:, :3] = guards
-        guard_mocks[:, 3:] = -1.     # guards are given RA and Dec -1 as well to distinguish them from other buffers
+        guard_mocks[:, 3:5] = -60.     # guards are given RA and Dec -60 as well to distinguish them from other buffers
+        guard_mocks[:, 5] = -1.
 
         print("\tadded %d guards to stabilize the tessellation" % num_guard_mocks)
 

@@ -394,7 +394,7 @@ class Recon:
 
         return shift_x, shift_y, shift_z
 
-    def export_shift_pos(self, root1, root2=''):
+    def export_shift_pos(self, root1, root2='', rsd_only=True):
         """method to write the shifted positions to file"""
 
         if self.is_box:
@@ -413,13 +413,14 @@ class Recon:
             out_file = root1 + '_shift.npy'
             np.save(out_file, output)
 
-            output = np.zeros((self.ran.size, 4))
-            output[:, 0] = self.ran.ra
-            output[:, 1] = self.ran.dec
-            output[:, 2] = self.ran.redshift
-            output[:, 3] = self.ran.weight
-            out_file = root2 + '_shift.npy'
-            np.save(out_file, output)
+            if not rsd_only:
+                output = np.zeros((self.ran.size, 4))
+                output[:, 0] = self.ran.ra
+                output[:, 1] = self.ran.dec
+                output[:, 2] = self.ran.redshift
+                output[:, 3] = self.ran.weight
+                out_file = root2 + '_shift.npy'
+                np.save(out_file, output)
 
     def cart_to_radecz(self, x, y, z):
 

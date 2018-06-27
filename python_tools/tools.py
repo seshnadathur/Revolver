@@ -95,6 +95,9 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
         # (this step is necessary because otherwise the buffer mocks affect the calculation)
         edgemask = modvols == 1.0/0.9e30
         modvols[np.logical_not(edgemask)] *= (sample.tracer_dens * sample.box_length ** 3.) / sample.num_part_total
+        # check for failures!
+        if np.any(modvols[np.logical_not(edgemask)] == 0):
+            sys.exit('Tessellation gave some zero-volume Voronoi cells!!\nAborting...')
 
         # ---Step 3: scale volumes accounting for z-dependent selection--- #
         if sample.use_z_wts:
@@ -109,6 +112,9 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
             # scale the densities according to this
             modfactors = selfn(redshifts[np.logical_not(edgemask)])
             modvols[np.logical_not(edgemask)] *= modfactors
+            # check for failures!
+            if np.any(modvols[np.logical_not(edgemask)] == 0):
+                sys.exit('Use of z-weights caused some zero-volume Voronoi cells!!\nAborting...')
 
         # ---Step 4: scale volumes accounting for angular completeness--- #
         if sample.use_ang_wts:
@@ -121,10 +127,8 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
             pixels = hp.ang2pix(nside, np.deg2rad(90 - dec), np.deg2rad(ra))
             modfactors = mask[pixels]
             modvols[np.logical_not(edgemask)] *= modfactors[np.logical_not(edgemask)]
-
-        # check for failures! (should not be required due to previous checks ...)
-        if np.any(modvols[np.logical_not(edgemask)] == 0):
-            sys.exit('Some tracers with zero-volume Voronoi cells found!!\nAborting...')
+            if np.any(modvols[np.logical_not(edgemask)] == 0):
+                sys.exit('Use of angular weights caused some zero-volume Voronoi cells!!\nAborting...')
 
         # ---Step 5: write the scaled volumes to file--- #
         with open("./%s.vol" % sample.handle, 'w') as F:
