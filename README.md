@@ -22,10 +22,12 @@ void-finding step. Masks for the BOSS DR12 public data releases are provided wit
 
 Requirements:
    - python 2.7 or python 3
-   - numpy 1.11.3
+   - numpy 1.14.5
    - scipy 0.18.1
    - healpy 1.9.0
    - pyfftw 0.10.3
+
+Earlier versions may lack some required functionality (especially numpy and scipy). 
    
 To run:
    - in the top-level directory, do 'make clean', then 'make'
