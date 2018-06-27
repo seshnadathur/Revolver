@@ -48,6 +48,7 @@ veto = True  # is a vetomask column provided? (data is dropped if veto != 1)
 # ================================= #
 
 # ====== randoms file ======= #
+# if do_recon == True, randoms MUST be provided for survey data (i.e. when is_box == False)
 randoms_file = ''   # path to file containing randoms data: must be formatted similarly to input data
 # NOTE: for randoms, only FKP weights are used, other weights and vetos are ignored (except in the
 # special case where special_patchy == True)

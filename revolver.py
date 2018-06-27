@@ -42,12 +42,8 @@ if parms.do_recon:
                               fkp=parms.fkp, noz=0, cp=0, systot=0, veto=0)
 
         # perform basic cuts on the data
-        if parms.boss_like:
-            wgal = np.logical_and((cat.veto == 1), (parms.z_min < cat.redshift < parms.z_max))
-            wran = np.logical_and((ran.veto == 1), (parms.z_min < ran.redshift < parms.z_max))
-        else:
-            wgal = (parms.z_min < cat.redshift < parms.z_max)
-            wran = (parms.z_min < ran.redshift < parms.z_max)
+        wgal = np.logical_and((cat.veto == 1), (parms.z_min < cat.redshift)&(cat.redshift < parms.z_max))
+        wran = np.logical_and((ran.veto == 1), (parms.z_min < ran.redshift)&(ran.redshift < parms.z_max))
         cat.cut(wgal)
         ran.cut(wran)
 

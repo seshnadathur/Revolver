@@ -127,7 +127,7 @@ class VoidSample:
             # check and cut on the provided redshift limits
             if np.min(self.tracers[:, 5]) < self.z_min or np.max(self.tracers[:, 5]) > self.z_max:
                 print('Cutting galaxies outside the redshift limits')
-                zselect = self.z_min < self.tracers[:, 5] < self.z_max
+                zselect = (self.z_min < self.tracers[:, 5])&(self.tracers[:, 5] < self.z_max)
                 self.tracers = self.tracers[zselect, :]
 
             # sky mask file (should be in Healpy FITS format)
