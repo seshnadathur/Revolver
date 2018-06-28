@@ -107,7 +107,7 @@ user.o:	    $(HFILES)
 	$(CC) -c $(CCOPTS1) $<
 
 clean:
-	rm -f *.o ../core qconvex qdelaunay qhalf qvoronoi qhull libqhull.a \
+	rm -f *.o ../core rbox qconvex qdelaunay qhalf qvoronoi qhull libqhull.a \
               *.exe
 
 cleanall: clean
