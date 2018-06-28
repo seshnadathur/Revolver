@@ -17,7 +17,7 @@ nbins = 256     # the number of grid cells per side of the box
 padding = 200.  # for survey data, the extra 'padding' for the cubic box, in Mpc/h
 smooth = 10.    # smoothing scale in Mpc/h
 bias = 2.0      # the linear galaxy/tracer bias value
-f = 0.8         # the assumed growth rate at the mean redshift
+f = 0.8         # the linear growth rate at the mean redshift
 nthreads = 1    # number of threads used by pyFFTW
 niter = 3       # number of iterations in the FFT reconstruction method
 # ========================================= #

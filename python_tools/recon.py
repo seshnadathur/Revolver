@@ -343,9 +343,14 @@ class Recon:
             for jj in range(2):
                 for kk in range(2):
                     pos = np.array([i + ii, j + jj, k + kk]).transpose()
-                    weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
-                              ((1 - ddy) + jj * (-1 + 2 * ddy)) *
-                              ((1 - ddz) + kk * (-1 + 2 * ddz))) * c.weight
+                    if self.is_box:
+                        weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
+                                  ((1 - ddy) + jj * (-1 + 2 * ddy)) *
+                                  ((1 - ddz) + kk * (-1 + 2 * ddz))) * c.weight
+                    else:
+                        weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
+                                  ((1 - ddy) + jj * (-1 + 2 * ddy)) *
+                                  ((1 - ddz) + kk * (-1 + 2 * ddz)))
                     delta_t, edges = np.histogramdd(pos, bins=edges, weights=weight)
                     delta += delta_t
 

@@ -159,12 +159,11 @@ class VoidSample:
                 # effective sky fraction
                 self.f_sky = 1.0*np.sum(mask)/len(mask)
 
-            # finally, remove any instances of two galaxies at the same location otherwise tessellation will fail
+            # finally, remove any instances of two galaxies at the same location, otherwise tessellation will fail
             # (this is a problem with PATCHY mocks, not seen any such instances in real survey data ...)
             unique_tracers = np.unique(self.tracers, axis=0)
             if unique_tracers.shape[0] < self.tracers.shape[0]:
-                print('Removing %d galaxies with duplicate positions'
-                      % ((self.tracers.shape[0]-unique_tracers.shape[0])/2))
+                print('Removing %d galaxies with duplicate positions' % (self.tracers.shape[0]-unique_tracers.shape[0]))
             self.tracers = unique_tracers
 
             # update galaxy stats
