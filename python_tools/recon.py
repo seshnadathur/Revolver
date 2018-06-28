@@ -346,11 +346,11 @@ class Recon:
                     if self.is_box:
                         weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
                                   ((1 - ddy) + jj * (-1 + 2 * ddy)) *
-                                  ((1 - ddz) + kk * (-1 + 2 * ddz))) * c.weight
+                                  ((1 - ddz) + kk * (-1 + 2 * ddz)))
                     else:
                         weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
                                   ((1 - ddy) + jj * (-1 + 2 * ddy)) *
-                                  ((1 - ddz) + kk * (-1 + 2 * ddz)))
+                                  ((1 - ddz) + kk * (-1 + 2 * ddz))) * c.weight
                     delta_t, edges = np.histogramdd(pos, bins=edges, weights=weight)
                     delta += delta_t
 
