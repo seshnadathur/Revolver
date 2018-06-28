@@ -161,6 +161,7 @@ class VoidSample:
 
             # finally, remove any instances of two galaxies at the same location, otherwise tessellation will fail
             # (this is a problem with PATCHY mocks, not seen any such instances in real survey data ...)
+            # NOTE: the following line will not work with older versions of numpy!!
             unique_tracers = np.unique(self.tracers, axis=0)
             if unique_tracers.shape[0] < self.tracers.shape[0]:
                 print('Removing %d galaxies with duplicate positions' % (self.tracers.shape[0]-unique_tracers.shape[0]))
