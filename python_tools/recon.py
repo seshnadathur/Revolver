@@ -201,7 +201,11 @@ class Recon:
 
         # -- delta/k**2
         k = fftfreq(self.nbins, d=binsize) * 2 * np.pi
-        delta /= k[:, None, None] ** 2 + k[None, :, None] ** 2 + k[None, None, :] ** 2
+        ksq = k[:, None, None] ** 2 + k[None, :, None] ** 2 + k[None, None, :] ** 2
+        # avoid divide by zero
+        ksq[ksq == 0] = 1.
+        delta /= ksq
+        # set zero mode to 1
         delta[0, 0, 0] = 1
 
         # now solve the basic building block: IFFT[-i k delta(k)/(b k^2)]
@@ -343,14 +347,9 @@ class Recon:
             for jj in range(2):
                 for kk in range(2):
                     pos = np.array([i + ii, j + jj, k + kk]).transpose()
-                    if self.is_box:
-                        weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
-                                  ((1 - ddy) + jj * (-1 + 2 * ddy)) *
-                                  ((1 - ddz) + kk * (-1 + 2 * ddz)))
-                    else:
-                        weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
-                                  ((1 - ddy) + jj * (-1 + 2 * ddy)) *
-                                  ((1 - ddz) + kk * (-1 + 2 * ddz))) * c.weight
+                    weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
+                              ((1 - ddy) + jj * (-1 + 2 * ddy)) *
+                              ((1 - ddz) + kk * (-1 + 2 * ddz))) * c.weight
                     delta_t, edges = np.histogramdd(pos, bins=edges, weights=weight)
                     delta += delta_t
 

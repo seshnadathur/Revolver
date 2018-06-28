@@ -29,8 +29,8 @@ if parms.do_recon:
                           fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)
 
     if parms.is_box:
-        recon = Recon(cat, ran=cat, is_box=True, box_length=parms.box_length, bias=parms.bias, f=parms.f,
-                      smooth=parms.smooth, nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads)
+        recon = Recon(cat, ran=cat, is_box=True, box_length=parms.box_length, omega_m=parms.omega_m, bias=parms.bias,
+                      f=parms.f, smooth=parms.smooth, nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads)
     else:
         if not os.access(parms.randoms_file, os.F_OK):
             sys.exit('ERROR: randoms data required but not provided! Aborting.')

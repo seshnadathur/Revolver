@@ -671,7 +671,6 @@ class GalaxyCatalogue:
                 data = np.loadtxt(catalogue_file)
 
             if is_box:
-                # for uniform box, galaxy weights, vetos, ra, dec, redshift, distance information are not used!
                 self.box_length = box_length
 
                 # for uniform box, position data is in Cartesian format
@@ -682,6 +681,11 @@ class GalaxyCatalogue:
                 self.newy = 1.0 * self.y
                 self.newz = 1.0 * self.z
                 self.size = self.x.size
+
+                # for uniform box ra, dec, redshift, distance information are not used!
+
+                # set uniform weights for all galaxies
+                self.weight = np.ones(self.size)
             else:
                 # position information is ra, dec and redshift
                 self.ra = data[:, posn_cols[0]]
