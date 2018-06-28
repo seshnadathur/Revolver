@@ -12,7 +12,7 @@ from astropy.io import fits
 class Cosmology:
 
     def __init__(self, omega_m=0.308, h=0.676):
-        print('Initializing cosmology with omega_m = %.2f' % omega_m)
+        print('Initializing cosmology with omega_m = %.3f' % omega_m)
         c = 299792.458
         omega_l = 1.-omega_m
         ztab = np.linspace(0, 4, 10000)
