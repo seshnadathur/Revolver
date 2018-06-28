@@ -180,7 +180,7 @@ class Recon:
         print('Computing density fluctuations, delta...')
         if self.is_box:
             # simply normalize based on (constant) mean galaxy number density
-            delta[:] = deltag/(1.*cat.size/self.box**3.) - 1.
+            delta[:] = (deltag * self.box**3.)/(cat.size * self.binsize**3.) - 1.
         else:
             # normalize using the randoms, avoiding possible divide-by-zero errors
             delta[:] = deltag - self.alpha * deltar
@@ -221,7 +221,7 @@ class Recon:
         shift_x, shift_y, shift_z = self.get_shift(cat, psi_x.real, psi_y.real, psi_z.real, use_newpos=False)
         # for debugging:
         for i in range(10):
-            print(shift_x[i], shift_y[i], shift_z[i], cat.x[i])
+            print('%0.3f %0.3f %0.3f %0.3f' %(shift_x[i], shift_y[i], shift_z[i], cat.newz[i]))
 
         # now we update estimates of the Psi field in the following way:
         if iloop == 0:

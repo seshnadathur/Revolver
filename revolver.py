@@ -22,7 +22,7 @@ if not os.access(parms.output_folder, os.F_OK):
     os.makedirs(parms.output_folder)
 
 if parms.do_recon:
-    print('Running reconstruction for real-space positions ...')
+    print('\n ==== Running reconstruction for real-space positions ==== ')
 
     cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
                           boss_like=parms.boss_like, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
@@ -54,14 +54,15 @@ if parms.do_recon:
     for i in range(parms.niter):
         recon.iterate(i)
 
-    # apply shifts to obtain real-space positions
-    recon.apply_shifts_rsd()
+    # get new ra, dec and redshift for real-space positions
     if not parms.is_box:
         cat.ra, cat.dec, cat.redshift = recon.get_new_radecz(recon.cat)
 
     # save real-space positions to file
-    root = parms.tracer_file.replace('.txt', '').replace('.dat', '').replace('.npy', '')
+    root = parms.tracer_file.replace('.txt', '').replace('.dat', '').replace('.npy', '').replace('.fits', '')
     recon.export_shift_pos(root, rsd_only=True)
+
+    print(" ==== Done reconstruction ====\n")
 
     # initialize the void sample
     sample = VoidSample(run_zobov=parms.run_zobov, tracer_file=root + '_shift.npy', handle=parms.handle,

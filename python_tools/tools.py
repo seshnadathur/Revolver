@@ -157,6 +157,7 @@ def zobov_wrapper(sample, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
 
     # ---if finding clusters, run jozov again--- #
     if sample.find_clusters:
+        print("Additionally, running watershed cluster-finder")
         cmd = ["./bin/jozovtrvol", "c", sample.handle, str(0), str(0)]
         log = open(logfile, 'a')
         subprocess.call(cmd)

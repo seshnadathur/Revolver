@@ -43,6 +43,8 @@ class VoidSample:
                  min_dens_cut=1.0, void_min_num=1, use_barycentres=True, void_prefix="", find_clusters=False,
                  max_dens_cut=1.0, cluster_min_num=1, cluster_prefix=""):
 
+        print(" ==== Starting the void-finding ==== ")
+
         # the prefix/handle used for all output file names
         self.handle = handle
 
@@ -639,9 +641,9 @@ class GalaxyCatalogue:
             sys.exit('ERROR: no randoms file provided! Randoms required for survey reconstruction')
 
         if randoms:
-            print('=== Loading randoms data from file ====')
+            print('Loading randoms data from file...')
         else:
-            print('=== Loading galaxy data from file ====')
+            print('Loading galaxy data from file...')
 
         if boss_like:
             a = fits.open(catalogue_file)[1].data
