@@ -665,6 +665,8 @@ class GalaxyCatalogue:
             self.dist = np.zeros_like(self.ra)
 
         else:
+            if not is_box and randoms and catalogue_file == '':
+                sys.exit('ERROR: no randoms file provided! Randoms required for survey reconstruction')
             # ASCII and NPY formatted input files are supported
             if '.npy' in catalogue_file:
                 data = np.load(catalogue_file)
