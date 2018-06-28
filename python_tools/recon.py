@@ -391,7 +391,10 @@ class Recon:
                     weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
                               ((1 - ddy) + jj * (-1 + 2 * ddy)) *
                               ((1 - ddz) + kk * (-1 + 2 * ddz)))
-                    pos = (i + ii, j + jj, k + kk)
+                    if self.is_box:
+                        pos = ((i + ii) % self.nbins, (j + jj) % self.nbins, (k + kk) % self.nbins)
+                    else:
+                        pos = (i + ii, j + jj, k + kk)
                     shift_x += f_x[pos] * weight
                     shift_y += f_y[pos] * weight
                     shift_z += f_z[pos] * weight
