@@ -145,7 +145,7 @@ class Recon:
                 print('Allocating randoms in cells...')
                 deltar = self.allocate_gal_cic(ran)
                 print('Smoothing...')
-                deltar = gaussian_filter(deltar, smooth/binsize, mode='wrap')
+                deltar = gaussian_filter(deltar, smooth/binsize)
 
             # -- Initialize FFT objects and load wisdom if available
             wisdom_file = "wisdom." + str(nbins) + "." + str(self.nthreads)
@@ -175,7 +175,12 @@ class Recon:
         print('Allocating galaxies in cells...')
         deltag = self.allocate_gal_cic(cat)
         print('Smoothing galaxy density field ...')
-        deltag = gaussian_filter(deltag, smooth/binsize, mode='wrap')  # mode='wrap' for PBC
+        if self.is_box:
+            deltag = gaussian_filter(deltag, smooth/binsize, mode='wrap')  # mode='wrap' for PBC
+        else:
+            # in this case the filter mode should not be important, due to the box padding
+            # but just in case, use mode='nearest' to continue with zeros
+            deltag = gaussian_filter(deltag, smooth / binsize, mode='nearest')
 
         print('Computing density fluctuations, delta...')
         if self.is_box:
@@ -346,7 +351,12 @@ class Recon:
         for ii in range(2):
             for jj in range(2):
                 for kk in range(2):
-                    pos = np.array([i + ii, j + jj, k + kk]).transpose()
+                    if self.is_box:
+                        # PBC, so wrap around the box
+                        pos = np.array([(i + ii) % self.nbins, (j + jj) % self.nbins,
+                                        (k + kk) % self.nbins]).transpose()
+                    else:
+                        pos = np.array([i + ii, j + jj, k + kk]).transpose()
                     weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
                               ((1 - ddy) + jj * (-1 + 2 * ddy)) *
                               ((1 - ddz) + kk * (-1 + 2 * ddz))) * c.weight
