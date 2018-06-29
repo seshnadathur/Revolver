@@ -1,7 +1,6 @@
 # REVOLVER
 
 ### REal-space VOid Locations from surVEy Reconstruction
-(until/unless a better name is found!)
 
 Repository containing code to:
 
@@ -11,7 +10,7 @@ Repository containing code to:
 The tracers used will normally be galaxies from a redshift survey, but could also be halos or dark matter 
 particles from a simulation box.
 
-Input data files can be in FITS format (with BOSS data fields), or ASCII- or NPY-formatted data arrays.
+Input data files can be in FITS format (with data fields as for BOSS/eBOSS), or ASCII- or NPY-formatted data arrays.
 Read the comments in parameters/params.py for more information about the input file formatting. For galaxy
 survey data, the reconstruction requires a file with appropriate randoms. Pre-computed FKP weights (and 
 other weight/veto information) are not necessary but should be provided for best performance. 

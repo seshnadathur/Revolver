@@ -218,7 +218,7 @@ class Recon:
         ifft_obj(input_array=deltak, output_array=psi_z)
 
         # from grid values of Psi_est = IFFT[-i k delta(k)/(b k^2)], compute the values at the galaxy positions
-        shift_x, shift_y, shift_z = self.get_shift(cat, psi_x.real, psi_y.real, psi_z.real, use_newpos=False)
+        shift_x, shift_y, shift_z = self.get_shift(cat, psi_x.real, psi_y.real, psi_z.real, use_newpos=True)
         # for debugging:
         for i in range(10):
             print('%0.3f %0.3f %0.3f %0.3f' %(shift_x[i], shift_y[i], shift_z[i], cat.newz[i]))
