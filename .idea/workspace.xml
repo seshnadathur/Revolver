@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/python_tools/recon.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/recon.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/parameters/params.py" beforeDir="false" afterPath="$PROJECT_DIR$/parameters/params.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -13,11 +13,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="params.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="params.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/parameters/params.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="380">
-              <caret line="35" column="83" selection-start-line="35" selection-start-column="83" selection-end-line="35" selection-end-column="83" />
+            <state relative-caret-position="90">
+              <caret line="6" column="39" selection-start-line="6" selection-start-column="39" selection-end-line="6" selection-end-column="39" />
             </state>
           </provider>
         </entry>
@@ -34,7 +34,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="recon.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="recon.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python_tools/recon.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="754">
@@ -203,7 +203,6 @@
         <option value="$PROJECT_DIR$/parameters/s8_params.py" />
         <option value="$USER_HOME$/Workspace/ZOBOV/runparams/s8_params.py" />
         <option value="$PROJECT_DIR$/python_tools/catalogue.py" />
-        <option value="$PROJECT_DIR$/parameters/params.py" />
         <option value="$PROJECT_DIR$/python_tools/__init__.py" />
         <option value="$PROJECT_DIR$/python_tools/tools.py" />
         <option value="$PROJECT_DIR$/python_tools/classes.py" />
@@ -211,6 +210,7 @@
         <option value="$PROJECT_DIR$/revolver.py" />
         <option value="$USER_HOME$/Workspace/codes/Python/Patchy_batch_corr.py" />
         <option value="$PROJECT_DIR$/python_tools/recon.py" />
+        <option value="$PROJECT_DIR$/parameters/params.py" />
       </list>
     </option>
   </component>
@@ -515,13 +515,6 @@
     <entry file="file://$PROJECT_DIR$/python_tools/__init__.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/parameters/params.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="380">
-          <caret line="35" column="83" selection-start-line="35" selection-start-column="83" selection-end-line="35" selection-end-column="83" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/README.md">
       <provider editor-type-id="text-editor">
         <state relative-caret-position="45">
@@ -587,6 +580,13 @@
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/parameters/params.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="6" column="39" selection-start-line="6" selection-start-column="39" selection-end-line="6" selection-end-column="39" />
         </state>
       </provider>
     </entry>

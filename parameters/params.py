@@ -4,7 +4,7 @@
 
 # ========= file handling options ========= #
 handle = ''         # string; used to identify the sample and set filenames
-output_folder = ''  # path to folder where output should be placed
+output_folder = ''  # /path/to/folder/ where output should be placed
 # ========================================= #
 
 # ========== cosmology ============ #
