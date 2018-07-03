@@ -18,6 +18,7 @@ class Recon:
 
         # -- parameters of box
         cosmo = Cosmology(omega_m=omega_m)
+        print('Using values of growth rate f = %0.3f and bias b = %0.3f' % (f, bias))
         print('Number of bins:', nbins)
         print('Smoothing scale [Mpc/h]:', smooth)
 
@@ -430,12 +431,12 @@ class Recon:
             out_file = root1 + '_shift.npy'
             np.save(out_file, output)
 
-            output = np.zeros((self.cat.size, 3))
-            output[:, 0] = self.cat.newx
-            output[:, 1] = self.cat.newy
-            output[:, 2] = self.cat.newz
-            out_file = root1 + '_shift_xyz.npy'
-            np.save(out_file, output)
+            # output = np.zeros((self.cat.size, 3))
+            # output[:, 0] = self.cat.newx
+            # output[:, 1] = self.cat.newy
+            # output[:, 2] = self.cat.newz
+            # out_file = root1 + '_shift_xyz.npy'
+            # np.save(out_file, output)
 
             if not rsd_only:
                 output = np.zeros((self.ran.size, 4))
