@@ -27,11 +27,11 @@ tracer_file = ''    # path to file with input data
 is_box = False      # True if tracers cover a cubic simulation box with periodic boundaries; False for survey data
 box_length = 1500.  # if is_box, the box side length in Mpc/h; else ignored
 boss_like = True    # True if the input data file is in FITS format with same data fields as BOSS data
-# if not boss_like, data file must contain array data in ASCII or NPY format
+special_patchy = False  # set True if input array is in the special PATCHY format provided by Hector
+# if not boss_like or special_patchy, data file must contain array data in ASCII or NPY format
 posn_cols = [0, 1, 2]  # columns of tracer input array containing 3D position information
 # if is_box == True, these columns should contain x,y,z Cartesian coordinates; otherwise RA, Dec, redshift
 # NOTE: for box data, reconstruction assumes plane-parallel approximation with single l-o-s along the box z-axis!!
-special_patchy = False  # set True if input array is in the special PATCHY format provided by Hector
 z_min = 0.15        # minimum redshift extent of survey data (ignored if not survey)
 z_max = 0.43        # maximum redshift extent of survey data (ignored if not survey)
 # ============================================= #
