@@ -32,3 +32,9 @@ To run:
    - in the top-level directory, do 'make clean', then 'make'
    - edit parameters/params.py
    - python revolver.py --par parameters/params.py
+   
+Acknowledgments:
+
+The reconstruction section of this code was developed from a version written by Julian Bautista and with input from 
+Paul Carter, Will Percival and (indirectly) Angela Burden. Some elements of the void-finding section of code were developed
+with Shaun Hotchkiss. 

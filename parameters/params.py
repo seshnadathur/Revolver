@@ -23,7 +23,7 @@ niter = 3       # number of iterations in the FFT reconstruction method
 # ========================================= #
 
 # ======= input tracer data options =========== #
-tracer_file = ''    # path to file with input data
+tracer_file = ''    # /path/to/file with input data
 is_box = False      # True if tracers cover a cubic simulation box with periodic boundaries; False for survey data
 box_length = 1500.  # if is_box, the box side length in Mpc/h; else ignored
 boss_like = True    # True if the input data file is in FITS format with same data fields as BOSS data
@@ -51,7 +51,7 @@ veto = True  # is a vetomask column provided? (data is dropped if veto != 1)
 
 # ====== randoms file ======= #
 # if do_recon == True, randoms MUST be provided for survey data (i.e. when is_box == False)
-randoms_file = ''   # path to file containing randoms data: must be formatted similarly to input data
+randoms_file = ''   # /path/to/file containing randoms data: must be formatted similarly to input data
 # NOTE: for randoms, only FKP weights are used, other weights and vetos are ignored (except in the
 # special case where special_patchy == True)
 # =========================== #
