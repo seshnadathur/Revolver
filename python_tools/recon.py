@@ -44,15 +44,15 @@ class Recon:
 
             # compute Cartesian positions for data and randoms
             cat.dist = cosmo.get_comoving_distance(cat.redshift)
-            cat.x = cat.dist * np.cos(cat.dec * np.pi / 180) * np.sin(cat.ra * np.pi / 180)
-            cat.y = cat.dist * np.cos(cat.dec * np.pi / 180) * np.cos(cat.ra * np.pi / 180)
+            cat.x = cat.dist * np.cos(cat.dec * np.pi / 180) * np.cos(cat.ra * np.pi / 180)
+            cat.y = cat.dist * np.cos(cat.dec * np.pi / 180) * np.sin(cat.ra * np.pi / 180)
             cat.z = cat.dist * np.sin(cat.dec * np.pi / 180)
             cat.newx = cat.x * 1.
             cat.newy = cat.y * 1.
             cat.newz = cat.z * 1.
             ran.dist = cosmo.get_comoving_distance(ran.redshift)
-            ran.x = ran.dist * np.cos(ran.dec * np.pi / 180) * np.sin(ran.ra * np.pi / 180)
-            ran.y = ran.dist * np.cos(ran.dec * np.pi / 180) * np.cos(ran.ra * np.pi / 180)
+            ran.x = ran.dist * np.cos(ran.dec * np.pi / 180) * np.cos(ran.ra * np.pi / 180)
+            ran.y = ran.dist * np.cos(ran.dec * np.pi / 180) * np.sin(ran.ra * np.pi / 180)
             ran.z = ran.dist * np.sin(ran.dec * np.pi / 180)
             ran.newx = ran.x * 1.
             ran.newy = ran.y * 1.
@@ -450,8 +450,9 @@ class Recon:
     def cart_to_radecz(self, x, y, z):
 
         dist = np.sqrt(x ** 2 + y ** 2 + z ** 2)
-        dec = np.arcsin(z / dist) * 180. / np.pi
-        ra = np.arctan(x / y) * 180. / np.pi + 180
+        dec = 90 - np.degrees(np.arccos(z / dist))
+        ra = np.degrees(np.arctan2(y, x))
+        ra[ra < 0] += 360
         redshift = self.cosmo.get_redshift(dist)
         return ra, dec, redshift
 
