@@ -17,7 +17,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 
 class ZobovVoids:
 
-    def __init__(self, run_zobov=True, tracer_file="", handle="", output_folder="", is_box=True, boss_like=False, 
+    def __init__(self, run_zobov=True, tracer_file="", handle="", output_folder="", is_box=True, boss_like=False,
                  special_patchy=False, posn_cols=np.array([0, 1, 2]), box_length=2500.0, omega_m=0.308, mask_file="",
                  use_z_wts=True, use_ang_wts=True, z_min=0.43, z_max=0.7, mock_file="", mock_dens_ratio=10,
                  min_dens_cut=1.0, void_min_num=1, use_barycentres=True, void_prefix="", find_clusters=False,
@@ -95,7 +95,7 @@ class ZobovVoids:
             tracers[tracers[:, 2] < 0, 2] += box_length
 
             # determine mean tracer number density
-            self.tracer_dens = 1.0*self.num_tracers/(box_length**3.)
+            self.tracer_dens = 1.0 * self.num_tracers / (box_length ** 3.)
 
             self.num_mocks = 0
             self.num_part_total = self.num_tracers
@@ -130,7 +130,7 @@ class ZobovVoids:
                 ra = self.tracers[:, 3]
                 dec = self.tracers[:, 4]
                 nside = hp.get_nside(mask)
-                pixels = hp.ang2pix(nside, np.deg2rad(90-dec), np.deg2rad(ra))
+                pixels = hp.ang2pix(nside, np.deg2rad(90 - dec), np.deg2rad(ra))
                 if np.any(mask[pixels] == 0):
                     print('Galaxies exist where mask=0. Removing these to avoid errors later.')
                     all_indices = np.arange(len(self.tracers))
@@ -139,14 +139,15 @@ class ZobovVoids:
                     self.tracers = self.tracers[good_inds, :]
 
                 # effective sky fraction
-                self.f_sky = 1.0*np.sum(mask)/len(mask)
+                self.f_sky = 1.0 * np.sum(mask) / len(mask)
 
             # finally, remove any instances of two galaxies at the same location, otherwise tessellation will fail
             # (this is a problem with PATCHY mocks, not seen any such instances in real survey data ...)
             # NOTE: the following line will not work with older versions of numpy!!
             unique_tracers = np.unique(self.tracers, axis=0)
             if unique_tracers.shape[0] < self.tracers.shape[0]:
-                print('Removing %d galaxies with duplicate positions' % (self.tracers.shape[0]-unique_tracers.shape[0]))
+                print(
+                    'Removing %d galaxies with duplicate positions' % (self.tracers.shape[0] - unique_tracers.shape[0]))
             self.tracers = unique_tracers
 
             # update galaxy stats
@@ -156,8 +157,8 @@ class ZobovVoids:
             # calculate mean density
             self.r_near = self.cosmo.get_comoving_distance(self.z_min)
             self.r_far = self.cosmo.get_comoving_distance(self.z_max)
-            survey_volume = self.f_sky*4*np.pi*(self.r_far**3. - self.r_near**3.)/3.
-            self.tracer_dens = self.num_tracers/survey_volume
+            survey_volume = self.f_sky * 4 * np.pi * (self.r_far ** 3. - self.r_near ** 3.) / 3.
+            self.tracer_dens = self.num_tracers / survey_volume
 
             # weights options: correct for z-dependent selection and angular completeness
             self.use_z_wts = use_z_wts
@@ -225,14 +226,14 @@ class ZobovVoids:
         rdist = self.cosmo.get_comoving_distance(redshift)
 
         # convert RA, Dec angles in degrees to theta, phi in radians
-        phi = ra*np.pi/180.
-        theta = np.pi/2. - dec*np.pi/180.
+        phi = ra * np.pi / 180.
+        theta = np.pi / 2. - dec * np.pi / 180.
 
         # obtain Cartesian coordinates
         galaxies = np.zeros((self.num_tracers, 6))
-        galaxies[:, 0] = rdist*np.sin(theta)*np.cos(phi)  # r*cos(ra)*cos(dec)
-        galaxies[:, 1] = rdist*np.sin(theta)*np.sin(phi)  # r*sin(ra)*cos(dec)
-        galaxies[:, 2] = rdist*np.cos(theta)  # r*sin(dec)
+        galaxies[:, 0] = rdist * np.sin(theta) * np.cos(phi)  # r*cos(ra)*cos(dec)
+        galaxies[:, 1] = rdist * np.sin(theta) * np.sin(phi)  # r*sin(ra)*cos(dec)
+        galaxies[:, 2] = rdist * np.cos(theta)  # r*sin(dec)
         # standard format includes RA, Dec, redshift info
         galaxies[:, 3] = ra
         galaxies[:, 4] = dec
@@ -282,7 +283,7 @@ class ZobovVoids:
 
         # find pixels outside the mask that neighbour pixels within it
         # do this step in a loop, to get a thicker boundary layer
-        for j in range(2 + nside/128):
+        for j in range(2 + nside / 128):
             if j == 0:
                 filled_inds = np.nonzero(mask > completeness_limit)[0]
             else:
@@ -327,16 +328,16 @@ class ZobovVoids:
 
         # define the radial extents of the layer in which we will place the buffer particles
         # these choices are somewhat arbitrary, and could be optimized
-        r_low = self.cosmo.get_comoving_distance(z_high) + mean_nn_distance * self.mock_dens_ratio**(-1./3)
+        r_low = self.cosmo.get_comoving_distance(z_high) + mean_nn_distance * self.mock_dens_ratio ** (-1. / 3)
         r_high = r_low + mean_nn_distance
-        cap_volume = self.f_sky*4.*np.pi*(r_high**3. - r_low**3.)/3.
+        cap_volume = self.f_sky * 4. * np.pi * (r_high ** 3. - r_low ** 3.) / 3.
 
         # how many buffer particles fit in this cap
         num_high_mocks = int(np.ceil(buffer_dens * cap_volume))
         high_mocks = np.zeros((num_high_mocks, 6))
 
         # generate random radial positions within the cap
-        rdist = (r_low**3. + (r_high**3. - r_low**3.)*np.random.rand(num_high_mocks))**(1./3)
+        rdist = (r_low ** 3. + (r_high ** 3. - r_low ** 3.) * np.random.rand(num_high_mocks)) ** (1. / 3)
 
         # generate random angular positions within the survey mask
         while num_high_mocks > numpix:
@@ -354,7 +355,7 @@ class ZobovVoids:
         high_mocks[:, 2] = rdist * np.cos(theta)
         high_mocks[:, 3] = phi * 180. / np.pi
         high_mocks[:, 4] = 90 - theta * 180. / np.pi
-        high_mocks[:, 5] = -1    # all buffer particles are given redshift -1 to aid identification
+        high_mocks[:, 5] = -1  # all buffer particles are given redshift -1 to aid identification
 
         # farthest buffer particle
         self.r_far = np.max(rdist)
@@ -370,7 +371,7 @@ class ZobovVoids:
         if z_low > 0:
             # define the radial extents of the layer in which we will place the buffer particles
             # these choices are somewhat arbitrary, and could be optimized
-            r_high = self.cosmo.get_comoving_distance(z_low) - mean_nn_distance * self.mock_dens_ratio**(-1./3)
+            r_high = self.cosmo.get_comoving_distance(z_low) - mean_nn_distance * self.mock_dens_ratio ** (-1. / 3)
             r_low = r_high - mean_nn_distance
             if r_high < 0:
                 r_high = self.cosmo.get_comoving_distance(z_low)
@@ -427,7 +428,7 @@ class ZobovVoids:
 
             # how many buffer particles
             # boundary_volume = boundary_f_sky * 4. * np.pi * (self.r_far ** 3. - self.r_near ** 3.) / 3.
-            boundary_volume = boundary_f_sky * 4. * np.pi * quad(lambda y: y**2, self.r_near, self.r_far)[0]
+            boundary_volume = boundary_f_sky * 4. * np.pi * quad(lambda y: y ** 2, self.r_near, self.r_far)[0]
             num_bound_mocks = int(np.ceil(buffer_dens * boundary_volume))
             bound_mocks = np.zeros((num_bound_mocks, 6))
 
@@ -475,7 +476,7 @@ class ZobovVoids:
 
         # make a kdTree instance using all the galaxies and buffer mocks
         all_positions = np.vstack([self.tracers[:, :3], buffers[:, :3]])
-        all_positions += self.box_length/2.  # from observer to box coordinates
+        all_positions += self.box_length / 2.  # from observer to box coordinates
         tree = cKDTree(all_positions, boxsize=self.box_length)
 
         # find the nearest neighbour distance for each of the guard particles
@@ -484,14 +485,14 @@ class ZobovVoids:
             nn_dist[i], nnind = tree.query(guards[i, :], k=1)
 
         # drop all guards that are too close to existing points
-        guards = guards[nn_dist > (self.box_length - 0.2)/20.]
-        guards = guards - self.box_length/2.    # guard positions back in observer coordinates
+        guards = guards[nn_dist > (self.box_length - 0.2) / 20.]
+        guards = guards - self.box_length / 2.  # guard positions back in observer coordinates
 
         # convert to standard format
         num_guard_mocks = len(guards)
         guard_mocks = np.zeros((num_guard_mocks, 6))
         guard_mocks[:, :3] = guards
-        guard_mocks[:, 3:5] = -60.     # guards are given RA and Dec -60 as well to distinguish them from other buffers
+        guard_mocks[:, 3:5] = -60.  # guards are given RA and Dec -60 as well to distinguish them from other buffers
         guard_mocks[:, 5] = -1.
 
         print("\tadded %d guards to stabilize the tessellation" % num_guard_mocks)
@@ -524,10 +525,10 @@ class ZobovVoids:
         # first determine the equal volume bins
         r_near = self.cosmo.get_comoving_distance(self.z_min)
         r_far = self.cosmo.get_comoving_distance(self.z_max)
-        rvals = np.linspace(r_near**3, r_far**3, nbins+1)
-        rvals = rvals**(1./3)
+        rvals = np.linspace(r_near ** 3, r_far ** 3, nbins + 1)
+        rvals = rvals ** (1. / 3)
         zsteps = self.cosmo.get_redshift(rvals)
-        volumes = self.f_sky*4*np.pi*(rvals[1:]**3. - rvals[:-1]**3.)/3.
+        volumes = self.f_sky * 4 * np.pi * (rvals[1:] ** 3. - rvals[:-1] ** 3.) / 3.
         # (all elements of volumes should be equal)
 
         # get the tracer galaxy redshifts
@@ -535,15 +536,15 @@ class ZobovVoids:
 
         # histogram and calculate number density
         hist, zsteps = np.histogram(redshifts, bins=zsteps)
-        nofz = hist/volumes
+        nofz = hist / volumes
         zmeans = np.zeros(len(hist))
         for i in range(len(hist)):
-            zmeans[i] = np.mean(redshifts[np.logical_and(redshifts >= zsteps[i], redshifts < zsteps[i+1])])
+            zmeans[i] = np.mean(redshifts[np.logical_and(redshifts >= zsteps[i], redshifts < zsteps[i + 1])])
 
         output = np.zeros((len(zmeans), 3))
         output[:, 0] = zmeans
         output[:, 1] = nofz
-        output[:, 2] = nofz/self.tracer_dens
+        output[:, 2] = nofz / self.tracer_dens
 
         # write to file
         np.savetxt(self.selection_fn_file, output, fmt='%0.3f %0.4e %0.4f', header='z n(z) f(z)')
@@ -1429,7 +1430,7 @@ class ZobovVoids:
                     rval = float(clustline[pos + 1])
                     rstopadd = rlist[i]
                     num_adds = 0
-                    if rval >= 1 and coredens > self.max_dens_cut and numpartlist[i] >= self.cluster_min_n \
+                    if rval >= 1 and coredens > self.max_dens_cut and numpartlist[i] >= self.cluster_min_num \
                             and (count_all_clusters or vid[i] not in counted_zones):
                         # this zone qualifies as a seed zone
                         add_more = True
@@ -1507,9 +1508,9 @@ class ZobovVoids:
 
         # insert header to the output _list.txt file
         listdata = np.loadtxt(new_list_file)
-        header = '%d non-edge tracers in %s, %d clusters\n' % (self.num_non_edge, self.handle, num__acc)
-        header = header + 'ClusterID CoreParticle CoreDens Zone#Parts Cluster#Zones Cluster#Parts ' + \
-                 'ClusterVol(Mpc/h^3) ClusterDensRatio'
+        header = "%d non-edge tracers in %s, %d clusters\n" % (self.num_non_edge, self.handle, num__acc)
+        header = header + "ClusterID CoreParticle CoreDens Zone#Parts Cluster#Zones Cluster#Parts" + \
+                 "ClusterVol(Mpc/h^3) ClusterDensRatio"
         np.savetxt(new_list_file, listdata, fmt='%d %d %0.6f %d %d %d %0.6f %0.6f', header=header)
 
         # now find the maximum density centre locations of the superclusters
@@ -1580,3 +1581,4 @@ class ZobovVoids:
                      'DensRatio Theta_eff(deg) EdgeFlag'
             np.savetxt(info_file, info_output, fmt='%d %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %d',
                        header=header)
+
