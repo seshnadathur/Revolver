@@ -50,15 +50,23 @@ veto = True  # is a vetomask column provided? (data is dropped if veto != 1)
 # ================================= #
 
 # ====== randoms file ======= #
-# if do_recon == True, randoms MUST be provided for survey data (i.e. when is_box == False)
+# for survey data (i.e. when is_box == False) randoms MUST be provided if either do_recon or run_pmvoids are True
 randoms_file = ''   # /path/to/file containing randoms data: must be formatted similarly to input data
 # NOTE: for randoms, only FKP weights are used, other weights and vetos are ignored (except in the
 # special case where special_patchy == True)
 # =========================== #
 
-# ========== void-finding options ============= #
+# ========== void-finding choices ============= #
+run_pmvoids = True  # watershed void-finding based on particle-mesh density field interpolation
+run_zobov = False   # watershed void-finding (using ZOBOV) based on Voronoi tessellation
+# note that these two options are not mutually exclusive - 2 sets of voids can be produced if desired
+# ============================================= #
+
+# ========== ZOBOV options ============ #
+# all ignored if run_zobov = False
+
 # -- Tessellation options -- #
-run_zobov = True    # if True, does tessellation; if False, only post-processes a previous run
+do_tessellation = True    # if True, does tessellation; if False, only post-processes a previous run
 # vozisol code performs entire tessellation in one shot: more memory-intensive, but handles survey data better
 use_vozisol = True  # set True for survey data or small simulation boxes
 # if not using vozisol, tessellation code divides data into chunks to save memory and requires following two options
@@ -89,4 +97,4 @@ cluster_prefix = 'Clusters'  # prefix used for naming supercluster catalogue fil
 max_dens_cut = 1.0  # cluster maximum galaxy density (in units of mean density) reqd to qualify
 cluster_min_num = 5   # minimum number of void member galaxies reqd to qualify
 # ---------------------------------------------- #
-# ============================================= #
+# ===================================== #

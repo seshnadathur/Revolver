@@ -3,8 +3,8 @@ import os
 import sys
 import imp
 import numpy as np
-from python_tools.classes import VoidSample, GalaxyCatalogue
-from python_tools.tools import zobov_wrapper, postprocess_voids, postprocess_clusters
+from python_tools.zobov import ZobovVoids
+from python_tools.galaxycat import GalaxyCatalogue
 from python_tools.recon import Recon
 
 # Read in settings
@@ -42,8 +42,8 @@ if parms.do_recon:
                               fkp=parms.fkp, noz=0, cp=0, systot=0, veto=0)
 
         # perform basic cuts on the data
-        wgal = np.logical_and((cat.veto == 1), (parms.z_min < cat.redshift)&(cat.redshift < parms.z_max))
-        wran = np.logical_and((ran.veto == 1), (parms.z_min < ran.redshift)&(ran.redshift < parms.z_max))
+        wgal = np.logical_and((cat.veto == 1), (parms.z_min < cat.redshift) & (cat.redshift < parms.z_max))
+        wran = np.logical_and((ran.veto == 1), (parms.z_min < ran.redshift) & (ran.redshift < parms.z_max))
         cat.cut(wgal)
         ran.cut(wran)
 
@@ -64,41 +64,35 @@ if parms.do_recon:
 
     print(" ==== Done reconstruction ====\n")
 
-    # initialize the void sample
-    sample = VoidSample(run_zobov=parms.run_zobov, tracer_file=root + '_shift.npy', handle=parms.handle,
-                        output_folder=parms.output_folder, is_box=parms.is_box, boss_like=False, posn_cols=[0, 1, 2],
-                        box_length=parms.box_length, omega_m=parms.omega_m, mask_file=parms.mask_file,
-                        use_z_wts=parms.use_z_wts, use_ang_wts=parms.use_ang_wts, z_min=parms.z_min, z_max=parms.z_max,
-                        mock_file=parms.mock_file, mock_dens_ratio=parms.mock_dens_ratio,
-                        min_dens_cut=parms.min_dens_cut, void_min_num=parms.void_min_num,
-                        use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
-                        find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
-                        cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix)
-else:
-    sample = VoidSample(run_zobov=parms.run_zobov, tracer_file=parms.tracer_file, handle=parms.handle,
-                        output_folder=parms.output_folder, is_box=parms.is_box, boss_like=parms.boss_like,
-                        special_patchy=parms.special_patchy, posn_cols=parms.posn_cols, box_length=parms.box_length,
-                        omega_m=parms.omega_m, mask_file=parms.mask_file, use_z_wts=parms.use_z_wts,
-                        use_ang_wts=parms.use_ang_wts, z_min=parms.z_min, z_max=parms.z_max, mock_file=parms.mock_file,
-                        mock_dens_ratio=parms.mock_dens_ratio, min_dens_cut=parms.min_dens_cut,
-                        void_min_num=parms.void_min_num, use_barycentres=parms.use_barycentres,
-                        void_prefix=parms.void_prefix, find_clusters=parms.find_clusters,
-                        max_dens_cut=parms.max_dens_cut, cluster_min_num=parms.cluster_min_num,
-                        cluster_prefix=parms.cluster_prefix)
+    if parms.run_zobov:
+        parms.tracer_file = root + '_shift.npy'
+        parms.posn_cols = [0, 1, 2]
 
 if parms.run_zobov:
-    # write the tracer information to ZOBOV-readable format
-    sample.write_box_zobov()
-    # write a config file
-    sample.write_config()
-    # run ZOBOV
-    zobov_wrapper(sample, use_vozisol=parms.use_vozisol, zobov_box_div=parms.zobov_box_div,
-                  zobov_buffer=parms.zobov_buffer)
-else:
-    # read the config file from a previous run
-    sample.read_config()
+    voidcat = ZobovVoids(run_zobov=parms.run_zobov, tracer_file=parms.tracer_file, handle=parms.handle,
+                         output_folder=parms.output_folder, is_box=parms.is_box, boss_like=parms.boss_like,
+                         special_patchy=parms.special_patchy, posn_cols=parms.posn_cols, box_length=parms.box_length,
+                         omega_m=parms.omega_m, mask_file=parms.mask_file, use_z_wts=parms.use_z_wts,
+                         use_ang_wts=parms.use_ang_wts, z_min=parms.z_min, z_max=parms.z_max, mock_file=parms.mock_file,
+                         mock_dens_ratio=parms.mock_dens_ratio, min_dens_cut=parms.min_dens_cut,
+                         void_min_num=parms.void_min_num, use_barycentres=parms.use_barycentres,
+                         void_prefix=parms.void_prefix, find_clusters=parms.find_clusters,
+                         max_dens_cut=parms.max_dens_cut, cluster_min_num=parms.cluster_min_num,
+                         cluster_prefix=parms.cluster_prefix)
 
-# post-process the raw ZOBOV output to make catalogues
-postprocess_voids(sample)
-if sample.find_clusters:
-    postprocess_clusters(sample)
+    if parms.do_tessellation:
+        # write the tracer information to ZOBOV-readable format
+        voidcat.write_box_zobov()
+        # write a config file
+        voidcat.write_config()
+        # run ZOBOV
+        voidcat.zobov_wrapper(use_vozisol=parms.use_vozisol, zobov_box_div=parms.zobov_box_div,
+                              zobov_buffer=parms.zobov_buffer)
+    else:
+        # read the config file from a previous run
+        voidcat.read_config()
+
+    # post-process the raw ZOBOV output to make catalogues
+    voidcat.postprocess_voids()
+    if voidcat.find_clusters:
+        voidcat.postprocess_clusters()
