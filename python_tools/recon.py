@@ -4,7 +4,7 @@ import os
 import json
 from scipy.ndimage.filters import gaussian_filter
 from scipy.fftpack import fftfreq
-from classes import Cosmology
+from cosmology import Cosmology
 import pyfftw
 
 
@@ -28,7 +28,6 @@ class Recon:
         self.f = f
         self.beta = beta
         self.smooth = smooth
-        self.cat = cat
         self.cosmo = cosmo
         self.nthreads = nthreads
         self.is_box = is_box
@@ -83,6 +82,8 @@ class Recon:
             self.binsize = self.box / self.nbins
             print('Box size [Mpc/h]:', self.box)
             print('Bin size [Mpc/h]:', self.binsize)
+
+        self.cat = cat
 
         # initialize a bunch of things to zero, will be set later
         self.delta = 0
@@ -227,7 +228,7 @@ class Recon:
         shift_x, shift_y, shift_z = self.get_shift(cat, psi_x.real, psi_y.real, psi_z.real, use_newpos=True)
         # for debugging:
         for i in range(10):
-            print('%0.3f %0.3f %0.3f %0.3f' %(shift_x[i], shift_y[i], shift_z[i], cat.newz[i]))
+            print('%0.3f %0.3f %0.3f %0.3f' % (shift_x[i], shift_y[i], shift_z[i], cat.newz[i]))
 
         # now we update estimates of the Psi field in the following way:
         if iloop == 0:
@@ -423,6 +424,8 @@ class Recon:
             out_file = root1 + '_shift.npy'
             np.save(out_file, output)
         else:
+            # recalculate weights, as we don't want the FKP weighting for void-finding
+            self.cat.weight = self.cat.get_weights(fkp=0, noz=1, cp=1, syst=1)
             output = np.zeros((self.cat.size, 4))
             output[:, 0] = self.cat.ra
             output[:, 1] = self.cat.dec
@@ -431,14 +434,9 @@ class Recon:
             out_file = root1 + '_shift.npy'
             np.save(out_file, output)
 
-            # output = np.zeros((self.cat.size, 3))
-            # output[:, 0] = self.cat.newx
-            # output[:, 1] = self.cat.newy
-            # output[:, 2] = self.cat.newz
-            # out_file = root1 + '_shift_xyz.npy'
-            # np.save(out_file, output)
-
             if not rsd_only:
+                # recalculate weights, as we don't want the FKP weighting for void-finding
+                self.ran.weight = self.ran.get_weights(fkp=0, noz=1, cp=1, syst=1)
                 output = np.zeros((self.ran.size, 4))
                 output[:, 0] = self.ran.ra
                 output[:, 1] = self.ran.dec
