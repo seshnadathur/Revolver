@@ -17,13 +17,13 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 
 class ZobovVoids:
 
-    def __init__(self, run_zobov=True, tracer_file="", handle="", output_folder="", is_box=True, boss_like=False,
+    def __init__(self, do_tessellation=True, tracer_file="", handle="", output_folder="", is_box=True, boss_like=False,
                  special_patchy=False, posn_cols=np.array([0, 1, 2]), box_length=2500.0, omega_m=0.308, mask_file="",
                  use_z_wts=True, use_ang_wts=True, z_min=0.43, z_max=0.7, mock_file="", mock_dens_ratio=10,
                  min_dens_cut=1.0, void_min_num=1, use_barycentres=True, void_prefix="", find_clusters=False,
                  max_dens_cut=1.0, cluster_min_num=1, cluster_prefix=""):
 
-        print(" ==== Starting the void-finding ==== ")
+        print(" ==== Starting the void-finding with ZOBOV ==== ")
 
         # the prefix/handle used for all output file names
         self.handle = handle
@@ -167,7 +167,7 @@ class ZobovVoids:
                 self.generate_selfn(nbins=15)
             self.use_ang_wts = use_ang_wts
 
-            if run_zobov:
+            if do_tessellation:
                 # options for buffer mocks around survey boundaries
                 if mock_file == '':
                     # no buffer mocks provided, so generate new
@@ -628,7 +628,7 @@ class ZobovVoids:
             logfolder = self.output_folder + 'log/'
             if not os.access(logfolder, os.F_OK):
                 os.makedirs(logfolder)
-            logfile = logfolder + self.handle + '.out'
+            logfile = logfolder + self.handle + '-zobov.out'
             log = open(logfile, "w")
             cmd = ["./bin/vozisol", self.posn_file, self.handle, str(self.box_length),
                    str(self.num_tracers), str(0.9e30)]
@@ -1581,4 +1581,3 @@ class ZobovVoids:
                      'DensRatio Theta_eff(deg) EdgeFlag'
             np.savetxt(info_file, info_output, fmt='%d %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %d',
                        header=header)
-

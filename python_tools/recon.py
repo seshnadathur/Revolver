@@ -39,7 +39,7 @@ class Recon:
 
             # get the weights for data and randoms
             cat.weight = cat.get_weights(fkp=1, noz=1, cp=1, syst=1)
-            ran.weight = ran.get_weights(fkp=1, noz=0, cp=0, syst=0)
+            ran.weight = ran.get_weights(fkp=1, noz=1, cp=1, syst=1)  # check with Julian?
 
             # compute Cartesian positions for data and randoms
             cat.dist = cosmo.get_comoving_distance(cat.redshift)
@@ -147,7 +147,7 @@ class Recon:
                 print('Allocating randoms in cells...')
                 deltar = self.allocate_gal_cic(ran)
                 print('Smoothing...')
-                deltar = gaussian_filter(deltar, smooth/binsize)
+                deltar = gaussian_filter(deltar, smooth/binsize, mode='nearest')
 
             # -- Initialize FFT objects and load wisdom if available
             wisdom_file = "wisdom." + str(nbins) + "." + str(self.nthreads)
