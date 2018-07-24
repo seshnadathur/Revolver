@@ -2,14 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="628088c6-3114-4efd-9049-54b35cadc2fb" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/python_tools/voxelvoids.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/jozov-grid.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/parameters/params.py" beforeDir="false" afterPath="$PROJECT_DIR$/parameters/params.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/recon.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/recon.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tools/zobov.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/zobov.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/revolver.py" beforeDir="false" afterPath="$PROJECT_DIR$/revolver.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/src/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tools/voxelvoids.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tools/voxelvoids.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/jozov-grid.c" beforeDir="false" afterPath="$PROJECT_DIR$/src/jozov-grid.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -20,11 +15,20 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
+      <file leaf-file-name="jozovtrvol.c" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/jozovtrvol.c">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-30">
+              <caret line="112" column="36" selection-start-line="112" selection-start-column="28" selection-end-line="112" selection-end-column="36" />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="params.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/parameters/params.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="255">
-              <caret line="40" column="89" selection-start-line="40" selection-start-column="89" selection-end-line="40" selection-end-column="89" />
+            <state relative-caret-position="454">
+              <caret line="97" column="110" selection-start-line="97" selection-start-column="110" selection-end-line="97" selection-end-column="110" />
             </state>
           </provider>
         </entry>
@@ -33,7 +37,7 @@
         <entry file="file://$PROJECT_DIR$/revolver.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="559">
-              <caret line="149" lean-forward="true" selection-start-line="149" selection-end-line="149" />
+              <caret line="149" selection-start-line="149" selection-end-line="149" />
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
               </folding>
@@ -44,8 +48,8 @@
       <file leaf-file-name="recon.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python_tools/recon.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="64">
-              <caret line="93" column="24" lean-forward="true" selection-start-line="93" selection-start-column="24" selection-end-line="93" selection-end-column="24" />
+            <state relative-caret-position="-1008">
+              <caret line="93" column="24" selection-start-line="93" selection-start-column="24" selection-end-line="93" selection-end-column="24" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -56,8 +60,8 @@
       <file leaf-file-name="zobov.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/python_tools/zobov.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="561">
-              <caret line="1583" lean-forward="true" selection-start-line="1583" selection-end-line="1583" />
+            <state relative-caret-position="1161">
+              <caret line="834" column="41" selection-start-line="833" selection-start-column="8" selection-end-line="834" selection-end-column="41" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -80,8 +84,8 @@
       <file leaf-file-name="voxelvoids.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/python_tools/voxelvoids.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="120">
-              <caret line="8" lean-forward="true" selection-start-line="8" selection-end-line="8" />
+            <state relative-caret-position="396">
+              <caret line="113" column="39" lean-forward="true" selection-start-line="113" selection-start-column="39" selection-end-line="113" selection-end-column="39" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -92,8 +96,8 @@
       <file leaf-file-name="jozov-grid.c" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/jozov-grid.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="194">
-              <caret line="327" column="22" selection-start-line="327" selection-start-column="14" selection-end-line="327" selection-end-column="22" />
+            <state relative-caret-position="269">
+              <caret line="94" column="3" lean-forward="true" selection-start-line="94" selection-start-column="3" selection-end-line="94" selection-end-column="3" />
             </state>
           </provider>
         </entry>
@@ -102,22 +106,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>phiratio</find>
-      <find>phi</find>
-      <find>BF</find>
-      <find>numin</find>
-      <find>use z</find>
-      <find>text</find>
-      <find>!= b</find>
-      <find>borderde</find>
-      <find>edge</find>
-      <find>high</find>
-      <find>gauss</find>
-      <find>tof</find>
-      <find>imp</find>
-      <find>sample.</find>
-      <find>cat.weight</find>
-      <find>weights(</find>
       <find>run</find>
       <find>run_z</find>
       <find>run_zobov</find>
@@ -127,11 +115,27 @@
       <find>output_f</find>
       <find>prefix</find>
       <find>rawZ</find>
-      <find>zonefile</find>
       <find>with ope</find>
       <find>ran</find>
-      <find>delta</find>
       <find>find_void_ba</find>
+      <find>zones = np.fromfile(F, dtype=np.int32, count=nvox)</find>
+      <find>delta</find>
+      <find>zonefile</find>
+      <find>vod</find>
+      <find>realnumin</find>
+      <find>zoneli</find>
+      <find>leak</find>
+      <find>slv</find>
+      <find>dens</find>
+      <find>voltol</find>
+      <find>lowvol</find>
+      <find>lowdens</find>
+      <find>densr</find>
+      <find>of w</find>
+      <find>borderde</find>
+      <find>border</find>
+      <find>0.5</find>
+      <find>0.5 *</find>
     </findStrings>
     <replaceStrings>
       <replace>z_min</replace>
@@ -227,6 +231,8 @@
         <option value="$PROJECT_DIR$/parameters/params.py" />
         <option value="$PROJECT_DIR$/revolver.py" />
         <option value="$PROJECT_DIR$/python_tools/zobov.py" />
+        <option value="$PROJECT_DIR$/src/jozov-grid.c" />
+        <option value="$PROJECT_DIR$/python_tools/voxelvoids.py" />
       </list>
     </option>
   </component>
@@ -257,6 +263,11 @@
               <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
               <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
               <item name="python_tools" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="REVOLVER" type="b2602c69:ProjectViewProjectNode" />
+              <item name="REVOLVER" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -326,7 +337,7 @@
       <window_info anchor="bottom" id="Python Console" order="7" />
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" order="8" />
+      <window_info anchor="bottom" id="Terminal" order="8" weight="0.3286385" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -499,13 +510,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/jozovtrvol.c">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="301">
-          <caret line="622" column="31" selection-start-line="622" selection-start-column="31" selection-end-line="622" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Workspace/codes/Python/Patchy_cute_submit.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="499">
@@ -550,13 +554,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/jozov-grid.c">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="194">
-          <caret line="327" column="22" selection-start-line="327" selection-start-column="14" selection-end-line="327" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/python_tools/pmvoids.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="214">
@@ -580,17 +577,10 @@
     <entry file="file://$PROJECT_DIR$/revolver.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="559">
-          <caret line="149" lean-forward="true" selection-start-line="149" selection-end-line="149" />
+          <caret line="149" selection-start-line="149" selection-end-line="149" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/parameters/params.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="40" column="89" selection-start-line="40" selection-start-column="89" selection-end-line="40" selection-end-column="89" />
         </state>
       </provider>
     </entry>
@@ -606,28 +596,49 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/python_tools/recon.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="64">
-          <caret line="93" column="24" lean-forward="true" selection-start-line="93" selection-start-column="24" selection-end-line="93" selection-end-column="24" />
+        <state relative-caret-position="-1008">
+          <caret line="93" column="24" selection-start-line="93" selection-start-column="24" selection-end-line="93" selection-end-column="24" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/parameters/params.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="454">
+          <caret line="97" column="110" selection-start-line="97" selection-start-column="110" selection-end-line="97" selection-end-column="110" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/python_tools/zobov.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="561">
-          <caret line="1583" lean-forward="true" selection-start-line="1583" selection-end-line="1583" />
+        <state relative-caret-position="1161">
+          <caret line="834" column="41" selection-start-line="833" selection-start-column="8" selection-end-line="834" selection-end-column="41" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/jozovtrvol.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-30">
+          <caret line="112" column="36" selection-start-line="112" selection-start-column="28" selection-end-line="112" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/jozov-grid.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="269">
+          <caret line="94" column="3" lean-forward="true" selection-start-line="94" selection-start-column="3" selection-end-line="94" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/python_tools/voxelvoids.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="8" lean-forward="true" selection-start-line="8" selection-end-line="8" />
+        <state relative-caret-position="396">
+          <caret line="113" column="39" lean-forward="true" selection-start-line="113" selection-start-column="39" selection-end-line="113" selection-end-column="39" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>

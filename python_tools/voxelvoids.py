@@ -26,6 +26,8 @@ class VoxelVoids:
         self.cluster_prefix = cluster_prefix
         self.rhog = np.array(0.)  # this gets changed later
 
+        print("%d tracers found" % cat.size)
+
         if self.is_box:
 
             self.box_length = box_length
@@ -33,7 +35,7 @@ class VoxelVoids:
 
             # determine an appropriate bin size
             mean_dens = cat.size / box_length ** 3.
-            self.nbins = int(np.floor(box_length / (0.25 * (3. * mean_dens / 4 / np.pi) ** (1. / 3))))
+            self.nbins = int(np.floor(box_length / (0.25 * (4 * np.pi * mean_dens /3.) ** (-1. / 3))))
             self.binsize = box_length / self.nbins
 
             # choose an appropriate smoothing scale
@@ -95,7 +97,7 @@ class VoxelVoids:
         # determine an appropriate bin size
         mean_dens = self.ran.size / box**3.
         # starting estimate
-        self.nbins = int(np.floor(box / (0.25 * (3. * mean_dens / 4 / np.pi) ** (1./3))))
+        self.nbins = int(np.floor(box / (0.25 * (4 * np.pi * mean_dens /3.) ** (-1. / 3))))
         self.binsize = box / self.nbins
         # now approximately check true survey volume and recalculate mean density
         ran = self.ran
@@ -103,7 +105,7 @@ class VoxelVoids:
         filled_cells = np.sum(rhor.flatten() >= 0.)
         mean_dens = self.cat.size / (filled_cells * self.binsize**3.)
         # thus get better choice of bin size
-        self.nbins = int(np.floor(box / (0.25 * (3. * mean_dens / 4 / np.pi) ** (1. / 3))))
+        self.nbins = int(np.floor(box / (0.25 * (4 * np.pi * mean_dens /3.) ** (-1. / 3))))
         self.binsize = box / self.nbins
 
         # choose an appropriate smoothing scale
@@ -198,7 +200,8 @@ class VoxelVoids:
 
         # write this to file for jozov-grid to read
         rhogflat = np.array(np.copy(rhog.flatten()), dtype=np.float32)
-        with open(raw_dir + 'density.dat', 'w') as F:
+        print('Debug: rhogflat[0] = %0.4e, rhogflat[-1] = %0.4e' % (rhogflat[0], rhogflat[-1]))
+        with open(raw_dir + 'density_n%d.dat' % self.nbins, 'w') as F:
             rhogflat.tofile(F, format='%f')
 
         # now call jozov-grid
@@ -206,7 +209,7 @@ class VoxelVoids:
         if not os.access(logfolder, os.F_OK):
             os.makedirs(logfolder)
         logfile = logfolder + self.handle + '-voxel.out'
-        cmd = ["./bin/jozov-grid", "v", raw_dir + "density.dat", self.handle, str(self.nbins)]
+        cmd = ["./bin/jozov-grid", "v", raw_dir + "density_n%d.dat" % self.nbins, self.handle, str(self.nbins)]
         log = open(logfile, 'w')
         subprocess.call(cmd)
         log.close()
@@ -228,7 +231,7 @@ class VoxelVoids:
             if not os.access(logfolder, os.F_OK):
                 os.makedirs(logfolder)
             logfile = logfolder + self.handle + '-voxel.out'
-            cmd = ["./bin/jozov-grid", "c", raw_dir + "density.dat", self.handle, str(self.nbins)]
+            cmd = ["./bin/jozov-grid", "c", raw_dir + "density_n%d.dat" % self.nbins, self.handle, str(self.nbins)]
             log = open(logfile, 'w')
             subprocess.call(cmd)
             log.close()
@@ -248,20 +251,22 @@ class VoxelVoids:
         raw_dir = self.output_folder + "rawVoxelInfo/"
         rawdata = np.loadtxt(raw_dir + self.handle + ".txt", skiprows=2)
 
-        # drop all voids that don't meet minimum density criterion
-        rawdata = rawdata[rawdata[:, 3] < self.min_dens_cut]
-        # and sort by order of minimum density
-        rawdata = rawdata[np.argsort(rawdata[:, 3])]
-
-        print("Post-processing %d voids that meet basic density criteria" % len(rawdata))
+        # load the void hierarchy data to record void leak density ratio, even though this is
+        # possibly not useful for anything at all
+        voidfile = raw_dir + self.handle + ".void"
+        with open(voidfile, 'r') as F:
+            hierarchy = F.readlines()
+        densratio = np.zeros(len(rawdata))
+        for i in range(len(rawdata)):
+            densratio[i] = np.fromstring(hierarchy[i + 1], dtype=float, sep=' ')[2]
 
         # load zone membership data
         zonefile = raw_dir + self.handle + ".zone"
         with open(zonefile, 'r') as F:
-            nvox = np.fromfile(F, dtype=np.int64, count=1)[0]
-            if not nvox == self.nbins**3:
-                sys.exit("Can't read right number of voxels from zone file! Aborting ... ")
-            zones = np.fromfile(F, dtype=np.int32, count=nvox)[0]
+            hierarchy = F.readlines()
+        nvox = self.nbins**3
+
+        print("Post-processing voids")
 
         # void effective radii
         vols = (rawdata[:, 5] * self.binsize ** 3.)
@@ -273,21 +278,20 @@ class VoxelVoids:
         # void average densities and barycentres
         avgdens = np.zeros(len(rawdata))
         barycentres = np.zeros((len(rawdata), 3))
+        rhoflat = self.rhog.flatten()
         for i in range(len(rawdata)):
-            zoneid = rawdata[:, 0]
-            member_voxels = np.arange(nvox)[zones[:] == zoneid]
-            member_dens = self.rhog.flatten()[member_voxels]
+            member_voxels = np.fromstring(hierarchy[i], dtype=int, sep=' ')[1:]
+            member_dens = rhoflat[member_voxels]
             avgdens[i] = np.mean(member_dens) - 1.
-            member_x, member_y, member_z = self.voxel_position(member_voxels)
-            barycentres[i, 0] = np.average(member_x, 1./member_dens)
-            barycentres[i, 1] = np.average(member_y, 1. / member_dens)
-            barycentres[i, 2] = np.average(member_z, 1. / member_dens)
+            if self.use_barycentres:
+                member_x, member_y, member_z = self.voxel_position(member_voxels)
+                barycentres[i, 0] = np.average(member_x, weights=1. / member_dens)
+                barycentres[i, 1] = np.average(member_y, weights=1. / member_dens)
+                barycentres[i, 2] = np.average(member_z, weights=1. / member_dens)
         # record void lambda value, even though usefulness of this has only really been shown for ZOBOV voids so far
         void_lambda = avgdens * (rads ** 1.2)
-        # record void leak density ratio, even though this is possibly not useful for anything at all
-        densratio = rawdata[:, 9]
 
-        # save output to file
+        # create output array
         output = np.zeros((len(rawdata), 9))
         output[:, 0] = rawdata[:, 0]
         output[:, 1] = xpos
@@ -298,6 +302,14 @@ class VoxelVoids:
         output[:, 6] = avgdens
         output[:, 7] = void_lambda
         output[:, 8] = densratio
+
+        # cut on minimum density criterion
+        output = output[rawdata[:, 3] < self.min_dens_cut]
+        barycentres = barycentres[rawdata[:, 3] < self.min_dens_cut]
+        print('Total %d voids pass basic density cuts' % len(output))
+        # sort in increasing order of minimum density
+        output = output[np.argsort(output[:, 5])]
+        # save to file
         catalogue_file = self.output_folder + self.void_prefix + '_cat.txt'
         np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f',
                    header='%d voxels, %d voids\n' % (nvox, len(output)) +
@@ -312,25 +324,28 @@ class VoxelVoids:
                        header='%d voxels, %d voids\n' % (nvox, len(output)) +
                               'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio')
 
+
     def postprocess_clusters(self):
 
         raw_dir = self.output_folder + "rawVoxelInfo/"
         rawdata = np.loadtxt(raw_dir + self.handle + "c.txt", skiprows=2)
 
-        # drop all clusters that don't meet maximum density criterion
-        rawdata = rawdata[rawdata[:, 3] > self.max_dens_cut]
-        # and sort by order of minimum density
-        rawdata = rawdata[np.argsort(rawdata[:, 3])]
+        print("Post-processing clusters")
 
-        print("Post-processing %d clusters that meet basic density criteria" % len(rawdata))
+        # load the void hierarchy data to record void leak density ratio, even though this is
+        # possibly not useful for anything at all
+        voidfile = raw_dir + self.handle + ".void"
+        with open(voidfile, 'r') as F:
+            hierarchy = F.readlines()
+        densratio = np.zeros(len(rawdata))
+        for i in range(len(rawdata)):
+            densratio[i] = np.fromstring(hierarchy[i + 1], dtype=float, sep=' ')[2]
 
         # load zone membership data
-        zonefile = raw_dir + self.handle + "c.zone"
+        zonefile = raw_dir + self.handle + ".zone"
         with open(zonefile, 'r') as F:
-            nvox = np.fromfile(F, dtype=np.int64, count=1)[0]
-            if not nvox == self.nbins**3:
-                sys.exit("Can't read right number of voxels from zone file! Aborting ... ")
-            zones = np.fromfile(F, dtype=np.int32, count=nvox)[0]
+            hierarchy = F.readlines()
+        nvox = self.nbins ** 3
 
         # cluster effective radii
         vols = (rawdata[:, 5] * self.binsize ** 3.)
@@ -341,17 +356,15 @@ class VoxelVoids:
         maxdens = rawdata[:, 3] - 1.
         # cluster average densities
         avgdens = np.zeros(len(rawdata))
+        rhoflat = self.rhog.flatten()
         for i in range(len(rawdata)):
-            zoneid = rawdata[:, 0]
-            member_voxels = np.arange(nvox)[zones[:] == zoneid]
-            member_dens = self.rhog.flatten()[member_voxels]
+            member_voxels = np.fromstring(hierarchy[i], dtype=int, sep=' ')[1:]  # allvoxels[zones[:] == zoneid]
+            member_dens = rhoflat[member_voxels]
             avgdens[i] = np.mean(member_dens) - 1.
         # record cluster lambda value, even though usefulness of this has only been shown for ZOBOV clusters so far
         cluster_lambda = avgdens * (rads ** 1.6)
-        # record cluster leak density ratio, even though this is possibly not useful for anything at all
-        densratio = rawdata[:, 9]
 
-        # save output to file
+        # create output array
         output = np.zeros((len(rawdata), 9))
         output[:, 0] = rawdata[:, 0]
         output[:, 1] = xpos
@@ -362,7 +375,12 @@ class VoxelVoids:
         output[:, 6] = avgdens
         output[:, 7] = cluster_lambda
         output[:, 8] = densratio
-        catalogue_file = self.output_folder + self.void_prefix + '_cat.txt'
+        # cut on maximum density criterion
+        output = output[rawdata[:, 3] > self.max_dens_cut]
+        print('Total %d clusters pass basic density cuts' % len(output))
+        # sort in decreasing order of maximum density
+        output = output[np.argsort(output[:, 5])[::-1]]
+        catalogue_file = self.output_folder + self.cluster_prefix + '_cat.txt'
         np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f',
                    header='%d voxels, %d clusters\n' % (nvox, len(output)) +
                           'ClusterID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio')
