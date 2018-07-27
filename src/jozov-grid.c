@@ -12,10 +12,10 @@
 #include <math.h>
 #include <string.h>
 
-#define NLINKS 300000 // Number of possible links with the same dens_sl 
-#define BF 100000000 // This is simply a number very much larger than the range in density
+#define NLINKS 300000 /* Number of possible links with the same dens_sl */
+#define BF 100000000 /* This is simply a number very much larger than the range in density */
 #define FF fflush(stdout)
-#define FNL 256 // Max length of filenames 
+#define FNL 256 /* Max length of filenames */
 
 typedef struct Voxel {
   float dens;
@@ -65,7 +65,6 @@ int main(int argc,char **argv) {
   int za;
   long testpart;
   char already, interior, *inyet, *inyet2, added, beaten, obo;
-//  int *nm, **m;
 
   float maxdens, mindens;
   float maxdensratio;
@@ -76,7 +75,6 @@ int main(int argc,char **argv) {
     printf("arg2: filename for file with dens data\n");
     printf("arg3: prefix to use for filenames\n");
     printf("arg4: dens grid resolution N (for NxNxN voxels)\n");
-//    printf("arg5: Density threshold (0 for no threshold)\n");
     exit(0);
   }
 
@@ -103,7 +101,7 @@ int main(int argc,char **argv) {
     printf("Bad grid size.\n");
     exit(0);
   }
-  Nvox = Nside*Nside*Nside;	//the total number of voxels (grid cells)  
+  Nvox = Nside*Nside*Nside;	/* the total number of voxels (grid cells) */  
   printf("Total number of voxels: %ld\n",Nvox);
 
   if (obo == 'v'){
@@ -117,7 +115,7 @@ int main(int argc,char **argv) {
     sprintf(txtfile,"%sc.txt",prefix);
   }
 
-  // Read the density data from file
+  /* Read the density data from file */
   printf("Reading in the dens data from file ...\n"); FF;
   p = (VOXEL *)malloc(Nvox*sizeof(VOXEL));
   dens = fopen(densfile, "r");
@@ -127,33 +125,33 @@ int main(int argc,char **argv) {
   }
   for (i=0;i<Nvox;i++) {
     fread(&p[i].dens,1,sizeof(float),dens); 
-    //if finding minima, invert the densities and then algorithm proceeds the same
+    /* if finding minima, invert the densities and then algorithm proceeds the same */
     if (obo=='c') p[i].dens = 1./p[i].dens;
   }
   fclose(dens);
   printf("Debug: dens[0] = %0.4e, dens[%ld] = %0.4e\n",p[0].dens,Nvox-1,p[Nvox-1].dens);
 
-  // Set the adjacencies
+  /* Set the adjacencies */
   printf("Setting the voxel adjacencies ...\n"); FF;
   for (i=0;i<Nvox;i++) {
-    // each voxel is adjacent to 6 other voxels
+    /* each voxel is adjacent to 6 other voxels */
     p[i].adj = (long *)malloc(6*sizeof(long));
-    // convert central voxel index to 3D
+    /* convert central voxel index to 3D */
     iz = i%Nside;
     iy = i%(Nside*Nside)/Nside;
     ix = i/(Nside*Nside);
-    // find the 3D indices of neighbouring voxels
+    /* find the 3D indices of neighbouring voxels */
     for (j=0;j<6;j++) {
       nbrs[j*3] = neighbours[j*3] + ix;
       nbrs[j*3+1] = neighbours[j*3+1] +iy;
       nbrs[j*3+2] = neighbours[j*3+2] +iz;
     }
-    // adjust for periodic boundary conditions
+    /* adjust for periodic boundary conditions */
     for (j=0;j<18;j++) {
       if (nbrs[j]>=Nside) nbrs[j] -= Nside;
       if (nbrs[j]<0) nbrs[j] += Nside;
     }
-    //convert these to flatttened indices and set adjacencies
+    /* convert these to flatttened indices and set adjacencies */
     for (j=0;j<6;j++) {
       ind = 3*j;	
       p[i].adj[j] = nbrs[ind]*Nside*Nside + nbrs[ind+1]*Nside + nbrs[ind+2];
@@ -165,7 +163,7 @@ int main(int argc,char **argv) {
   numinh = (long *)malloc(Nvox*sizeof(long));
   realnuminh = (long *)malloc(Nvox*sizeof(long));
 
-  // find jumper - every voxel jumps to its lowest neighbour
+  /* find jumper - every voxel jumps to its lowest neighbour */
   printf("Finding jumper for each voxel\n"); FF;
   for (i = 0; i < Nvox; i++) {
     mindens = p[i].dens; jumper[i] = -1;
@@ -179,18 +177,18 @@ int main(int argc,char **argv) {
     realnuminh[i] = 0;
   }
 
-  // Jump along the chain
+  /* Jump along the chain */
   printf("About to jump ...\n"); FF;
   for (i = 0; i < Nvox; i++) {
     jumped[i] = i;
     while (jumper[jumped[i]] > -1)
       jumped[i] = jumper[jumped[i]];
-    numinh[jumped[i]]++;	//count all voxels in the basin
+    numinh[jumped[i]]++;	/* count all voxels in the basin */
     if (p[i].dens < borderdens) realnuminh[jumped[i]]++;
   }
   printf("Post-jump ...\n"); FF;
   
-  // count the number of zones
+  /* count the number of zones */
   nzones = 0; nrealzones = 0;
   for (i = 0; i < Nvox; i++) 
     if (numinh[i] > 0) {
@@ -199,7 +197,7 @@ int main(int argc,char **argv) {
     }
   printf("%d initial zones found...\n  of which %d are 'real'\n",nzones,nrealzones);
 
-  //allocate the zone variables
+  /* allocate the zone variables */
   z = (ZONE *)malloc(nzones*sizeof(ZONE));
   if (z == NULL) {
     printf("Unable to allocate z\n");
@@ -211,7 +209,7 @@ int main(int argc,char **argv) {
     exit(0);
   }
   
-  //initialize zone adjacencies
+  /* initialize zone adjacencies */
   for (h=0;h<nzones;h++) {
     zt[h].nadj = 0;
   }
@@ -223,7 +221,7 @@ int main(int argc,char **argv) {
 
   h = 0;
   for (i = 0; i < Nvox; i++)
-    if (numinh[i] > 0) {  //here we are counting all zones
+    if (numinh[i] > 0) {  /* here we are counting all zones */
       z[h].core = i;
       zonenum[i] = h;
       h++;
@@ -231,13 +229,13 @@ int main(int argc,char **argv) {
       zonenum[i] = -1;
     }
  
-  // Finding particles on zone borders 
+  /* Finding particles on zone borders */ 
   printf("Finding zone borders\n");
   for (i = 0; i < Nvox; i++)
     for (j = 0; j < 6; j++) {
       testpart = p[i].adj[j];
       if (jumped[i] != jumped[testpart])
-	//two neighbouring voxels jump to different zones
+	/* two neighbouring voxels jump to different zones */
 	zt[zonenum[jumped[i]]].nadj++;
     }
   
@@ -253,10 +251,10 @@ int main(int argc,char **argv) {
       printf("Unable to allocate %d slv's of zone %d\n",zt[h].nadj,h);
       exit(0);
     }
-    zt[h].nadj = 0;	//resets number of adjacencies to zero
+    zt[h].nadj = 0;	/* resets number of adjacencies to zero */
   }
 
-  // Find "weakest links" - i.e. the lowest-density link
+  /* Find "weakest links" - i.e. the lowest-density link */
   printf("Finding weakest links\n");
   for (i = 0; i < Nvox; i++) {
     h = zonenum[jumped[i]];
@@ -264,7 +262,7 @@ int main(int argc,char **argv) {
       testpart = p[i].adj[j];
       if (h != zonenum[jumped[testpart]]) {	
 	    if (p[testpart].dens < p[i].dens) {
-	      // there could be a weakest link through testpart
+	      /* there could be a weakest link through testpart */
 	      already = 0;
 	      for (za = 0; za < zt[h].nadj; za++)
 	        if (zt[h].adj[za] == zonenum[jumped[testpart]]) {
@@ -280,7 +278,7 @@ int main(int argc,char **argv) {
 	      }
 	    }
 	    else {
-	      // There could be a weakest link through i
+	      /* There could be a weakest link through i */
 	      already = 0;
 	      for (za = 0; za < zt[h].nadj; za++)
 	        if (zt[h].adj[za] == zonenum[jumped[testpart]]) {
@@ -300,12 +298,11 @@ int main(int argc,char **argv) {
   }
   printf("Found zone adjacencies\n"); FF;
 
-  // Free voxel adjacencies 
+  /* Free voxel adjacencies */ 
   for (i=0;i<Nvox; i++) free(p[i].adj);
 
-  // Use z instead of zt 
+  /* Use z instead of zt */ 
   for (h=0;h<nzones;h++) {
-    //printf("%d ",zt[h].nadj);
     z[h].nadj = zt[h].nadj;
     z[h].adj = (int *)malloc(zt[h].nadj*sizeof(int));
     z[h].slv = (float *)malloc(zt[h].nadj*sizeof(float));
@@ -315,12 +312,12 @@ int main(int argc,char **argv) {
     }
     free(zt[h].adj);
     free(zt[h].slv);
-    z[h].np = realnuminh[z[h].core]; //only count member voxels that are not flagged (using borderdens)
+    z[h].np = realnuminh[z[h].core]; /* only count member voxels that are not flagged (using borderdens) */
     z[h].vox = (long *)malloc(realnuminh[z[h].core]*sizeof(long));
     if (realnuminh[z[h].core] == numinh[z[h].core]) {
-      z[h].edge = 0;  // no border flagged voxels in this zone so edge flag is zero
+      z[h].edge = 0;  /* no border flagged voxels in this zone so edge flag is zero */
     }
-    else z[h].edge = 1;  // else flag it as an edge zone
+    else z[h].edge = 1;  /* else flag it as an edge zone */
   }
   free(zt);
   free(numinh);
@@ -339,7 +336,7 @@ int main(int argc,char **argv) {
 
   nhl = 0; 
 
-  //Find the maximum and minimum values of dens
+  /* Find the maximum and minimum values of dens */
   maxdens = -BF;
   mindens = BF;
   maxdensratio = 0.;
@@ -350,7 +347,7 @@ int main(int argc,char **argv) {
   printf("density ranges from %e to %e.\n",mindens,maxdens); FF;
 
 
-  //Write the zone merger information to voidfile
+  /* Write the zone merger information to voidfile */
   vod = fopen(voidfile,"w");
   if (vod == NULL) {
     printf("Problem opening voidfile %s.\n\n",voidfile);
@@ -359,7 +356,7 @@ int main(int argc,char **argv) {
   fprintf(vod,"%d\n",nrealzones);
 
   for (h = 0; h<nzones; h++) {
-    if (p[z[h].core].dens >= borderdens) continue;	//completely skip 'non-real' zones
+    if (p[z[h].core].dens >= borderdens) continue;	/* completely skip 'non-real' zones */
     fprintf(vod,"%d ",h);
     nhlcount = 0;
     for (hl = 0; hl < nhl; hl++)
@@ -370,19 +367,19 @@ int main(int argc,char **argv) {
     nhl = 1;
     z[h].npjoin = z[h].np;
     do {
-      // Find the highest-density adjacency
+      /* Find the highest-density adjacency */
       lowdens = BF; nl = 0; beaten = 0;
-      for (hl = 0; hl < nhl; hl++) {	//loop over all the zones in the current list
+      for (hl = 0; hl < nhl; hl++) {	/* loop over all the zones in the current list */
 	    h2 = zonelist[hl];
 	    if (inyet[h2] == 1) {
-	      // If it's not already identified as an interior zone, with inyet=2
+	      /* If it's not already identified as an interior zone, with inyet=2 */
 	      interior = 1;
- 	      for (za = 0; za < z[h2].nadj; za ++) {  //loop over the adjacencies of this zone
+ 	      for (za = 0; za < z[h2].nadj; za ++) {  /*loop over the adjacencies of this zone */
 	        if (inyet[z[h2].adj[za]] == 0) {
- 	          //this adjacent zone not yet included in the current list
-	          interior = 0;  //therefore current zone h2 is not an interior zone
+ 	          /* this adjacent zone not yet included in the current list */
+	          interior = 0;  /* therefore current zone h2 is not an interior zone */
 	          if (z[h2].slv[za] == lowdens) {
-		        //there is a link via zone h2 which equals current weakest link
+		        /* there is a link via zone h2 which equals current weakest link */
 		        link[nl] = z[h2].adj[za];
 		        nl ++;
 		        if (nl == NLINKS) {
@@ -391,66 +388,66 @@ int main(int argc,char **argv) {
 		        }
 	          }
 	          if (z[h2].slv[za] < lowdens) {
-		        // there is a link via zone h2 which betters previous weakest link
+		        /* there is a link via zone h2 which betters previous weakest link */
 		        lowdens = z[h2].slv[za];
 		        link[0] = z[h2].adj[za];
 		        nl = 1;
 	          }
 	        }
 	      }
-	      if (interior == 1) inyet[h2] = 2; // this zone does not border any zones not in current zonelist
+	      if (interior == 1) inyet[h2] = 2; /* this zone does not border any zones not in current zonelist */
 	    }
       }
 
       if (nl == 0) { 
-	    //either (a) this zonelist encompasses all zones or (b) something else went wrong
+	    /* either (a) this zonelist encompasses all zones or (b) something else went wrong */
 	    printf("	h=%d, nl=0\n",h);
  	    beaten = 1;
 	    z[h].leak = maxdens;
-	    continue;	//skip the step adding links, break out of do-while loop
+	    continue;	/* skip the step adding links, break out of do-while loop */
       }
 	
       for (l=0; l < nl; l++)
-	    if (p[z[link[l]].core].dens < p[z[h].core].dens) //linked zone is superior, so don't add these links
+	    if (p[z[link[l]].core].dens < p[z[h].core].dens) /* linked zone is superior, so don't add these links */
 	      beaten = 1;
 
       if (lowdens >= borderdens) {
-	    //the weakest link is via a border voxel, so don't add these links
+	    /* the weakest link is via a border voxel, so don't add these links */
 	    beaten = 1;
       }
 
       if (beaten == 1) {
         z[h].leak = lowdens;
-	    continue;	//skip the step adding links, break out of do-while loop
+	    continue;	/* skip the step adding links, break out of do-while loop */
       }
 
-      // Add everything linked to the link(s)
+      /* Add everything linked to the link(s) */
       nhl2 = 0;
-      for (l=0; l < nl; l++) { //loop over all the zones linked by weakest link dens
+      for (l=0; l < nl; l++) { /* loop over all the zones linked by weakest link dens */
 	    if (inyet2[link[l]] == 0) {
-	      //linked zone link[l] not yet counted as part of current zonelist
-	      //so we add its 'watershed basin' to current zonelist
+	      /* linked zone link[l] not yet counted as part of current zonelist */
+	      /* so we add its 'watershed basin' to current zonelist */
 	      zonelist2[nhl2] = link[l];
 	      inyet2[link[l]] = 1;
 	      nhl2 ++;
 	      added = 1;
-	      while ((added == 1) && (beaten == 0)) { //build up the watershed basin
+	      while ((added == 1) && (beaten == 0)) { /* build up the watershed basin */
 	        added = 0;
 	        for (hl = 0; (hl < nhl2) && (beaten == 0); hl++) {
 	          h2 = zonelist2[hl];
-	          if (inyet2[h2] == 1) { //zone h2 already part of link[l]'s zonelist
-		        interior = 1; // Guilty until proven innocent
+	          if (inyet2[h2] == 1) { /* zone h2 already part of link[l]'s zonelist */
+		        interior = 1; /* Guilty until proven innocent */
 		        for (za = 0; za < z[h2].nadj; za ++) {
-		          //loop over adjacencies of h2
+		          /* loop over adjacencies of h2 */
 		          link2 = z[h2].adj[za];
 		          if ((inyet[link2]+inyet2[link2]) == 0) {
-		            //zone link2 neither already part of h's zonelist nor link[l]'s zonelist
+		            /* zone link2 neither already part of h's zonelist nor link[l]'s zonelist */
 		            interior = 0;
 		            if (z[h2].slv[za] <= lowdens) {
-		              // weakest link from h2 to link2 lies 'below current water level' so the two zonelists
-		              // should be added together
+		              /* weakest link from h2 to link2 lies 'below current water level' so the two zonelists */
+		              /* should be added together */
 		              if (p[z[link2].core].dens < p[z[h].core].dens) {
-			            //but link2 is the superior, so h's zonelist beaten at this link level
+			            /*but link2 is the superior, so h's zonelist beaten at this link level */
 			            beaten = 1;
 			            break;
 		              }
@@ -467,16 +464,16 @@ int main(int argc,char **argv) {
 	      }
  	    }
       }
-      for (hl = 0; hl < nhl2; hl++) //reset inyet2 for next round
+      for (hl = 0; hl < nhl2; hl++) /*reset inyet2 for next round */
 	    inyet2[zonelist2[hl]] = 0;
       
-      // See if there's a beater
+      /* See if there's a beater */
       if (beaten == 1) {
-        //h was beaten, so nothing added to its zonelist
+        /* h was beaten, so nothing added to its zonelist */
 	    z[h].leak = lowdens;
       }
       else {
-	    //h not yet beaten, so add all the zones that entered at this link level
+	    /* h not yet beaten, so add all the zones that entered at this link level */
 	    fprintf(vod,"%d %lf ",nhl2, lowdens/p[z[h].core].dens);
 	    for (h2 = 0; h2 < nhl2; h2++) {
 	      zonelist[nhl] = zonelist2[h2];
@@ -491,30 +488,30 @@ int main(int argc,char **argv) {
 	    nhlcount = nhl/10000;
 	    printf(" %d",nhl); FF;
       }
-    } while((lowdens < BF) && (beaten == 0)); //end of do-while loop
+    } while((lowdens < BF) && (beaten == 0)); /* end of do-while loop */
    
     z[h].densratio = z[h].leak/p[z[h].core].dens;
 
-    fprintf(vod,"0 %lf\n",z[h].densratio); // Mark the end of the line
+    fprintf(vod,"0 %lf\n",z[h].densratio); /* Mark the end of the line */
 
-    if (nhlcount > 0) { // Outputs the number of zones in very large voids
+    if (nhlcount > 0) { /* Outputs the number of zones in very large voids */
       printf(" h%d:%d\n",h,nhl);
       FF;
     }
     
-    z[h].nhl = nhl;	//total number of zones in this void
+    z[h].nhl = nhl;	/* total number of zones in this void */
   }
   fclose(vod);
 
-  // Text output file
+  /* Text output file */
   txt = fopen(txtfile,"w");
   fprintf(txt,"%dx%dx%d voxels, %d vloidsters\n", Nside, Nside, Nside, nrealzones);
   fprintf(txt,"Zone# EdgeFlag CoreVoxel CoreDens ignore Zone#Vox ignore Vloid#Zones Vloid#Vox DensLeakRatio ignore\n");
   for (h=0; h<nzones; h++) {
-    if (obo == 'c') { // reinvert dens back to correct value
+    if (obo == 'c') { /* reinvert dens back to correct value */
       p[z[h].core].dens = 1./p[z[h].core].dens;
     }
-    if (z[h].np>0) { // only record 'real zones'
+    if (z[h].np>0) { /* only record 'real zones' */
       fprintf(txt,"%d %d %ld %e %d %ld %d %d %ld %e %d\n",
 	      h, z[h].edge, z[h].core, p[z[h].core].dens, 0, z[h].np, 0, z[h].nhl, z[h].npjoin, z[h].densratio, 0);
     }
@@ -529,7 +526,7 @@ int main(int argc,char **argv) {
     z[h].vox[voxcounter[h]] = i;
     voxcounter[h]++;
   }
-  // Record which voxel membership for each zone
+  /* Record which voxel membership for each zone */
   printf("Writing the zone memberships\n"); FF;
   zon = fopen(zonefile,"w");
   if (zon == NULL) {
