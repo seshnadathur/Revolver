@@ -1,6 +1,5 @@
 from __future__ import print_function
 import os
-import sys
 import numpy as np
 import subprocess
 from scipy.ndimage.filters import gaussian_filter
@@ -78,7 +77,7 @@ class VoxelVoids:
             self.cat = cat
 
             # put the data into a box
-            self.xmin, self.ymin, self.zmin, self.box_length, self.smooth = self.make_sky_box()
+            self.make_sky_box()
 
     def make_sky_box(self, padding=200.):
 
@@ -99,6 +98,10 @@ class VoxelVoids:
         # starting estimate
         self.nbins = int(np.floor(box / (0.25 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
         self.binsize = box / self.nbins
+        self.xmin = xmin
+        self.ymin = ymin
+        self.zmin = zmin
+        self.box_length = box
         # now approximately check true survey volume and recalculate mean density
         ran = self.ran
         rhor = self.allocate_gal_cic(ran)
@@ -107,15 +110,20 @@ class VoxelVoids:
         # thus get better choice of bin size
         self.nbins = int(np.floor(box / (0.25 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
         self.binsize = box / self.nbins
+        self.xmin = xmin
+        self.ymin = ymin
+        self.zmin = zmin
+        self.box_length = box
 
         # choose an appropriate smoothing scale
         smooth = mean_dens ** (-1./3)
+        self.smooth = smooth
 
         print('Box size [Mpc/h]:', box)
         print('Bin size [Mpc/h]: %0.2f, nbins = %d' % (self.binsize, self.nbins))
         print('Smoothing scale [Mpc/h]:', smooth)
 
-        return xmin, ymin, zmin, box, smooth
+        # return xmin, ymin, zmin, box, smooth
 
     def allocate_gal_cic(self, c):
         """ Allocate galaxies to grid cells using a CIC scheme in order to determine galaxy
