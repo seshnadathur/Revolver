@@ -94,7 +94,7 @@ class VoxelVoids:
         zmin = z0 - box / 2
 
         # determine an appropriate bin size
-        mean_dens = self.ran.size / box**3.
+        mean_dens = self.cat.size / box**3.
         # starting estimate
         self.nbins = int(np.floor(box / (0.25 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
         self.binsize = box / self.nbins
