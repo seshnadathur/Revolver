@@ -35,7 +35,7 @@ class VoxelVoids:
 
             # determine an appropriate bin size
             mean_dens = cat.size / box_length ** 3.
-            self.nbins = int(np.floor(box_length / (0.25 * (4 * np.pi * mean_dens /3.) ** (-1. / 3))))
+            self.nbins = int(np.floor(box_length / (0.25 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
             self.binsize = box_length / self.nbins
 
             # choose an appropriate smoothing scale
@@ -97,7 +97,7 @@ class VoxelVoids:
         # determine an appropriate bin size
         mean_dens = self.ran.size / box**3.
         # starting estimate
-        self.nbins = int(np.floor(box / (0.25 * (4 * np.pi * mean_dens /3.) ** (-1. / 3))))
+        self.nbins = int(np.floor(box / (0.25 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
         self.binsize = box / self.nbins
         # now approximately check true survey volume and recalculate mean density
         ran = self.ran
@@ -105,7 +105,7 @@ class VoxelVoids:
         filled_cells = np.sum(rhor.flatten() >= 0.)
         mean_dens = self.cat.size / (filled_cells * self.binsize**3.)
         # thus get better choice of bin size
-        self.nbins = int(np.floor(box / (0.25 * (4 * np.pi * mean_dens /3.) ** (-1. / 3))))
+        self.nbins = int(np.floor(box / (0.25 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
         self.binsize = box / self.nbins
 
         # choose an appropriate smoothing scale
@@ -117,9 +117,6 @@ class VoxelVoids:
 
         return xmin, ymin, zmin, box, smooth
 
-    # choose a grid size and a smoothing scale based on particle separation
-
-    # method allocate_gal_cic()
     def allocate_gal_cic(self, c):
         """ Allocate galaxies to grid cells using a CIC scheme in order to determine galaxy
         densities on the grid"""
@@ -324,7 +321,6 @@ class VoxelVoids:
                        header='%d voxels, %d voids\n' % (nvox, len(output)) +
                               'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio')
 
-
     def postprocess_clusters(self):
 
         raw_dir = self.output_folder + "rawVoxelInfo/"
@@ -395,11 +391,3 @@ class VoxelVoids:
         zpos = (zind + 0.5) * self.box_length / self.nbins
 
         return xpos, ypos, zpos
-
-        # method to calculate (smoothed) galaxy density, and call jozov-grid
-
-        # method to postprocess voids
-
-        # method to post-process clusters
-
-        # method to find void barycentres
