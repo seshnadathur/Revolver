@@ -37,8 +37,9 @@ z_max = 0.43        # maximum redshift extent of survey data (ignored if not sur
 # ============================================= #
 
 # ======= weights options ========= #
-# the following options are used to identify the correct weights information in ASCII/NPY formatted input arrays
-# if provided, weights are only used in the reconstruction step; if is_box is True, they are ignored even if provided
+# the following options are used to identify the correct galaxy weights information in ASCII/NPY formatted input arrays
+# FKP weights are only used for reconstruction; Voronoi tessellation does not use weights
+# if is_box is True, all weights are ignored even if provided
 # a special case is hard-coded for use if special_patchy == True, in which case these options are ignored
 fkp = True  # are FKP weights (WEIGHT_FKP) provided?
 cp = True   # are fibre collision weights (WEIGHT_CP) provided?
@@ -57,9 +58,18 @@ randoms_file = ''   # /path/to/file containing randoms data: must be formatted s
 # =========================== #
 
 # ========== void-finding choices ============= #
-run_pmvoids = True  # watershed void-finding based on particle-mesh density field interpolation
+run_voxelvoids = True  # watershed void-finding based on particle-mesh density field interpolation in voxels
 run_zobov = False   # watershed void-finding (using ZOBOV) based on Voronoi tessellation
 # note that these two options are not mutually exclusive - 2 sets of voids can be produced if desired
+
+void_prefix = 'Voids'   # prefix used for naming void catalogue files
+min_dens_cut = 1.0  # void minimum galaxy number density (in units of mean density) reqd to qualify
+use_barycentres = True  # if True, additionally calculate void barycentre positions
+
+# -- additional bonus: 'supercluster' options -- #
+find_clusters = False   # if run_zobov is True, this step will be significantly slower
+cluster_prefix = 'Clusters'  # prefix used for naming supercluster catalogue files
+max_dens_cut = 1.0  # cluster maximum galaxy density (in units of mean density) reqd to qualify
 # ============================================= #
 
 # ========== ZOBOV options ============ #
@@ -85,16 +95,10 @@ mock_dens_ratio = 10.   # if computing buffer mocks, ratio of buffer mock densit
 # ---------------------------------- #
 
 # --- void options ---- #
-void_prefix = 'Voids'   # prefix used for naming void catalogue files
-min_dens_cut = 1.0  # void minimum galaxy number density (in units of mean density) reqd to qualify
 void_min_num = 1    # minimum number of void member galaxies reqd to qualify (for surveys, set = 5 to be safe)
-use_barycentres = True  # if True, additionally calculate void barycentre positions
 # --------------------- #
 
-# -- additional bonus: 'supercluster' options -- #
-find_clusters = False   # set to False unless really needed, finding superclusters is slow
-cluster_prefix = 'Clusters'  # prefix used for naming supercluster catalogue files
-max_dens_cut = 1.0  # cluster maximum galaxy density (in units of mean density) reqd to qualify
+# -- bonus 'supercluster' options -- #
 cluster_min_num = 5   # minimum number of void member galaxies reqd to qualify
-# ---------------------------------------------- #
+# ---------------------------------- #
 # ===================================== #
