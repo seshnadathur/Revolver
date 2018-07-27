@@ -10,14 +10,22 @@ Repository containing code to:
 The tracers used will normally be galaxies from a redshift survey, but could also be halos or dark matter 
 particles from a simulation box.
 
-Input data files can be in FITS format (with data fields as for BOSS/eBOSS), or ASCII- or NPY-formatted data arrays.
-Read the comments in parameters/params.py for more information about the input file formatting. For galaxy
-survey data, the reconstruction requires a file with appropriate randoms. Pre-computed FKP weights (and 
-other weight/veto information) are not necessary but should be provided for best performance. 
+Two different void-finding routines are provided. One is based on ZOBOV (Neyrinck 2008, arXiv:0712.3049, 
+http://skysrv.pha.jhu.edu/~neyrinck/zobov/zobovhelp.html) and uses Voronoi tessellation of the tracer field to estimate 
+the local density, followed by a watershed void-finding step. The other is a voxel-based method, which uses a 
+particle-mesh interpolation to estimate the tracer density, and then uses a similar watershed algorithm.
 
-For galaxy survey data, an optional path to an appropriate survey mask file (in HEALPix FITS format) combining 
-the survey geometry, completeness, missing pixels etc. should be provided for best performance of the 
-void-finding step. Masks for the BOSS DR12 public data releases are provided with this code.
+Input data files can be in FITS format (with data fields as for BOSS/eBOSS), or ASCII- or NPY-formatted data arrays.
+Read the comments in parameters/params.py for more information about the input file formatting. 
+
+For galaxy survey data, the reconstruction and voxel-based void-finding require a file containing with appropriate 
+randoms for the survey. The ZOBOV-based void-finding does not require randoms, but instead requires an appropriate
+survey mask file (in HEALPix FITS format) combining the survey geometry, completeness, missing pixels etc. Example masks
+for the BOSS DR12 public data releases are provided with this code. If a mask file is not specified, the code will 
+attempt to generate an approximate one, but the acccuracy of results will be compromised.
+
+For survey data, pre-computed FKP weights (and other galaxy weight/veto information) are not necessary, but should be 
+provided for best performance. 
 
 Requirements:
    - python 2.7 or python 3
@@ -36,5 +44,5 @@ To run:
 Acknowledgments:
 
 The reconstruction section of this code was developed from a version written by Julian Bautista and with input from 
-Paul Carter, Will Percival and (indirectly) Angela Burden. Some elements of the void-finding section of code were developed
-with Shaun Hotchkiss. 
+Paul Carter, Will Percival and (indirectly) Angela Burden. Some elements of the ZOBOV void-finding section of code were 
+developed with Shaun Hotchkiss. 
