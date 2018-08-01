@@ -339,7 +339,9 @@ class ZobovVoids:
         # generate random radial positions within the cap
         rdist = (r_low ** 3. + (r_high ** 3. - r_low ** 3.) * np.random.rand(num_high_mocks)) ** (1. / 3)
 
-        # generate random angular positions within the survey mask
+        # generate mock angular positions within the survey mask
+        # NOTE: these are not random positions, since they are all centred in a Healpix pixel
+        # but for buffer particles this is not important (and is generally faster)
         while num_high_mocks > numpix:
             # more mock posns required than mask pixels, so upgrade mask to get more pixels
             nside *= 2
@@ -386,7 +388,8 @@ class ZobovVoids:
             # generate random radial positions within the cap
             rdist = (r_low ** 3. + (r_high ** 3. - r_low ** 3.) * np.random.rand(num_low_mocks)) ** (1. / 3)
 
-            # generate random angular positions within the survey mask
+            # generate mock angular positions within the survey mask
+            # same as above -- these are not truly random but that's ok
             while num_low_mocks > numpix:
                 # more mock posns required than mask pixels, so upgrade mask to get more pixels
                 nside *= 2
@@ -436,7 +439,8 @@ class ZobovVoids:
             rdist = (self.r_near ** 3. + (self.r_far ** 3. - self.r_near ** 3.) *
                      np.random.rand(num_bound_mocks)) ** (1. / 3)
 
-            # generate random angular positions within the boundary layer
+            # generate mock angular positions within the boundary layer
+            # and same as above -- not truly random, but ok
             while num_bound_mocks > numpix:
                 # more mocks required than pixels in which to place them, so upgrade mask
                 boundary_nside *= 2
