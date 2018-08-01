@@ -68,19 +68,16 @@ if parms.do_recon:
     # galaxy input for void-finding will now be read from new file with shifted data
     # so we change the following options
     parms.tracer_file = root + '_shift.npy'
-    parms.posn_cols = [0, 1, 2]
-    parms.boss_like = False
-    parms.special_patchy = False
 
 if parms.run_voxelvoids:
 
     if parms.do_recon:
         # new tracer file after reconstruction only contains single consolidated weights column
         cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
-                              boss_like=parms.boss_like, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
-                              fkp=0, noz=0, cp=0, systot=1, veto=0)
+                              boss_like=False, special_patchy=False, posn_cols=[0, 1, 2], fkp=0, noz=0, cp=0,
+                              systot=1, veto=0)
     else:
-        # no reconstruction wasperformed: use original weights specification
+        # no reconstruction was performed: use original weights specification
         cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
                               boss_like=parms.boss_like, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
                               fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)

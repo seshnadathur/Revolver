@@ -134,27 +134,29 @@ int main(int argc,char **argv) {
   /* Set the adjacencies */
   printf("Setting the voxel adjacencies ...\n"); FF;
   for (i=0;i<Nvox;i++) {
-    /* each voxel is adjacent to 6 other voxels */
-    p[i].adj = (long *)malloc(6*sizeof(long));
-    /* convert central voxel index to 3D */
-    iz = i%Nside;
-    iy = i%(Nside*Nside)/Nside;
-    ix = i/(Nside*Nside);
-    /* find the 3D indices of neighbouring voxels */
-    for (j=0;j<6;j++) {
-      nbrs[j*3] = neighbours[j*3] + ix;
-      nbrs[j*3+1] = neighbours[j*3+1] +iy;
-      nbrs[j*3+2] = neighbours[j*3+2] +iz;
-    }
-    /* adjust for periodic boundary conditions */
-    for (j=0;j<18;j++) {
-      if (nbrs[j]>=Nside) nbrs[j] -= Nside;
-      if (nbrs[j]<0) nbrs[j] += Nside;
-    }
-    /* convert these to flatttened indices and set adjacencies */
-    for (j=0;j<6;j++) {
-      ind = 3*j;	
-      p[i].adj[j] = nbrs[ind]*Nside*Nside + nbrs[ind+1]*Nside + nbrs[ind+2];
+    if (p[i].dens < borderdens) {
+      /* each non-border voxel is adjacent to 6 other voxels */
+      p[i].adj = (long *)malloc(6*sizeof(long));
+      /* convert central voxel index to 3D */
+      iz = i%Nside;
+      iy = i%(Nside*Nside)/Nside;
+      ix = i/(Nside*Nside);
+      /* find the 3D indices of neighbouring voxels */
+      for (j=0;j<6;j++) {
+        nbrs[j*3] = neighbours[j*3] + ix;
+        nbrs[j*3+1] = neighbours[j*3+1] +iy;
+        nbrs[j*3+2] = neighbours[j*3+2] +iz;
+      }
+      /* adjust for periodic boundary conditions */
+      for (j=0;j<18;j++) {
+        if (nbrs[j]>=Nside) nbrs[j] -= Nside;
+        if (nbrs[j]<0) nbrs[j] += Nside;
+      }
+      /* convert these to flattened indices and set adjacencies */
+      for (j=0;j<6;j++) {
+        ind = 3*j;
+        p[i].adj[j] = nbrs[ind]*Nside*Nside + nbrs[ind+1]*Nside + nbrs[ind+2];
+      }
     }
   }
 
@@ -167,10 +169,12 @@ int main(int argc,char **argv) {
   printf("Finding jumper for each voxel\n"); FF;
   for (i = 0; i < Nvox; i++) {
     mindens = p[i].dens; jumper[i] = -1;
-    for (j=0; j<6; j++) {
-      if (p[p[i].adj[j]].dens < mindens) {
-        jumper[i] = p[i].adj[j];
-	    mindens = p[jumper[i]].dens;
+    if (p[i].dens < borderdens) {
+      for (j=0; j<6; j++) {
+        if (p[p[i].adj[j]].dens < mindens) {
+          jumper[i] = p[i].adj[j];
+	      mindens = p[jumper[i]].dens;
+        }
       }
     }
     numinh[i] = 0;
@@ -232,11 +236,13 @@ int main(int argc,char **argv) {
   /* Finding particles on zone borders */ 
   printf("Finding zone borders\n");
   for (i = 0; i < Nvox; i++)
-    for (j = 0; j < 6; j++) {
-      testpart = p[i].adj[j];
-      if (jumped[i] != jumped[testpart])
-	/* two neighbouring voxels jump to different zones */
-	zt[zonenum[jumped[i]]].nadj++;
+    if (p[i].dens < borderdens) {
+      for (j = 0; j < 6; j++) {
+        testpart = p[i].adj[j];
+        if (jumped[i] != jumped[testpart])
+	      /* two neighbouring voxels jump to different zones */
+	      zt[zonenum[jumped[i]]].nadj++;
+	  }
     }
   
   printf("Allocating zone adjacencies and links\n");
@@ -258,41 +264,43 @@ int main(int argc,char **argv) {
   printf("Finding weakest links\n");
   for (i = 0; i < Nvox; i++) {
     h = zonenum[jumped[i]];
-    for (j = 0; j < 6; j++) {
-      testpart = p[i].adj[j];
-      if (h != zonenum[jumped[testpart]]) {	
-	    if (p[testpart].dens < p[i].dens) {
-	      /* there could be a weakest link through testpart */
-	      already = 0;
-	      for (za = 0; za < zt[h].nadj; za++)
-	        if (zt[h].adj[za] == zonenum[jumped[testpart]]) {
-	          already = 1;
-	          if (p[testpart].dens < zt[h].slv[za]) {
-		        zt[h].slv[za] = p[testpart].dens;
+    if (p[i].dens < borderdens) {
+      for (j = 0; j < 6; j++) {
+        testpart = p[i].adj[j];
+        if (h != zonenum[jumped[testpart]]) {
+	      if (p[testpart].dens < p[i].dens) {
+	        /* there could be a weakest link through testpart */
+	        already = 0;
+	        for (za = 0; za < zt[h].nadj; za++)
+	          if (zt[h].adj[za] == zonenum[jumped[testpart]]) {
+	            already = 1;
+	            if (p[testpart].dens < zt[h].slv[za]) {
+		          zt[h].slv[za] = p[testpart].dens;
+	            }
 	          }
+	        if (already == 0) {
+	          zt[h].adj[zt[h].nadj] = zonenum[jumped[testpart]];
+	          zt[h].slv[zt[h].nadj] = p[testpart].dens;
+	          zt[h].nadj++;
 	        }
-	      if (already == 0) {
-	        zt[h].adj[zt[h].nadj] = zonenum[jumped[testpart]];
-	        zt[h].slv[zt[h].nadj] = p[testpart].dens;
-	        zt[h].nadj++;
 	      }
-	    }
-	    else {
-	      /* There could be a weakest link through i */
-	      already = 0;
-	      for (za = 0; za < zt[h].nadj; za++)
-	        if (zt[h].adj[za] == zonenum[jumped[testpart]]) {
-	          already = 1;
-	          if (p[i].dens < zt[h].slv[za]) {
-		        zt[h].slv[za] = p[i].dens;
+	      else {
+	        /* There could be a weakest link through i */
+	        already = 0;
+	        for (za = 0; za < zt[h].nadj; za++)
+	          if (zt[h].adj[za] == zonenum[jumped[testpart]]) {
+	            already = 1;
+	            if (p[i].dens < zt[h].slv[za]) {
+		          zt[h].slv[za] = p[i].dens;
+	            }
 	          }
+	        if (already == 0) {
+	          zt[h].adj[zt[h].nadj] = zonenum[jumped[testpart]];
+	          zt[h].slv[zt[h].nadj] = p[i].dens;
+	          zt[h].nadj++;
 	        }
-	      if (already == 0) {
-	        zt[h].adj[zt[h].nadj] = zonenum[jumped[testpart]];
-	        zt[h].slv[zt[h].nadj] = p[i].dens;
-	        zt[h].nadj++;
 	      }
-	    }
+        }
       }
     }
   }

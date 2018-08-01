@@ -51,7 +51,7 @@ class VoxelVoids:
 
             # get the weights for data and randoms
             cat.weight = cat.get_weights(fkp=0, noz=1, cp=1, syst=1)
-            ran.weight = ran.get_weights(fkp=0, noz=1, cp=1, syst=1)
+            ran.weight = ran.get_weights(fkp=0, noz=0, cp=0, syst=0)
 
             # relative weighting of galaxies and randoms
             sum_wgal = np.sum(cat.weight)
@@ -79,7 +79,7 @@ class VoxelVoids:
             # put the data into a box
             self.make_sky_box()
 
-    def make_sky_box(self, padding=200.):
+    def make_sky_box(self, padding=50.):
 
         dx = max(self.ran.x) - min(self.ran.x)
         dy = max(self.ran.y) - min(self.ran.y)
@@ -96,19 +96,21 @@ class VoxelVoids:
         # determine an appropriate bin size
         mean_dens = self.cat.size / box**3.
         # starting estimate
-        self.nbins = int(np.floor(box / (0.25 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
+        self.nbins = int(np.floor(box / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
         self.binsize = box / self.nbins
         self.xmin = xmin
         self.ymin = ymin
         self.zmin = zmin
         self.box_length = box
+        print('Box size [Mpc/h]: %0.3f' % self.box_length)
+        print('Initial bin size [Mpc/h]: %0.2f, nbins = %d' % (self.binsize, self.nbins))
         # now approximately check true survey volume and recalculate mean density
         ran = self.ran
         rhor = self.allocate_gal_cic(ran)
-        filled_cells = np.sum(rhor.flatten() >= 0.)
+        filled_cells = np.sum(rhor.flatten() >= self.ran_min)
         mean_dens = self.cat.size / (filled_cells * self.binsize**3.)
         # thus get better choice of bin size
-        self.nbins = int(np.floor(box / (0.25 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
+        self.nbins = int(np.floor(box / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
         self.binsize = box / self.nbins
         self.xmin = xmin
         self.ymin = ymin
@@ -119,11 +121,8 @@ class VoxelVoids:
         smooth = mean_dens ** (-1./3)
         self.smooth = smooth
 
-        print('Box size [Mpc/h]:', box)
-        print('Bin size [Mpc/h]: %0.2f, nbins = %d' % (self.binsize, self.nbins))
-        print('Smoothing scale [Mpc/h]:', smooth)
-
-        # return xmin, ymin, zmin, box, smooth
+        print('Final bin size [Mpc/h]: %0.2f, nbins = %d' % (self.binsize, self.nbins))
+        print('Smoothing scale [Mpc/h]: %0.2f' % self.smooth)
 
     def allocate_gal_cic(self, c):
         """ Allocate galaxies to grid cells using a CIC scheme in order to determine galaxy
@@ -192,14 +191,14 @@ class VoxelVoids:
             delta = rhog - self.alpha * rhor
             w = np.where(rhor > self.ran_min)
             delta[w] = delta[w] / (self.alpha * rhor[w])
-            w2 = np.where((rhor <= self.ran_min))  # possible divide-by-zero sites, density estimate not reliable here
+            w2 = np.where((rhor <= self.ran_min))  # empty or boundary cells; set to mean density and flag later
             delta[w2] = 0.
             rhog = delta + 1.
             del w
-            del w2
             # then smooth with pre-determined smoothing scale
             print('Smoothing galaxy density field ...')
             rhog = gaussian_filter(rhog, self.smooth / self.binsize, mode='nearest')
+            rhog[w2] = 0.9e30  # flag the empty cells
 
         self.rhog = rhog
 
