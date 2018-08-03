@@ -423,7 +423,7 @@ int main(int argc,char **argv) {
   zonelist2 = (int *)malloc(nzones*sizeof(int));
   sorter = (realT *)malloc((nzones+1)*sizeof(realT));
 
-  for (h = 0; h< nzones; h++) {
+  for (h = 0; h<nzones; h++) {
     inyet[h] = 0;
     inyet2[h] = 0;
   }
@@ -493,7 +493,7 @@ int main(int argc,char **argv) {
       }
 
       if (nl == 0) {
-	    beaten = 1;
+        beaten = 1;
 	    z[h].leak = maxdens;
 	    continue;
       }
@@ -558,8 +558,8 @@ int main(int argc,char **argv) {
 	    fprintf(vod,"%d %lf ",nhl2, lowvol/p[z[h].core].dens);
 	    for (h2 = 0; h2 < nhl2; h2++) {
 	      zonelist[nhl] = zonelist2[h2];
-	      inyet[zonelist2[h2]] = 1;
-	      nhl++;
+          inyet[zonelist2[h2]] = 1;
+          nhl++;
 	      z[h].npjoin += z[zonelist2[h2]].np;
 	      fprintf(vod,"%d ",zonelist2[h2]);
 	    }
@@ -580,8 +580,6 @@ int main(int argc,char **argv) {
     if (z[h].denscontrast > maxdenscontrast) {
       maxdenscontrast = (realT)z[h].denscontrast;
     }
-
-    /* Don't sort; want the core zone to be first */
 
     if (nhlcount > 0) { /* Outputs the number of zones in large voids */
       printf(" h%d:%d\n",h,nhl);
@@ -614,7 +612,6 @@ int main(int argc,char **argv) {
   }
     
   /* Text output file */
-
   txt = fopen(txtfile,"w");
   fprintf(txt,"%d particles, %d vloidsters\n", np, nvoidsreal);
   if (obo == 'v') {

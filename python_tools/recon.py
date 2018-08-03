@@ -39,7 +39,7 @@ class Recon:
 
             # get the weights for data and randoms
             cat.weight = cat.get_weights(fkp=1, noz=1, cp=1, syst=1)
-            ran.weight = ran.get_weights(fkp=1, noz=1, cp=1, syst=1)  # check with Julian?
+            ran.weight = ran.get_weights(fkp=1, noz=0, cp=0, syst=0)
 
             # compute Cartesian positions for data and randoms
             cat.dist = cosmo.get_comoving_distance(cat.redshift)

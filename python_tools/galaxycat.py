@@ -83,7 +83,7 @@ class GalaxyCatalogue:
                 self.weight_fkp = np.ones(self.size)
                 self.weight_cp = np.ones(self.size)
                 self.weight_noz = np.ones(self.size)
-                self.weight_syst = np.ones(self.size)
+                self.weight_systot = np.ones(self.size)
                 self.veto = np.ones(self.size)
 
                 if special_patchy:  # special routine for dealing with unusual PATCHY mock data formatting
@@ -110,7 +110,7 @@ class GalaxyCatalogue:
                         self.weight_noz = data[:, posn_cols[2] + count]
                         count += 1
                     if systot:
-                        self.weight_syst = data[:, posn_cols[2] + count]
+                        self.weight_systot = data[:, posn_cols[2] + count]
                         count += 1
                     if veto:
                         self.veto = data[:, posn_cols[2] + count]
@@ -139,6 +139,6 @@ class GalaxyCatalogue:
         if fkp:
             weights *= self.weight_fkp
         if syst:
-            weights *= self.weight_syst
+            weights *= self.weight_systot
 
         return weights
