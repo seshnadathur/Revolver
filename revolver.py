@@ -60,7 +60,8 @@ if parms.do_recon:
         cat.ra, cat.dec, cat.redshift = recon.get_new_radecz(recon.cat)
 
     # save real-space positions to file
-    root = parms.tracer_file.replace('.txt', '').replace('.dat', '').replace('.npy', '').replace('.fits', '')
+    # root = parms.tracer_file.replace('.txt', '').replace('.dat', '').replace('.npy', '').replace('.fits', '')
+    root = parms.output_folder + parms.handle + '_pos'
     recon.export_shift_pos(root, rsd_only=True)
 
     print(" ==== Done reconstruction ====\n")
