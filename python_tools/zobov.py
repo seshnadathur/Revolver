@@ -23,7 +23,7 @@ class ZobovVoids:
                  min_dens_cut=1.0, void_min_num=1, use_barycentres=True, void_prefix="", find_clusters=False,
                  max_dens_cut=1.0, cluster_min_num=1, cluster_prefix=""):
 
-        print(" ==== Starting the void-finding with ZOBOV ==== ")
+        print("\n ==== Starting the void-finding with ZOBOV ==== ")
 
         # the prefix/handle used for all output file names
         self.handle = handle
@@ -743,6 +743,7 @@ class ZobovVoids:
 
             # ---Step 6: if finding clusters, create the files required--- #
             if self.find_clusters:
+                print(" ==== bonus: overdensity-finding with ZOBOV ==== ")
                 modvols[edgemask] = 0.9e30
                 # and write to c.vol file
                 with open("./%sc.vol" % self.handle, 'w') as F:
@@ -763,7 +764,7 @@ class ZobovVoids:
 
         # ---if finding clusters, run jozov again--- #
         if self.find_clusters:
-            print("Additionally, running watershed cluster-finder")
+            print(" ==== bonus: overdensity-finding with ZOBOV ==== ")
             cmd = ["./bin/jozovtrvol", "c", self.handle, str(0), str(0)]
             log = open(logfile, 'a')
             subprocess.call(cmd)
@@ -780,6 +781,8 @@ class ZobovVoids:
         for fileName in glob.glob("./" + self.handle + "*"):
             cmd = ["mv", fileName, "%s." % raw_dir]
             subprocess.call(cmd)
+
+        print(" ==== Finished with ZOBOV-based method ==== ")
 
     def postprocess_voids(self):
         """Method to post-process raw ZOBOV output to obtain discrete set of non-overlapping voids. This method

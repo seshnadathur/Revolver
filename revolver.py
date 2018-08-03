@@ -69,9 +69,6 @@ if parms.do_recon:
     # galaxy input for void-finding will now be read from new file with shifted data
     # so we change the following options
     parms.tracer_file = root + '_shift.npy'
-    parms.posn_cols = [0, 1, 2]
-    parms.boss_like = False
-    parms.special_patchy = False
 
 if parms.run_voxelvoids:
 
