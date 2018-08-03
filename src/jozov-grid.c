@@ -130,7 +130,7 @@ int main(int argc,char **argv) {
     if (obo=='c') p[i].dens = 1./p[i].dens;
   }
   fclose(dens);
-  // printf("Debug: dens[0] = %0.4e, dens[%ld] = %0.4e\n",p[0].dens,Nvox-1,p[Nvox-1].dens);
+  /* printf("Debug: dens[0] = %0.4e, dens[%ld] = %0.4e\n",p[0].dens,Nvox-1,p[Nvox-1].dens); */
 
   /* Set the adjacencies */
   printf("Setting the voxel adjacencies ...\n"); FF;
@@ -215,7 +215,7 @@ int main(int argc,char **argv) {
   for (i = 0; i < Nvox; i++) 
     if (numinh[i] > 0) {
       nzones++;	
-      //if (p[i].dens < borderdens) nrealzones++;
+      /* if (p[i].dens < borderdens) nrealzones++; */
     }
   printf("%d zones found...\n",nzones);
 
