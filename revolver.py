@@ -4,6 +4,7 @@ import sys
 import imp
 import numpy as np
 from python_tools.zobov import ZobovVoids
+from python_tools.voxelvoids import VoxelVoids
 from python_tools.galaxycat import GalaxyCatalogue
 from python_tools.recon import Recon
 
@@ -70,6 +71,48 @@ if parms.do_recon:
     parms.posn_cols = [0, 1, 2]
     parms.boss_like = False
     parms.special_patchy = False
+
+if parms.run_voxelvoids:
+
+    if parms.do_recon:
+        # new tracer file after reconstruction only contains single consolidated weights column
+        cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
+                              boss_like=False, special_patchy=False, posn_cols=[0, 1, 2], fkp=0, noz=0, cp=0,
+                              systot=1, veto=0)
+    else:
+        # no reconstruction was performed: use original weights specification
+        cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
+                              boss_like=parms.boss_like, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
+                              fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)
+
+    if not parms.is_box:
+        # randoms are required
+        if not os.access(parms.randoms_file, os.F_OK):
+            sys.exit('ERROR: randoms data required but randoms file not provided or not found! Aborting.')
+
+        # initializing randoms: note that in general we assume only FKP and systot weights are provided for randoms
+        # this is overridden for special input formats (if either boss_like and special_patchy are True)
+        ran = GalaxyCatalogue(parms.randoms_file, is_box=False, box_length=parms.box_length, boss_like=parms.boss_like,
+                              randoms=True, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
+                              fkp=parms.fkp, noz=0, cp=0, systot=1, veto=0)
+
+        # perform basic cuts on the data
+        wgal = np.logical_and((cat.veto == 1), (parms.z_min < cat.redshift) & (cat.redshift < parms.z_max))
+        wran = np.logical_and((ran.veto == 1), (parms.z_min < ran.redshift) & (ran.redshift < parms.z_max))
+        cat.cut(wgal)
+        ran.cut(wran)
+    else:
+        # no randoms are required, so set to zero
+        ran = 0.
+
+    # initialize ...
+    voidcat = VoxelVoids(cat, ran, handle=parms.handle, output_folder=parms.output_folder, is_box=parms.is_box,
+                         box_length=parms.box_length, omega_m=parms.omega_m, min_dens_cut=parms.min_dens_cut,
+                         use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
+                         find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
+                         cluster_prefix=parms.cluster_prefix)
+    # ... and run the void-finder
+    voidcat.run_voidfinder()
 
 if parms.run_zobov:
 
