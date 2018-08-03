@@ -12,7 +12,7 @@ qhull/src/qdelaunay
 qhull/src/qhalf
 qhull/src/qhull
 qhull/src/qvoronoi
-qhull/src/rbox
+
 qhull/src/libqhull.a
 python_tools/*.pyc
 parameters/*.pyc
