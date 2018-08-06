@@ -257,6 +257,8 @@ class VoxelVoids:
             # conservative cut on basis of void centre location
             select = np.in1d(rawdata[:, 2], np.arange(nvox)[self.mask_cut], invert=True)
             rawdata = rawdata[select, :]
+        # and further cut to remove all 'edge' voids
+        rawdata = rawdata[rawdata[:, 1] == 0]
 
         # load the void hierarchy data to record void leak density ratio, even though this is
         # possibly not useful for anything at all
