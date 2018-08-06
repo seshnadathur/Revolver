@@ -33,6 +33,7 @@ Requirements:
    - scipy 0.18.1
    - healpy 1.9.0
    - pyfftw 0.10.3
+   - astropy 1.0.6
 
 Earlier versions of these packages may lack some required functionality (especially numpy and scipy). 
    
