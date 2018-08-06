@@ -67,7 +67,6 @@ if parms.do_recon:
     print(" ==== Done reconstruction ====\n")
 
     # galaxy input for void-finding will now be read from new file with shifted data
-    # so we change the following options
     parms.tracer_file = root + '_shift.npy'
 
 if parms.run_voxelvoids:
@@ -119,16 +118,28 @@ if parms.run_zobov:
         parms.void_prefix = parms.void_prefix + '-zobov'
         parms.cluster_prefix = parms.cluster_prefix + '-zobov'
 
-    voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
-                         output_folder=parms.output_folder, is_box=parms.is_box, boss_like=parms.boss_like,
-                         special_patchy=parms.special_patchy, posn_cols=parms.posn_cols, box_length=parms.box_length,
-                         omega_m=parms.omega_m, mask_file=parms.mask_file, use_z_wts=parms.use_z_wts,
-                         use_ang_wts=parms.use_ang_wts, z_min=parms.z_min, z_max=parms.z_max, mock_file=parms.mock_file,
-                         mock_dens_ratio=parms.mock_dens_ratio, min_dens_cut=parms.min_dens_cut,
-                         void_min_num=parms.void_min_num, use_barycentres=parms.use_barycentres,
-                         void_prefix=parms.void_prefix, find_clusters=parms.find_clusters,
-                         max_dens_cut=parms.max_dens_cut, cluster_min_num=parms.cluster_min_num,
-                         cluster_prefix=parms.cluster_prefix)
+    if parms.do_recon:
+        voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
+                             output_folder=parms.output_folder, is_box=parms.is_box, boss_like=False,
+                             special_patchy=False, posn_cols=[0, 1, 2], box_length=parms.box_length,
+                             omega_m=parms.omega_m, mask_file=parms.mask_file, use_z_wts=parms.use_z_wts,
+                             use_ang_wts=parms.use_ang_wts, z_min=parms.z_min, z_max=parms.z_max,
+                             mock_file=parms.mock_file, mock_dens_ratio=parms.mock_dens_ratio,
+                             min_dens_cut=parms.min_dens_cut, void_min_num=parms.void_min_num,
+                             use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
+                             find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
+                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix)
+    else:
+        voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
+                             output_folder=parms.output_folder, is_box=parms.is_box, boss_like=parms.boss_like,
+                             special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
+                             box_length=parms.box_length, omega_m=parms.omega_m, mask_file=parms.mask_file,
+                             use_z_wts=parms.use_z_wts, use_ang_wts=parms.use_ang_wts, z_min=parms.z_min,
+                             z_max=parms.z_max, mock_file=parms.mock_file, mock_dens_ratio=parms.mock_dens_ratio,
+                             min_dens_cut=parms.min_dens_cut, void_min_num=parms.void_min_num,
+                             use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
+                             find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
+                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix)
 
     if parms.do_tessellation:
         # write the tracer information to ZOBOV-readable format

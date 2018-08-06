@@ -400,7 +400,7 @@ class VoxelVoids:
         avgdens = np.zeros(len(rawdata))
         rhoflat = self.rhog.flatten()
         for i in range(len(rawdata)):
-            member_voxels = np.fromstring(hierarchy[i], dtype=int, sep=' ')[1:] 
+            member_voxels = np.fromstring(hierarchy[i], dtype=int, sep=' ')[1:]
             member_dens = rhoflat[member_voxels]
             avgdens[i] = np.mean(member_dens) - 1.
         # record cluster lambda value, even though usefulness of this has only been shown for ZOBOV clusters so far
