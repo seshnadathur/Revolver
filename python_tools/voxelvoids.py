@@ -326,7 +326,7 @@ class VoxelVoids:
                 barycentres[:, 2] = redshift
 
         # create output array
-        output = np.zeros((len(rawdata), 10))
+        output = np.zeros((len(rawdata), 9))
         output[:, 0] = rawdata[:, 0]
         output[:, 1] = xpos
         output[:, 2] = ypos
@@ -336,7 +336,6 @@ class VoxelVoids:
         output[:, 6] = avgdens
         output[:, 7] = void_lambda
         output[:, 8] = densratio
-        output[:, 9] = rawdata[:, 1]
 
         # cut on minimum density criterion
         output = output[rawdata[:, 3] < self.min_dens_cut]
@@ -348,17 +347,17 @@ class VoxelVoids:
         catalogue_file = self.output_folder + self.void_prefix + '_cat.txt'
         header = '%d voxels, %d voids\n' % (nvox, len(output))
         if self.is_box:
-            header += 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio EdgeFlag'
+            header += 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
         else:
-            header += 'VoidID RA Dec z R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio EdgeFlag'
-        np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f %d', header=header)
+            header += 'VoidID RA Dec z R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
+        np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f', header=header)
 
         if self.use_barycentres:
             if not os.access(self.output_folder + "barycentres/", os.F_OK):
                 os.makedirs(self.output_folder + "barycentres/")
             catalogue_file = self.output_folder + 'barycentres/' + self.void_prefix + '_baryC_cat.txt'
             output[:, 1:4] = barycentres
-            np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f %d',
+            np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f',
                        header=header)
 
     def postprocess_clusters(self):
@@ -429,6 +428,7 @@ class VoxelVoids:
         output[:, 6] = avgdens
         output[:, 7] = cluster_lambda
         output[:, 8] = densratio
+
         # cut on maximum density criterion
         output = output[rawdata[:, 3] > self.max_dens_cut]
         print('Total %d clusters pass basic density cuts' % len(output))
@@ -437,10 +437,10 @@ class VoxelVoids:
         catalogue_file = self.output_folder + self.cluster_prefix + '_cat.txt'
         header = '%d voxels, %d clusters\n' % (nvox, len(output))
         if self.is_box:
-            header += 'ClusterID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio EdgeFlag'
+            header += 'ClusterID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio'
         else:
-            header += 'ClusterID RA Dec z R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio EdgeFlag'
-        np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f %d', header=header)
+            header += 'ClusterID RA Dec z R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio'
+        np.savetxt(catalogue_file, output, fmt='%d %0.4f %0.4f %0.4f %0.4f %0.6f %0.6f %0.6f %0.6f', header=header)
 
     def voxel_position(self, voxel):
 
