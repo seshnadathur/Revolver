@@ -2,6 +2,7 @@ from __future__ import print_function
 import numpy as np
 import os
 import json
+import sys
 from scipy.ndimage.filters import gaussian_filter
 from scipy.fftpack import fftfreq
 from cosmology import Cosmology
@@ -21,6 +22,7 @@ class Recon:
         print('Using values of growth rate f = %0.3f and bias b = %0.3f' % (f, bias))
         print('Number of bins:', nbins)
         print('Smoothing scale [Mpc/h]:', smooth)
+        sys.stdout.flush()
 
         # initialize the basics common to all analyses
         self.nbins = nbins
@@ -83,6 +85,7 @@ class Recon:
             print('Box size [Mpc/h]:', self.box)
             print('Bin size [Mpc/h]:', self.binsize)
 
+        sys.stdout.flush()
         self.cat = cat
 
         # initialize a bunch of things to zero, will be set later
@@ -145,8 +148,10 @@ class Recon:
                 deltar = 0
             else:
                 print('Allocating randoms in cells...')
+                sys.stdout.flush()
                 deltar = self.allocate_gal_cic(ran)
                 print('Smoothing...')
+                sys.stdout.flush()
                 deltar = gaussian_filter(deltar, smooth/binsize, mode='nearest')
 
             # -- Initialize FFT objects and load wisdom if available
@@ -158,6 +163,7 @@ class Recon:
                 pyfftw.import_wisdom(wisd)
                 g.close()
             print('Creating FFTW objects...')
+            sys.stdout.flush()
             fft_obj = pyfftw.FFTW(delta, delta, axes=[0, 1, 2], threads=self.nthreads)
             ifft_obj = pyfftw.FFTW(deltak, psi_x, axes=[0, 1, 2],
                                    threads=self.nthreads,
@@ -175,8 +181,10 @@ class Recon:
         # -- Allocate galaxies and randoms to grid with CIC method
         # -- using new positions
         print('Allocating galaxies in cells...')
+        sys.stdout.flush()
         deltag = self.allocate_gal_cic(cat)
         print('Smoothing galaxy density field ...')
+        sys.stdout.flush()
         if self.is_box:
             deltag = gaussian_filter(deltag, smooth/binsize, mode='wrap')  # mode='wrap' for PBC
         else:
@@ -185,6 +193,7 @@ class Recon:
             deltag = gaussian_filter(deltag, smooth / binsize, mode='nearest')
 
         print('Computing density fluctuations, delta...')
+        sys.stdout.flush()
         if self.is_box:
             # simply normalize based on (constant) mean galaxy number density
             delta[:] = (deltag * self.box**3.)/(cat.size * self.binsize**3.) - 1.
@@ -204,6 +213,7 @@ class Recon:
         del deltag  # deltag no longer required anywhere
 
         print('Fourier transforming delta field...')
+        sys.stdout.flush()
         fft_obj(input_array=delta, output_array=delta)
 
         # -- delta/k**2
@@ -217,6 +227,7 @@ class Recon:
 
         # now solve the basic building block: IFFT[-i k delta(k)/(b k^2)]
         print('Inverse Fourier transforming to get psi...')
+        sys.stdout.flush()
         deltak[:] = delta * -1j * k[:, None, None] / bias
         ifft_obj(input_array=deltak, output_array=psi_x)
         deltak[:] = delta * -1j * k[None, :, None] / bias
