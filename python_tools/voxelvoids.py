@@ -222,15 +222,9 @@ class VoxelVoids:
             rhogflat.tofile(F, format='%f')
 
         # now call jozov-grid
-        logfolder = self.output_folder + 'log/'
-        if not os.access(logfolder, os.F_OK):
-            os.makedirs(logfolder)
-        logfile = logfolder + self.handle + '-voxel.out'
         cmd = ["./bin/jozov-grid", "v", raw_dir + "density_n%d.dat" % self.nbins,
                raw_dir + self.handle, str(self.nbins)]
-        log = open(logfile, 'w')
         subprocess.call(cmd)
-        log.close()
 
         # postprocess void data
         self.postprocess_voids()

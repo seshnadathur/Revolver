@@ -772,7 +772,7 @@ class ZobovVoids:
         # ---run jozov to perform the void-finding--- #
         cmd = ["./bin/jozovtrvol", "v", self.handle, str(0), str(0)]
         log = open(logfile, 'a')
-        subprocess.call(cmd)
+        subprocess.call(cmd, stdout=log, stderr=log)
         log.close()
         # this call to (modified version of) jozov sets NO density threshold, so
         # ALL voids are merged without limit and the FULL merged void heirarchy is
@@ -784,7 +784,7 @@ class ZobovVoids:
             sys.stdout.flush()
             cmd = ["./bin/jozovtrvol", "c", self.handle, str(0), str(0)]
             log = open(logfile, 'a')
-            subprocess.call(cmd)
+            subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
 
         # ---clean up: remove unnecessary files--- #
