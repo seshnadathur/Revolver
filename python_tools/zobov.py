@@ -24,6 +24,7 @@ class ZobovVoids:
                  max_dens_cut=1.0, cluster_min_num=1, cluster_prefix=""):
 
         print("\n ==== Starting the void-finding with ZOBOV ==== ")
+        sys.stdout.flush()
 
         # the prefix/handle used for all output file names
         self.handle = handle
@@ -45,6 +46,7 @@ class ZobovVoids:
 
         # load tracer information
         print("Loading tracer positions from file %s" % tracer_file)
+        sys.stdout.flush()
         if boss_like:  # FITS format input file
             if self.is_box:
                 print('Both boss_like and is_box cannot be simultaneously True! Setting is_box = False')
@@ -76,6 +78,7 @@ class ZobovVoids:
                 tracers = tracers[veto_cut, :]
             self.num_tracers = tracers.shape[0]
             print("%d tracers found" % self.num_tracers)
+            sys.stdout.flush()
 
             # keep only the tracer position information
             tracers = tracers[:, posn_cols]
@@ -121,6 +124,7 @@ class ZobovVoids:
             # sky mask file (should be in Healpy FITS format)
             if not os.access(mask_file, os.F_OK):
                 print("Sky mask not provided or not found, generating approximate one")
+                sys.stdout.flush()
                 self.mask_file = self.output_folder + self.handle + '_mask.fits'
                 self.f_sky = self.generate_mask()
             else:
@@ -133,6 +137,7 @@ class ZobovVoids:
                 pixels = hp.ang2pix(nside, np.deg2rad(90 - dec), np.deg2rad(ra))
                 if np.any(mask[pixels] == 0):
                     print('Galaxies exist where mask=0. Removing these to avoid errors later.')
+                    sys.stdout.flush()
                     all_indices = np.arange(len(self.tracers))
                     bad_inds = np.where(mask[pixels] == 0)[0]
                     good_inds = all_indices[np.logical_not(np.in1d(all_indices, bad_inds))]
@@ -146,13 +151,15 @@ class ZobovVoids:
             # NOTE: the following line will not work with older versions of numpy!!
             unique_tracers = np.unique(self.tracers, axis=0)
             if unique_tracers.shape[0] < self.tracers.shape[0]:
-                print(
-                    'Removing %d galaxies with duplicate positions' % (self.tracers.shape[0] - unique_tracers.shape[0]))
+                print('Removing %d galaxies with duplicate positions' %
+                      (self.tracers.shape[0] - unique_tracers.shape[0]))
+                sys.stdout.flush()
             self.tracers = unique_tracers
 
             # update galaxy stats
             self.num_tracers = self.tracers.shape[0]
             print('Kept %d tracers after all cuts' % self.num_tracers)
+            sys.stdout.flush()
 
             # calculate mean density
             self.r_near = self.cosmo.get_comoving_distance(self.z_min)
@@ -173,16 +180,19 @@ class ZobovVoids:
                     # no buffer mocks provided, so generate new
                     print('Generating buffer mocks around survey edges ...')
                     print('\tbuffer mocks will have %0.1f x the galaxy number density' % mock_dens_ratio)
+                    sys.stdout.flush()
                     self.mock_dens_ratio = mock_dens_ratio
                     self.generate_buffer()
                 elif not os.access(mock_file, os.F_OK):
                     print('Could not find file %s containing buffer mocks!' % mock_file)
                     print('Generating buffer mocks around survey edges ...')
                     print('\tbuffer mocks will have %0.1f x the galaxy number density' % mock_dens_ratio)
+                    sys.stdout.flush()
                     self.mock_dens_ratio = mock_dens_ratio
                     self.generate_buffer()
                 else:
                     print('Loading pre-computed buffer mocks from file %s' % mock_file)
+                    sys.stdout.flush()
                     if '.npy' in mock_file:
                         buffers = np.load(mock_file)
                     else:
@@ -416,6 +426,7 @@ class ZobovVoids:
             self.num_mocks += num_low_mocks
         else:
             print("\tno buffer mocks required at low-redshift cap")
+        sys.stdout.flush()
         # ------------------------------------------------------------- #
 
         # ------ Step 3: buffer particles along the survey edges-------- #
@@ -464,6 +475,7 @@ class ZobovVoids:
             self.num_mocks += num_bound_mocks
         else:
             print("\tdata covers the full sky, no buffer mocks required along edges")
+        sys.stdout.flush()
         # ------------------------------------------------------------- #
 
         # determine the size of the cubic box required
@@ -510,6 +522,7 @@ class ZobovVoids:
         print('Buffer mocks written to file %s' % mock_file)
         np.save(mock_file, buffers)
         self.mock_file = mock_file
+        sys.stdout.flush()
 
         # now add buffer particles to tracers
         self.tracers = np.vstack([self.tracers, buffers])
@@ -525,6 +538,7 @@ class ZobovVoids:
         """
 
         print('Determining survey redshift selection function ...')
+        sys.stdout.flush()
 
         # first determine the equal volume bins
         r_near = self.cosmo.get_comoving_distance(self.z_min)
@@ -629,6 +643,7 @@ class ZobovVoids:
         # ---run the tessellation--- #
         if use_vozisol:
             print("Calling vozisol to do the tessellation...")
+            sys.stdout.flush()
             logfolder = self.output_folder + 'log/'
             if not os.access(logfolder, os.F_OK):
                 os.makedirs(logfolder)
@@ -644,6 +659,7 @@ class ZobovVoids:
                 sys.exit("Something went wrong with the tessellation. Aborting ...")
         else:
             print("Calling vozinit, voz1b1 and voztie to do the tessellation...")
+            sys.stdout.flush()
 
             # ---Step 1: call vozinit to write the script used to call voz1b1 and voztie--- #
             logfolder = self.output_folder + 'log/'
@@ -684,6 +700,7 @@ class ZobovVoids:
                 log.close()
 
         print("Tessellation done.\n")
+        sys.stdout.flush()
 
         # ---prepare files for running jozov--- #
         if self.is_box:
@@ -743,7 +760,6 @@ class ZobovVoids:
 
             # ---Step 6: if finding clusters, create the files required--- #
             if self.find_clusters:
-                print(" ==== bonus: overdensity-finding with ZOBOV ==== ")
                 modvols[edgemask] = 0.9e30
                 # and write to c.vol file
                 with open("./%sc.vol" % self.handle, 'w') as F:
@@ -765,6 +781,7 @@ class ZobovVoids:
         # ---if finding clusters, run jozov again--- #
         if self.find_clusters:
             print(" ==== bonus: overdensity-finding with ZOBOV ==== ")
+            sys.stdout.flush()
             cmd = ["./bin/jozovtrvol", "c", self.handle, str(0), str(0)]
             log = open(logfile, 'a')
             subprocess.call(cmd)
@@ -783,6 +800,7 @@ class ZobovVoids:
             subprocess.call(cmd)
 
         print(" ==== Finished with ZOBOV-based method ==== ")
+        sys.stdout.flush()
 
     def postprocess_voids(self):
         """Method to post-process raw ZOBOV output to obtain discrete set of non-overlapping voids. This method
@@ -992,6 +1010,7 @@ class ZobovVoids:
         """
 
         print("Identified %d voids. Now extracting circumcentres ..." % num_struct)
+        sys.stdout.flush()
 
         # set the filenames
         densities_file = self.output_folder + "rawZOBOV/" + self.handle + ".vol"
@@ -1176,6 +1195,7 @@ class ZobovVoids:
         """
 
         print('Now extracting void barycentres ...\n')
+        sys.stdout.flush()
 
         # set the filenames
         vol_file = self.output_folder + 'rawZOBOV/' + self.handle + '.trvol'
@@ -1336,6 +1356,7 @@ class ZobovVoids:
         """
 
         print('Post-processing superclusters ...\n')
+        sys.stdout.flush()
 
         # ------------NOTE----------------- #
         # Actually, the current code is built from previous code that did have merging

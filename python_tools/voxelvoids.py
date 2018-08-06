@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import sys
 import numpy as np
 import subprocess
 from scipy.ndimage.filters import gaussian_filter
@@ -13,6 +14,7 @@ class VoxelVoids:
                  cluster_prefix=""):
 
         print("\n ==== Starting the void-finding with voxel-based method ==== ")
+        sys.stdout.flush()
 
         self.is_box = is_box
         self.handle = handle
@@ -78,6 +80,7 @@ class VoxelVoids:
 
             # put the data into a box
             self.make_sky_box()
+            sys.stdout.flush()
 
     def make_sky_box(self, padding=50.):
 
@@ -174,16 +177,19 @@ class VoxelVoids:
 
         # measure the galaxy density field
         print('Allocating galaxies in cells...')
+        sys.stdout.flush()
         rhog = self.allocate_gal_cic(self.cat)
         if self.is_box:
             # smooth with pre-determined smoothing scale
             print('Smoothing galaxy density field ...')
+            sys.stdout.flush()
             rhog = gaussian_filter(rhog, self.smooth / self.binsize, mode='wrap')
 
             # then normalize number counts to get density in units of mean (i.e. 1 + delta)
             rhog = (rhog * self.box_length ** 3.) / (self.cat.size * self.binsize ** 3.)
         else:
             print('Allocating randoms in cells...')
+            sys.stdout.flush()
             rhor = self.allocate_gal_cic(self.ran)
             # identify "empty" cells for later cuts on void catalogue
             mask_cut = np.where((rhor.flatten() <= self.ran_min))
@@ -191,6 +197,7 @@ class VoxelVoids:
 
             # smooth both galaxy and randoms with pre-determined smoothing scale
             print('Smoothing density fields ...')
+            sys.stdout.flush()
             rhog = gaussian_filter(rhog, self.smooth / self.binsize, mode='nearest')
             rhor = gaussian_filter(rhor, self.smooth / self.binsize, mode='nearest')
             w = np.where(rhor > self.ran_min)
@@ -231,6 +238,7 @@ class VoxelVoids:
         # if reqd, find superclusters
         if self.find_clusters:
             print("\n ==== bonus: overdensity-finding with voxel-based method ==== ")
+            sys.stdout.flush()
             logfolder = self.output_folder + 'log/'
             if not os.access(logfolder, os.F_OK):
                 os.makedirs(logfolder)
@@ -244,6 +252,7 @@ class VoxelVoids:
             self.postprocess_clusters()
 
         print(" ==== Finished with voxel-based method ==== ")
+        sys.stdout.flush()
 
     def postprocess_voids(self):
 
@@ -341,6 +350,7 @@ class VoxelVoids:
         output = output[rawdata[:, 3] < self.min_dens_cut]
         barycentres = barycentres[rawdata[:, 3] < self.min_dens_cut]
         print('Total %d voids pass basic density cuts' % len(output))
+        sys.stdout.flush()
         # sort in increasing order of minimum density
         output = output[np.argsort(output[:, 5])]
         # save to file
@@ -432,6 +442,7 @@ class VoxelVoids:
         # cut on maximum density criterion
         output = output[rawdata[:, 3] > self.max_dens_cut]
         print('Total %d clusters pass basic density cuts' % len(output))
+        sys.stdout.flush()
         # sort in decreasing order of maximum density
         output = output[np.argsort(output[:, 5])[::-1]]
         catalogue_file = self.output_folder + self.cluster_prefix + '_cat.txt'
