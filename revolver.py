@@ -114,6 +114,11 @@ if parms.run_voxelvoids:
 
 if parms.run_zobov:
 
+    if parms.run_voxelvoids:
+        # need to differentiate the output file names
+        parms.void_prefix = 'zobov' + parms.void_prefix
+        parms.cluster_prefix = 'zobov' + parms.cluster_prefix
+
     voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
                          output_folder=parms.output_folder, is_box=parms.is_box, boss_like=parms.boss_like,
                          special_patchy=parms.special_patchy, posn_cols=parms.posn_cols, box_length=parms.box_length,
