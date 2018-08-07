@@ -82,8 +82,8 @@ class Recon:
             self.zmin = 0
             self.box = box_length
             self.binsize = self.box / self.nbins
-            print('Box size [Mpc/h]:', self.box)
-            print('Bin size [Mpc/h]:', self.binsize)
+            print('Box size [Mpc/h]: %0.2f' % self.box)
+            print('Bin size [Mpc/h]: %0.2f' % self.binsize)
 
         sys.stdout.flush()
         self.cat = cat
