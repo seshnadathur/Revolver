@@ -103,10 +103,10 @@ if parms.run_voxelvoids:
 
     # initialize ...
     voidcat = VoxelVoids(cat, ran, handle=parms.handle, output_folder=parms.output_folder, is_box=parms.is_box,
-                         box_length=parms.box_length, omega_m=parms.omega_m, min_dens_cut=parms.min_dens_cut,
-                         use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
-                         find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
-                         cluster_prefix=parms.cluster_prefix)
+                         box_length=parms.box_length, omega_m=parms.omega_m, z_min=parms.z_min, z_max=parms.z_max,
+                         min_dens_cut=parms.min_dens_cut, use_barycentres=parms.use_barycentres,
+                         void_prefix=parms.void_prefix, find_clusters=parms.find_clusters,
+                         max_dens_cut=parms.max_dens_cut, cluster_prefix=parms.cluster_prefix)
     # ... and run the void-finder
     voidcat.run_voidfinder()
 
