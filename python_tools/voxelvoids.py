@@ -255,14 +255,6 @@ class VoxelVoids:
         raw_dir = self.output_folder + "rawVoxelInfo/"
         rawdata = np.loadtxt(raw_dir + self.handle + ".txt", skiprows=2)
 
-        nvox = self.nbins ** 3
-        if not self.is_box:
-            # conservative cut on basis of void centre location
-            select = np.in1d(rawdata[:, 2], np.arange(nvox)[self.mask_cut], invert=True)
-            rawdata = rawdata[select, :]
-        # and further cut to remove all 'edge' voids
-        rawdata = rawdata[rawdata[:, 1] == 0]
-
         # load the void hierarchy data to record void leak density ratio, even though this is
         # possibly not useful for anything at all
         voidfile = raw_dir + self.handle + ".void"
@@ -276,6 +268,9 @@ class VoxelVoids:
         zonefile = raw_dir + self.handle + ".zone"
         with open(zonefile, 'r') as F:
             hierarchy = F.readlines()
+
+        nvox = self.nbins ** 3
+        masked_vox = np.arange(nvox)[self.mask_cut]
 
         # void effective radii
         vols = (rawdata[:, 5] * self.binsize ** 3.)
@@ -338,11 +333,22 @@ class VoxelVoids:
         output[:, 7] = void_lambda
         output[:, 8] = densratio
 
-        # cut on minimum density criterion
-        output = output[rawdata[:, 3] < self.min_dens_cut]
-        barycentres = barycentres[rawdata[:, 3] < self.min_dens_cut]
-        print('Total %d voids pass basic density cuts' % len(output))
+        # now apply various cuts
+        # remove voids that don't meet minimum density criterion
+        select = rawdata[:, 3] < self.min_dens_cut
+        if not self.is_box:
+            # remove all voids whose minimum density centre lies in a (conservatively) masked voxel
+            select_mask = np.in1d(rawdata[:, 2], masked_vox, invert=True)
+            # and further cut to remove all 'edge' voids
+            select_edge = rawdata[:, 1] == 0
+            select_skypos = np.logical_and(select_mask, select_edge)
+            select = np.logical_and(select, select_skypos)
+        output = output[select]
+        barycentres = barycentres[select]
+
+        print('Total %d voids pass basic cuts' % len(output))
         sys.stdout.flush()
+
         # sort in increasing order of minimum density
         output = output[np.argsort(output[:, 5])]
         # save to file
@@ -369,12 +375,6 @@ class VoxelVoids:
         raw_dir = self.output_folder + "rawVoxelInfo/"
         rawdata = np.loadtxt(raw_dir + self.handle + "c.txt", skiprows=2)
 
-        nvox = self.nbins ** 3
-        if not self.is_box:
-            # conservative cut on basis of void centre location
-            select = np.in1d(rawdata[:, 2], np.arange(nvox)[self.mask_cut], invert=True)
-            rawdata = rawdata[select, :]
-
         # load the void hierarchy data to record void leak density ratio, even though this is
         # possibly not useful for anything at all
         voidfile = raw_dir + self.handle + ".void"
@@ -388,6 +388,9 @@ class VoxelVoids:
         zonefile = raw_dir + self.handle + ".zone"
         with open(zonefile, 'r') as F:
             hierarchy = F.readlines()
+
+        nvox = self.nbins ** 3
+        masked_vox = np.arange(nvox)[self.mask_cut]
 
         # cluster effective radii
         vols = (rawdata[:, 5] * self.binsize ** 3.)
@@ -431,9 +434,19 @@ class VoxelVoids:
         output[:, 7] = cluster_lambda
         output[:, 8] = densratio
 
-        # cut on maximum density criterion
-        output = output[rawdata[:, 3] > self.max_dens_cut]
-        print('Total %d clusters pass basic density cuts' % len(output))
+        # now apply various cuts
+        # remove clusters that don't meet maximum density criterion
+        select = rawdata[:, 3] > self.max_dens_cut
+        if not self.is_box:
+            # remove all clusters whose maximum density centre lies in a (conservatively) masked voxel
+            select_mask = np.in1d(rawdata[:, 2], masked_vox, invert=True)
+            # and further cut to remove all 'edge' voids
+            select_edge = rawdata[:, 1] == 0
+            select_skypos = np.logical_and(select_mask, select_edge)
+            select = np.logical_and(select, select_skypos)
+        output = output[select]
+
+        print('Total %d clusters pass basic cuts' % len(output))
         sys.stdout.flush()
         # sort in decreasing order of maximum density
         output = output[np.argsort(output[:, 5])[::-1]]
