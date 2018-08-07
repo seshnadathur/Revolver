@@ -10,8 +10,8 @@ from cosmology import Cosmology
 class VoxelVoids:
 
     def __init__(self, cat, ran, handle="", output_folder="", is_box=True, box_length=2500.0, omega_m=0.308,
-                 min_dens_cut=1.0, use_barycentres=True, void_prefix="", find_clusters=False, max_dens_cut=1.0,
-                 cluster_prefix=""):
+                 z_min=0, z_max = 1, min_dens_cut=1.0, use_barycentres=True, void_prefix="", find_clusters=False,
+                 max_dens_cut=1.0, cluster_prefix=""):
 
         print("\n ==== Starting the void-finding with voxel-based method ==== ")
         sys.stdout.flush()
@@ -27,6 +27,8 @@ class VoxelVoids:
         self.cluster_prefix = cluster_prefix
         self.rhog = np.array(0.)  # this gets changed later
         self.mask_cut = []
+        self.z_min = z_min
+        self.z_max = z_max
 
         print("%d tracers found" % cat.size)
 
@@ -343,10 +345,13 @@ class VoxelVoids:
             select_edge = rawdata[:, 1] == 0
             select_skypos = np.logical_and(select_mask, select_edge)
             select = np.logical_and(select, select_skypos)
+            # finally, remove all voids with minimum density centres outside specified redshift range
+            select_z = np.logical_and(output[:, 3] > self.z_min, output[:, 3] < self.z_max)
+            select = np.logical_and(select, select_z)
         output = output[select]
         barycentres = barycentres[select]
 
-        print('Total %d voids pass basic cuts' % len(output))
+        print('Total %d voids pass all cuts' % len(output))
         sys.stdout.flush()
 
         # sort in increasing order of minimum density
@@ -444,9 +449,12 @@ class VoxelVoids:
             select_edge = rawdata[:, 1] == 0
             select_skypos = np.logical_and(select_mask, select_edge)
             select = np.logical_and(select, select_skypos)
+            # finally, remove all cluster with maximum density centres outside specified redshift range
+            select_z = np.logical_and(output[:, 3] > self.z_min, output[:, 3] < self.z_max)
+            select = np.logical_and(select, select_z)
         output = output[select]
 
-        print('Total %d clusters pass basic cuts' % len(output))
+        print('Total %d clusters pass all cuts' % len(output))
         sys.stdout.flush()
         # sort in decreasing order of maximum density
         output = output[np.argsort(output[:, 5])[::-1]]
