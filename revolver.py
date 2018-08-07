@@ -159,3 +159,4 @@ if parms.run_zobov:
     voidcat.postprocess_voids()
     if voidcat.find_clusters:
         voidcat.postprocess_clusters()
+    print(" ==== Finished with ZOBOV-based method ==== ")

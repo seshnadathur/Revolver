@@ -799,9 +799,6 @@ class ZobovVoids:
             cmd = ["mv", fileName, "%s." % raw_dir]
             subprocess.call(cmd)
 
-        print(" ==== Finished with ZOBOV-based method ==== ")
-        sys.stdout.flush()
-
     def postprocess_voids(self):
         """Method to post-process raw ZOBOV output to obtain discrete set of non-overlapping voids. This method
         is hard-coded to NOT allow any void merging, since no objective (non-arbitrary) criteria can be defined
