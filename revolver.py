@@ -42,9 +42,9 @@ if parms.do_recon:
                               randoms=True, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
                               fkp=parms.fkp, noz=0, cp=0, systot=0, veto=0)
 
-        # perform basic cuts on the data
-        wgal = np.logical_and((cat.veto == 1), (parms.z_min < cat.redshift) & (cat.redshift < parms.z_max))
-        wran = np.logical_and((ran.veto == 1), (parms.z_min < ran.redshift) & (ran.redshift < parms.z_max))
+        # perform basic cuts on the data (vetomask)
+        wgal = cat.veto == 1
+        wran = ran.veto == 1
         cat.cut(wgal)
         ran.cut(wran)
 
@@ -60,7 +60,6 @@ if parms.do_recon:
         cat.ra, cat.dec, cat.redshift = recon.get_new_radecz(recon.cat)
 
     # save real-space positions to file
-    # root = parms.tracer_file.replace('.txt', '').replace('.dat', '').replace('.npy', '').replace('.fits', '')
     root = parms.output_folder + parms.handle + '_pos'
     recon.export_shift_pos(root, rsd_only=True)
 
@@ -93,9 +92,9 @@ if parms.run_voxelvoids:
                               randoms=True, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
                               fkp=parms.fkp, noz=0, cp=0, systot=1, veto=0)
 
-        # perform basic cuts on the data
-        wgal = np.logical_and((cat.veto == 1), (parms.z_min < cat.redshift) & (cat.redshift < parms.z_max))
-        wran = np.logical_and((ran.veto == 1), (parms.z_min < ran.redshift) & (ran.redshift < parms.z_max))
+        # perform basic cuts on the data (vetomask)
+        wgal = cat.veto == 1
+        wran = ran.veto == 1
         cat.cut(wgal)
         ran.cut(wran)
     else:
@@ -117,6 +116,10 @@ if parms.run_zobov:
         # need to differentiate the output file names
         parms.void_prefix = parms.void_prefix + '-zobov'
         parms.cluster_prefix = parms.cluster_prefix + '-zobov'
+
+    # NOTE: Reconstruction and voxel void-finding use all the galaxies for the density estimation
+    # (and normalize by the randoms) but ZOBOV cuts survey galaxy data on redshift, parms.z_min < z < parms.z_max
+    # This is necessary for the tessellation implementation. ZOBOV does not use the randoms.
 
     if parms.do_recon:
         voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
