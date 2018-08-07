@@ -32,8 +32,10 @@ special_patchy = False  # set True if input array is in the special PATCHY forma
 posn_cols = [0, 1, 2]  # columns of tracer input array containing 3D position information
 # if is_box == True, these columns should contain x,y,z Cartesian coordinates; otherwise RA, Dec, redshift
 # NOTE: for box data, reconstruction assumes plane-parallel approximation with single l-o-s along the box z-axis!!
-z_low_cut = 0.2     # redshift below which data can be excluded (ignored if not survey)
-# z_low_cut is required to avoid divide-by-zero errors from outlier galaxies with blueshifts or redshift failures
+z_low_cut = 0.4      # lower redshift cut (ignored if not survey)
+z_high_cut = 0.8     # higher redshift cut (ignored if not survey)
+# minimum cuts required for efficient functioning of reconstruction and voxel void-finding in cases where a tiny
+# fraction of data extends to very high or very low redshifts (or even redshifts < 0), as for BOSS data
 # ============================================= #
 
 # ======= weights options ========= #
@@ -62,6 +64,11 @@ run_voxelvoids = True  # watershed void-finding based on particle-mesh density f
 run_zobov = False   # watershed void-finding (using ZOBOV) based on Voronoi tessellation
 # note that these two options are not mutually exclusive - 2 sets of voids can be produced if desired
 
+z_min = 0.43        # minimum redshift extent
+z_max = 0.70        # maximum redshift extent
+# voids/cluster catalogues will be cut to have z_min < z < z_max (if survey data): these cuts should be as tight as
+# or tighter than the z_low_cut and z_high_cut values specified above
+
 void_prefix = 'Voids'   # prefix used for naming void catalogue files
 min_dens_cut = 1.0  # void minimum galaxy number density (in units of mean density) reqd to qualify
 use_barycentres = True  # if True, additionally calculate void barycentre positions
@@ -86,9 +93,6 @@ zobov_buffer = 0.1  # fraction of box length overlap between subdivisions
 
 # -- survey data handling options -- #
 # (if is_box==True, these options are ignored)
-z_min = 0.43        # minimum redshift extent (for buffer placement)
-z_max = 0.70         # maximum redshift extent (for buffer placement)
-# ZOBOV voids will lie between z_min and z_max. z_min should always be >= z_low_cut above!
 mask_file = ''      # path to Healpix FITS file containing the survey mask (geometry, completeness, missing pixels etc.)
 use_z_wts = True    # if True, densities are weighted by survey n(z) selection function
 use_ang_wts = True  # if True, densities are weighted by survey angular completeness function
