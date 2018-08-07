@@ -121,8 +121,8 @@ class Recon:
             box = box * 2.
             binsize = box / self.nbins
 
-        print('Box size [Mpc/h]:', box)
-        print('Bin size [Mpc/h]:', binsize)
+        print('Box size [Mpc/h]: %0.2f' % box)
+        print('Bin size [Mpc/h]: %0.2f' % binsize)
 
         return xmin, ymin, zmin, box, binsize
 
