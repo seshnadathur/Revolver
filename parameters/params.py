@@ -32,8 +32,8 @@ special_patchy = False  # set True if input array is in the special PATCHY forma
 posn_cols = [0, 1, 2]  # columns of tracer input array containing 3D position information
 # if is_box == True, these columns should contain x,y,z Cartesian coordinates; otherwise RA, Dec, redshift
 # NOTE: for box data, reconstruction assumes plane-parallel approximation with single l-o-s along the box z-axis!!
-z_min = 0.15        # minimum redshift extent of survey data (ignored if not survey)
-z_max = 0.43        # maximum redshift extent of survey data (ignored if not survey)
+z_low_cut = 0.2     # redshift below which data can be excluded (ignored if not survey)
+# z_low_cut is required to avoid divide-by-zero errors from outlier galaxies with blueshifts or redshift failures
 # ============================================= #
 
 # ======= weights options ========= #
@@ -86,6 +86,9 @@ zobov_buffer = 0.1  # fraction of box length overlap between subdivisions
 
 # -- survey data handling options -- #
 # (if is_box==True, these options are ignored)
+z_min = 0.43        # minimum redshift extent (for buffer placement)
+z_max = 0.70         # maximum redshift extent (for buffer placement)
+# ZOBOV voids will lie between z_min and z_max. z_min should always be >= z_low_cut above!
 mask_file = ''      # path to Healpix FITS file containing the survey mask (geometry, completeness, missing pixels etc.)
 use_z_wts = True    # if True, densities are weighted by survey n(z) selection function
 use_ang_wts = True  # if True, densities are weighted by survey angular completeness function
