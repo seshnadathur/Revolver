@@ -61,8 +61,6 @@ class VoxelVoids:
             sum_wgal = np.sum(cat.weight)
             sum_wran = np.sum(ran.weight)
             alpha = sum_wgal / sum_wran
-            ran_min = 0.01 * sum_wran / ran.size
-            self.ran_min = ran_min
             self.alpha = alpha
             self.deltar = 0
 
@@ -81,10 +79,14 @@ class VoxelVoids:
             self.cat = cat
 
             # put the data into a box
-            self.make_sky_box()
+            mean_dens = self.make_sky_box()
             sys.stdout.flush()
 
-    def make_sky_box(self, padding=50.):
+            # set a cutoff threshold for empty cells
+            ran_min = (0.01 * mean_dens * self.binsize**3.) / self.alpha
+            self.ran_min = ran_min
+
+    def make_sky_box(self, padding=5.):
 
         dx = max(self.ran.x) - min(self.ran.x)
         dy = max(self.ran.y) - min(self.ran.y)
@@ -93,7 +95,7 @@ class VoxelVoids:
         y0 = 0.5 * (max(self.ran.y) + min(self.ran.y))
         z0 = 0.5 * (max(self.ran.z) + min(self.ran.z))
 
-        box = max([dx, dy, dz]) + 2 * padding  # a bit bigger than strictly necessary
+        box = max([dx, dy, dz]) + 2 * padding  # marginally bigger than strictly necessary
         xmin = x0 - box / 2
         ymin = y0 - box / 2
         zmin = z0 - box / 2
@@ -104,7 +106,7 @@ class VoxelVoids:
         self.box_length = box
         print('Box size [Mpc/h]: %0.3f' % self.box_length)
 
-        mean_dens = self.cat.size / box**3.
+        mean_dens = np.sum(self.cat.weight) / box**3.
 
         # starting estimate for bin size
         self.nbins = int(np.floor(box / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
@@ -114,8 +116,8 @@ class VoxelVoids:
         # now approximately check true survey volume and recalculate mean density
         ran = self.ran
         rhor = self.allocate_gal_cic(ran)
-        filled_cells = np.sum(rhor.flatten() >= self.ran_min)
-        mean_dens = self.cat.size / (filled_cells * self.binsize**3.)
+        filled_cells = np.sum(rhor.flatten() > 0)
+        mean_dens = np.sum(self.cat.weight) / (filled_cells * self.binsize**3.)
         # thus get better choice of bin size
         self.nbins = int(np.floor(box / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
         self.binsize = self.box_length / self.nbins
@@ -125,6 +127,8 @@ class VoxelVoids:
         smooth = mean_dens ** (-1./3)
         self.smooth = smooth
         print('Smoothing scale [Mpc/h]: %0.2f' % self.smooth)
+
+        return mean_dens
 
     def allocate_gal_cic(self, c):
         """ Allocate galaxies to grid cells using a CIC scheme in order to determine galaxy
@@ -290,6 +294,7 @@ class VoxelVoids:
             member_voxels = np.fromstring(hierarchy[i], dtype=int, sep=' ')[1:]
             member_dens = rhoflat[member_voxels]
             avgdens[i] = np.mean(member_dens) - 1.
+            if np.any(member_dens == 0): print(rawdata[i, 0])
             if self.use_barycentres:
                 member_x, member_y, member_z = self.voxel_position(member_voxels)
                 barycentres[i, 0] = np.average(member_x, weights=1. / member_dens)
@@ -355,7 +360,9 @@ class VoxelVoids:
         sys.stdout.flush()
 
         # sort in increasing order of minimum density
-        output = output[np.argsort(output[:, 5])]
+        sort_order = np.argsort(output[:, 5])
+        output = output[sort_order]
+        barycentres = barycentres[sort_order]
         # save to file
         catalogue_file = self.output_folder + self.void_prefix + '_cat.txt'
         header = '%d voxels, %d voids\n' % (nvox, len(output))
