@@ -294,7 +294,6 @@ class VoxelVoids:
             member_voxels = np.fromstring(hierarchy[i], dtype=int, sep=' ')[1:]
             member_dens = rhoflat[member_voxels]
             avgdens[i] = np.mean(member_dens) - 1.
-            if np.any(member_dens == 0): print(rawdata[i, 0])
             if self.use_barycentres:
                 member_x, member_y, member_z = self.voxel_position(member_voxels)
                 barycentres[i, 0] = np.average(member_x, weights=1. / member_dens)
