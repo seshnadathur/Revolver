@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import imp
+import time
 import numpy as np
 from python_tools.zobov import ZobovVoids
 from python_tools.voxelvoids import VoxelVoids
@@ -23,6 +24,7 @@ if not os.access(parms.output_folder, os.F_OK):
     os.makedirs(parms.output_folder)
 
 if parms.do_recon:
+    start = time.time()
     print('\n ==== Running reconstruction for real-space positions ==== ')
 
     cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
@@ -64,12 +66,15 @@ if parms.do_recon:
     recon.export_shift_pos(root, rsd_only=True)
 
     print(" ==== Done reconstruction ====\n")
+    end = time.time()
+    print("Reconstruction took %0.3f seconds" % (end - start))
 
     # galaxy input for void-finding will now be read from new file with shifted data
     parms.tracer_file = root + '_shift.npy'
 
 if parms.run_voxelvoids:
 
+    start = time.time()
     if parms.do_recon:
         # new tracer file after reconstruction only contains single consolidated weights column
         cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
@@ -110,8 +115,12 @@ if parms.run_voxelvoids:
     # ... and run the void-finder
     voidcat.run_voidfinder()
 
+    end = time.time()
+    print("Voxel voids took %0.3f seconds" % (end - start))
+
 if parms.run_zobov:
 
+    start = time.time()
     if parms.run_voxelvoids:
         # need to differentiate the output file names
         parms.void_prefix = parms.void_prefix + '-zobov'
@@ -160,3 +169,6 @@ if parms.run_zobov:
     if voidcat.find_clusters:
         voidcat.postprocess_clusters()
     print(" ==== Finished with ZOBOV-based method ==== ")
+
+    end = time.time()
+    print("ZOBOV took %0.3f seconds" % (end - start))
