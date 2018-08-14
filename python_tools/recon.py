@@ -222,8 +222,8 @@ class Recon:
         # avoid divide by zero
         ksq[ksq == 0] = 1.
         delta /= ksq
-        # set zero mode to 1
-        delta[0, 0, 0] = 1
+        # set zero mode to 0
+        delta[0, 0, 0] = 0
 
         # now solve the basic building block: IFFT[-i k delta(k)/(b k^2)]
         print('Inverse Fourier transforming to get psi...')
