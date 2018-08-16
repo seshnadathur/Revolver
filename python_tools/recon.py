@@ -3,6 +3,7 @@ import numpy as np
 import os
 import json
 import sys
+import cic
 from scipy.ndimage.filters import gaussian_filter
 from scipy.fftpack import fftfreq
 from cosmology import Cosmology
@@ -100,12 +101,18 @@ class Recon:
     def compute_box(self, padding=200., optimize_box=1):
 
         if optimize_box:
-            dx = max(self.ran.x) - min(self.ran.x)
-            dy = max(self.ran.y) - min(self.ran.y)
-            dz = max(self.ran.z) - min(self.ran.z)
-            x0 = 0.5 * (max(self.ran.x) + min(self.ran.x))
-            y0 = 0.5 * (max(self.ran.y) + min(self.ran.y))
-            z0 = 0.5 * (max(self.ran.z) + min(self.ran.z))
+            maxx = np.max(self.ran.x)
+            minx = np.min(self.ran.x)
+            maxy = np.max(self.ran.y)
+            miny = np.min(self.ran.y)
+            maxz = np.max(self.ran.z)
+            minz = np.min(self.ran.z)
+            dx = maxx - minx
+            dy = maxy - miny
+            dz = maxz - minz
+            x0 = 0.5 * (maxx + minx)
+            y0 = 0.5 * (maxy + miny)
+            z0 = 0.5 * (maxz + minz)
 
             box = max([dx, dy, dz]) + 2 * padding
             xmin = x0 - box / 2
@@ -136,6 +143,7 @@ class Recon:
         f = self.f
         nbins = self.nbins
 
+        print("Loop %d" % iloop)
         # -- Creating arrays for FFTW
         if iloop == 0:  # first iteration requires initialization
             delta = pyfftw.empty_aligned((nbins, nbins, nbins), dtype='complex128')
@@ -149,7 +157,7 @@ class Recon:
             else:
                 print('Allocating randoms in cells...')
                 sys.stdout.flush()
-                deltar = self.allocate_gal_cic(ran)
+                deltar = self.allocate_gal_cic_fast(ran)
                 print('Smoothing...')
                 sys.stdout.flush()
                 deltar = gaussian_filter(deltar, smooth/binsize, mode='nearest')
@@ -182,7 +190,7 @@ class Recon:
         # -- using new positions
         print('Allocating galaxies in cells...')
         sys.stdout.flush()
-        deltag = self.allocate_gal_cic(cat)
+        deltag = self.allocate_gal_cic_fast(cat)
         print('Smoothing galaxy density field ...')
         sys.stdout.flush()
         if self.is_box:
@@ -236,6 +244,8 @@ class Recon:
         ifft_obj(input_array=deltak, output_array=psi_z)
 
         # from grid values of Psi_est = IFFT[-i k delta(k)/(b k^2)], compute the values at the galaxy positions
+        print('Calculating shifts...')
+        sys.stdout.flush()
         shift_x, shift_y, shift_z = self.get_shift(cat, psi_x.real, psi_y.real, psi_z.real, use_newpos=True)
         # for debugging:
         for i in range(10):
@@ -334,47 +344,26 @@ class Recon:
         for s in [sx, sy, sz]:
             print(np.std(s), np.percentile(s, 16), np.percentile(s, 84), np.min(s), np.max(s))
 
-    def allocate_gal_cic(self, c):
+    def allocate_gal_cic_fast(self, c):
         """ Allocate galaxies to grid cells using a CIC scheme in order to determine galaxy
         densities on the grid"""
 
         xmin = self.xmin
         ymin = self.ymin
         zmin = self.zmin
-        binsize = self.binsize
         nbins = self.nbins
+        boxsize = self.binsize * nbins
 
-        xpos = (c.newx - xmin) / binsize
-        ypos = (c.newy - ymin) / binsize
-        zpos = (c.newz - zmin) / binsize
+        # Scale positions to lie inside [0,1]
+        xpos = (c.newx - xmin) / boxsize
+        ypos = (c.newy - ymin) / boxsize
+        zpos = (c.newz - zmin) / boxsize
 
-        i = xpos.astype(int)
-        j = ypos.astype(int)
-        k = zpos.astype(int)
+        # Make output array (as written it works with doubles only, but can be changed)
+        delta = np.zeros((nbins, nbins, nbins), dtype='float64')
 
-        ddx = xpos - i
-        ddy = ypos - j
-        ddz = zpos - k
-
-        delta = np.zeros((nbins, nbins, nbins))
-        edges = [np.linspace(0, nbins, nbins + 1),
-                 np.linspace(0, nbins, nbins + 1),
-                 np.linspace(0, nbins, nbins + 1)]
-
-        for ii in range(2):
-            for jj in range(2):
-                for kk in range(2):
-                    if self.is_box:
-                        # PBC, so wrap around the box
-                        pos = np.array([(i + ii) % self.nbins, (j + jj) % self.nbins,
-                                        (k + kk) % self.nbins]).transpose()
-                    else:
-                        pos = np.array([i + ii, j + jj, k + kk]).transpose()
-                    weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
-                              ((1 - ddy) + jj * (-1 + 2 * ddy)) *
-                              ((1 - ddz) + kk * (-1 + 2 * ddz))) * c.weight
-                    delta_t, edges = np.histogramdd(pos, bins=edges, weights=weight)
-                    delta += delta_t
+        # need to add a wrap condition here if self.is_box is True!
+        cic.perform_cic_3D_w(delta, xpos, ypos, zpos, c.weight)
 
         return delta
 

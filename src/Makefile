@@ -1,6 +1,4 @@
 # Compiler choice:
-
-# Gcc
 CC    = gcc
 MPICC = mpicc
 CFLAGS = -O2 -g -ansi -Wno-unused-result
@@ -9,9 +7,6 @@ MLIBS	=   -lm
 
 QLIB = -L../qhull/src/ -lqhull
 QINC = -I../qhull/src/
-
-###############
-# I've removed the mpi executables from install, which is what is called by the parent Makefile... I did this because mpicc doesn't work on chadwick
 
 EXES = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol voz1b1_mpi checkedges
 EXES_NOMPI = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol checkedges

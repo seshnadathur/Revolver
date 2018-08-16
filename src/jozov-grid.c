@@ -424,8 +424,12 @@ int main(int argc,char **argv) {
 	    continue;
       }
 
-      /* here code skips the option of terminating zone merging at some condition, present in jozovtrvol */
-	
+      /* the following three lines short-circuit the void hierarchy creation to save time, since we don't use it;
+      if you want to use the full void hierarchy from any reason, comment these lines out */
+      z[h].leak = lowdens;
+      beaten = 1;
+      continue;
+
       for (l=0; l < nl; l++)
 	    if (p[z[link[l]].core].dens < p[z[h].core].dens) /* linked zone is superior, so don't add these links */
 	      beaten = 1;

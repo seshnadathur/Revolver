@@ -17,3 +17,5 @@ qhull/src/libqhull.a
 python_tools/*.pyc
 parameters/*.pyc
 wisdom*
+python_tools/*.*o
+python_tools/cic_wrap.c

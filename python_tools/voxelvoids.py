@@ -3,15 +3,16 @@ import os
 import sys
 import numpy as np
 import subprocess
+import cic
 from scipy.ndimage.filters import gaussian_filter
 from cosmology import Cosmology
 
 
 class VoxelVoids:
 
-    def __init__(self, cat, ran, handle="", output_folder="", is_box=True, box_length=2500.0, omega_m=0.308,
-                 z_min=0, z_max = 1, min_dens_cut=1.0, use_barycentres=True, void_prefix="", find_clusters=False,
-                 max_dens_cut=1.0, cluster_prefix=""):
+    def __init__(self, cat, ran, pre_calc_ran=True, handle="", output_folder="", is_box=True, box_length=2500.0,
+                 omega_m=0.308, z_min=0, z_max = 1, min_dens_cut=1.0, use_barycentres=True, void_prefix="",
+                 find_clusters=False, max_dens_cut=1.0, cluster_prefix=""):
 
         print("\n ==== Starting the void-finding with voxel-based method ==== ")
         sys.stdout.flush()
@@ -53,9 +54,22 @@ class VoxelVoids:
 
         else:
 
+            # convert sky coords to Cartesian
+            cosmo = Cosmology(omega_m=omega_m)
+            cat.dist = cosmo.get_comoving_distance(cat.redshift)
+            cat.x = cat.dist * np.cos(cat.dec * np.pi / 180) * np.cos(cat.ra * np.pi / 180)
+            cat.y = cat.dist * np.cos(cat.dec * np.pi / 180) * np.sin(cat.ra * np.pi / 180)
+            cat.z = cat.dist * np.sin(cat.dec * np.pi / 180)
+            if not pre_calc_ran:
+                ran.dist = cosmo.get_comoving_distance(ran.redshift)
+                ran.x = ran.dist * np.cos(ran.dec * np.pi / 180) * np.cos(ran.ra * np.pi / 180)
+                ran.y = ran.dist * np.cos(ran.dec * np.pi / 180) * np.sin(ran.ra * np.pi / 180)
+                ran.z = ran.dist * np.sin(ran.dec * np.pi / 180)
+
             # get the weights for data and randoms
             cat.weight = cat.get_weights(fkp=0, noz=1, cp=1, syst=1)
-            ran.weight = ran.get_weights(fkp=0, noz=0, cp=0, syst=0)
+            if not pre_calc_ran:
+                ran.weight = ran.get_weights(fkp=0, noz=0, cp=0, syst=0)
 
             # relative weighting of galaxies and randoms
             sum_wgal = np.sum(cat.weight)
@@ -64,23 +78,12 @@ class VoxelVoids:
             self.alpha = alpha
             self.deltar = 0
 
-            # convert sky coords to Cartesian
-            cosmo = Cosmology(omega_m=omega_m)
-            cat.dist = cosmo.get_comoving_distance(cat.redshift)
-            cat.x = cat.dist * np.cos(cat.dec * np.pi / 180) * np.cos(cat.ra * np.pi / 180)
-            cat.y = cat.dist * np.cos(cat.dec * np.pi / 180) * np.sin(cat.ra * np.pi / 180)
-            cat.z = cat.dist * np.sin(cat.dec * np.pi / 180)
-            ran.dist = cosmo.get_comoving_distance(ran.redshift)
-            ran.x = ran.dist * np.cos(ran.dec * np.pi / 180) * np.cos(ran.ra * np.pi / 180)
-            ran.y = ran.dist * np.cos(ran.dec * np.pi / 180) * np.sin(ran.ra * np.pi / 180)
-            ran.z = ran.dist * np.sin(ran.dec * np.pi / 180)
             self.cosmo = cosmo
             self.ran = ran
             self.cat = cat
 
             # put the data into a box
             mean_dens = self.make_sky_box()
-            sys.stdout.flush()
 
             # set a cutoff threshold for empty cells
             ran_min = (0.01 * mean_dens * self.binsize**3.) / self.alpha
@@ -88,12 +91,18 @@ class VoxelVoids:
 
     def make_sky_box(self, padding=5.):
 
-        dx = max(self.ran.x) - min(self.ran.x)
-        dy = max(self.ran.y) - min(self.ran.y)
-        dz = max(self.ran.z) - min(self.ran.z)
-        x0 = 0.5 * (max(self.ran.x) + min(self.ran.x))
-        y0 = 0.5 * (max(self.ran.y) + min(self.ran.y))
-        z0 = 0.5 * (max(self.ran.z) + min(self.ran.z))
+        maxx = np.max(self.ran.x)
+        minx = np.min(self.ran.x)
+        maxy = np.max(self.ran.y)
+        miny = np.min(self.ran.y)
+        maxz = np.max(self.ran.z)
+        minz = np.min(self.ran.z)
+        dx = maxx - minx
+        dy = maxy - miny
+        dz = maxz - minz
+        x0 = 0.5 * (maxx + minx)
+        y0 = 0.5 * (maxy + miny)
+        z0 = 0.5 * (maxz + minz)
 
         box = max([dx, dy, dz]) + 2 * padding  # marginally bigger than strictly necessary
         xmin = x0 - box / 2
@@ -115,7 +124,7 @@ class VoxelVoids:
 
         # now approximately check true survey volume and recalculate mean density
         ran = self.ran
-        rhor = self.allocate_gal_cic(ran)
+        rhor = self.allocate_gal_cic_fast(ran)
         filled_cells = np.sum(rhor.flatten() > 0)
         mean_dens = np.sum(self.cat.weight) / (filled_cells * self.binsize**3.)
         # thus get better choice of bin size
@@ -130,47 +139,26 @@ class VoxelVoids:
 
         return mean_dens
 
-    def allocate_gal_cic(self, c):
+    def allocate_gal_cic_fast(self, c):
         """ Allocate galaxies to grid cells using a CIC scheme in order to determine galaxy
         densities on the grid"""
 
         xmin = self.xmin
         ymin = self.ymin
         zmin = self.zmin
-        binsize = self.binsize
         nbins = self.nbins
+        boxsize = self.binsize * nbins
 
-        xpos = (c.x - xmin) / binsize
-        ypos = (c.y - ymin) / binsize
-        zpos = (c.z - zmin) / binsize
+        # Scale positions to lie inside [0,1]
+        xpos = (c.x - xmin) / boxsize
+        ypos = (c.y - ymin) / boxsize
+        zpos = (c.z - zmin) / boxsize
 
-        i = xpos.astype(int)
-        j = ypos.astype(int)
-        k = zpos.astype(int)
+        # Make output array (as written it works with doubles only, but can be changed)
+        delta = np.zeros((nbins, nbins, nbins), dtype='float64')
 
-        ddx = xpos - i
-        ddy = ypos - j
-        ddz = zpos - k
-
-        delta = np.zeros((nbins, nbins, nbins))
-        edges = [np.linspace(0, nbins, nbins + 1),
-                 np.linspace(0, nbins, nbins + 1),
-                 np.linspace(0, nbins, nbins + 1)]
-
-        for ii in range(2):
-            for jj in range(2):
-                for kk in range(2):
-                    if self.is_box:
-                        # PBC, so wrap around the box
-                        pos = np.array([(i + ii) % self.nbins, (j + jj) % self.nbins,
-                                        (k + kk) % self.nbins]).transpose()
-                    else:
-                        pos = np.array([i + ii, j + jj, k + kk]).transpose()
-                    weight = (((1 - ddx) + ii * (-1 + 2 * ddx)) *
-                              ((1 - ddy) + jj * (-1 + 2 * ddy)) *
-                              ((1 - ddz) + kk * (-1 + 2 * ddz))) * c.weight
-                    delta_t, edges = np.histogramdd(pos, bins=edges, weights=weight)
-                    delta += delta_t
+        # need to add a wrap condition here if self.is_box is True!
+        cic.perform_cic_3D_w(delta, xpos, ypos, zpos, c.weight)
 
         return delta
 
@@ -184,7 +172,7 @@ class VoxelVoids:
         # measure the galaxy density field
         print('Allocating galaxies in cells...')
         sys.stdout.flush()
-        rhog = self.allocate_gal_cic(self.cat)
+        rhog = self.allocate_gal_cic_fast(self.cat)
         if self.is_box:
             # smooth with pre-determined smoothing scale
             print('Smoothing galaxy density field ...')
@@ -196,7 +184,7 @@ class VoxelVoids:
         else:
             print('Allocating randoms in cells...')
             sys.stdout.flush()
-            rhor = self.allocate_gal_cic(self.ran)
+            rhor = self.allocate_gal_cic_fast(self.ran)
             # identify "empty" cells for later cuts on void catalogue
             mask_cut = np.where((rhor.flatten() <= self.ran_min))
             self.mask_cut = mask_cut
@@ -260,6 +248,8 @@ class VoxelVoids:
 
         raw_dir = self.output_folder + "rawVoxelInfo/"
         rawdata = np.loadtxt(raw_dir + self.handle + ".txt", skiprows=2)
+        nvox = self.nbins ** 3
+        masked_vox = np.arange(nvox)[self.mask_cut]
 
         # load the void hierarchy data to record void leak density ratio, even though this is
         # possibly not useful for anything at all
@@ -274,16 +264,47 @@ class VoxelVoids:
         zonefile = raw_dir + self.handle + ".zone"
         with open(zonefile, 'r') as F:
             hierarchy = F.readlines()
+        hierarchy = np.asarray(hierarchy, dtype=str)
 
-        nvox = self.nbins ** 3
-        masked_vox = np.arange(nvox)[self.mask_cut]
+        # remove voids that: a) don't meet minimum density cut, b) are edge voids, or c) lie in a masked voxel
+        select = rawdata[:, 3] < self.min_dens_cut                     # a
+        select_edge = rawdata[:, 1] == 0                               # b
+        select = np.logical_and(select, select_edge)
+        rawdata = rawdata[select]
+        densratio = densratio[select]
+        hierarchy = hierarchy[select]
+        select_mask = np.in1d(rawdata[:, 2], masked_vox, invert=True)  # c
+        rawdata = rawdata[select_mask]
+        densratio = densratio[select_mask]
+        hierarchy = hierarchy[select_mask]
+
+        # void minimum density centre locations
+        xpos, ypos, zpos = self.voxel_position(rawdata[:, 2])
+
+        if not self.is_box:  # convert void centre coordinates from box Cartesian to sky positions
+            xpos += self.xmin
+            ypos += self.ymin
+            zpos += self.zmin
+            dist = np.sqrt(xpos**2 + ypos**2 + zpos**2)
+            redshift = self.cosmo.get_redshift(dist)
+            ra = np.degrees(np.arctan2(ypos, xpos))
+            dec = 90 - np.degrees(np.arccos(zpos / dist))
+            ra[ra < 0] += 360
+            xpos = ra
+            ypos = dec
+            zpos = redshift
+            # and an additional cut on any voids with min. dens. centre outside specified redshift range
+            select_z = np.logical_and(zpos > self.z_min, zpos < self.z_max)
+            rawdata = rawdata[select_z]
+            densratio = densratio[select_z]
+            hierarchy = hierarchy[select_z]
+            xpos = xpos[select_z]
+            ypos = ypos[select_z]
+            zpos = zpos[select_z]
 
         # void effective radii
         vols = (rawdata[:, 5] * self.binsize ** 3.)
         rads = (3. * vols / (4. * np.pi)) ** (1. / 3)
-        # void minimum density centre locations
-        xpos, ypos, zpos = self.voxel_position(rawdata[:, 2])
-
         # void minimum densities (as delta)
         mindens = rawdata[:, 3] - 1.
         # void average densities and barycentres
@@ -299,33 +320,21 @@ class VoxelVoids:
                 barycentres[i, 0] = np.average(member_x, weights=1. / member_dens)
                 barycentres[i, 1] = np.average(member_y, weights=1. / member_dens)
                 barycentres[i, 2] = np.average(member_z, weights=1. / member_dens)
+        if self.use_barycentres and not self.is_box:
+            barycentres[:, 0] += self.xmin
+            barycentres[:, 1] += self.ymin
+            barycentres[:, 2] += self.zmin
+            dist = np.linalg.norm(barycentres, axis=1)
+            redshift = self.cosmo.get_redshift(dist)
+            ra = np.degrees(np.arctan2(barycentres[:, 1], barycentres[:, 0]))
+            dec = 90 - np.degrees(np.arccos(barycentres[:, 2] / dist))
+            ra[ra < 0] += 360
+            barycentres[:, 0] = ra
+            barycentres[:, 1] = dec
+            barycentres[:, 2] = redshift
+
         # record void lambda value, even though usefulness of this has only really been shown for ZOBOV voids so far
         void_lambda = avgdens * (rads ** 1.2)
-
-        if not self.is_box:  # convert void centre coordinates from box Cartesian to sky positions
-            xpos += self.xmin
-            ypos += self.ymin
-            zpos += self.zmin
-            dist = np.sqrt(xpos**2 + ypos**2 + zpos**2)
-            redshift = self.cosmo.get_redshift(dist)
-            ra = np.degrees(np.arctan2(ypos, xpos))
-            dec = 90 - np.degrees(np.arccos(zpos / dist))
-            ra[ra < 0] += 360
-            xpos = ra
-            ypos = dec
-            zpos = redshift
-            if self.use_barycentres:
-                barycentres[:, 0] += self.xmin
-                barycentres[:, 1] += self.ymin
-                barycentres[:, 2] += self.zmin
-                dist = np.linalg.norm(barycentres, axis=1)
-                redshift = self.cosmo.get_redshift(dist)
-                ra = np.degrees(np.arctan2(barycentres[:, 1], barycentres[:, 0]))
-                dec = 90 - np.degrees(np.arccos(barycentres[:, 2] / dist))
-                ra[ra < 0] += 360
-                barycentres[:, 0] = ra
-                barycentres[:, 1] = dec
-                barycentres[:, 2] = redshift
 
         # create output array
         output = np.zeros((len(rawdata), 9))
@@ -339,29 +348,14 @@ class VoxelVoids:
         output[:, 7] = void_lambda
         output[:, 8] = densratio
 
-        # now apply various cuts
-        # remove voids that don't meet minimum density criterion
-        select = rawdata[:, 3] < self.min_dens_cut
-        if not self.is_box:
-            # remove all voids whose minimum density centre lies in a (conservatively) masked voxel
-            select_mask = np.in1d(rawdata[:, 2], masked_vox, invert=True)
-            # and further cut to remove all 'edge' voids
-            select_edge = rawdata[:, 1] == 0
-            select_skypos = np.logical_and(select_mask, select_edge)
-            select = np.logical_and(select, select_skypos)
-            # finally, remove all voids with minimum density centres outside specified redshift range
-            select_z = np.logical_and(output[:, 3] > self.z_min, output[:, 3] < self.z_max)
-            select = np.logical_and(select, select_z)
-        output = output[select]
-        barycentres = barycentres[select]
-
         print('Total %d voids pass all cuts' % len(output))
         sys.stdout.flush()
 
         # sort in increasing order of minimum density
         sort_order = np.argsort(output[:, 5])
         output = output[sort_order]
-        barycentres = barycentres[sort_order]
+        if self.use_barycentres:
+            barycentres = barycentres[sort_order]
         # save to file
         catalogue_file = self.output_folder + self.void_prefix + '_cat.txt'
         header = '%d voxels, %d voids\n' % (nvox, len(output))
