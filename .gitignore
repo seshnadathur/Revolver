@@ -18,5 +18,4 @@ python_tools/*.pyc
 parameters/*.pyc
 wisdom*
 python_tools/*.*o
-python_tools/cic.c
 python_tools/cic_wrap.c
