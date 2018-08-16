@@ -29,6 +29,6 @@ clean:
 	make -C src clean
 	make -C qhull/src cleanall
 	rm -f bin/*
-	rm -f python_tools/*.o
+	rm -f python_tools/*.*o
 	rm -f python_tools/cic_wrap.c
 	rm -f python_tools/cic.py*
