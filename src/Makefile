@@ -1,8 +1,7 @@
 # Compiler choice:
-CC    = /usr/local/Cellar/clang-omp/2015-04-01/bin/clang-omp
-#CC    = gcc
+CC    = gcc
 MPICC = mpicc
-CFLAGS = -Wall -O3 -fopenmp -Wunused-variable
+CFLAGS = -O2 -g -ansi -Wno-unused-result
 
 MLIBS	=   -lm
 
