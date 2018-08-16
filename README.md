@@ -28,16 +28,20 @@ For survey data, pre-computed FKP weights (and other galaxy weight/veto informat
 provided for best performance. 
 
 Requirements:
-   - python 2.7 or python 3
+   - python 2.7, but should be compatible with python 3
    - numpy 1.14.5
    - scipy 0.18.1
    - healpy 1.9.0
    - pyfftw 0.10.3
    - astropy 1.0.6
+   - SWIG-3.0.12
 
-Earlier versions of these packages may lack some required functionality (especially numpy and scipy). 
-   
-To run:
+Some earlier versions of numpy and scipy will fail due to changes in functionality of some methods (numpy.unique 
+and scipy.spatial.cKDTree). The code has only been tested with the stated versions of the other packages: other versions
+may or may not work!
+  
+To install and run:
+   - edit the python paths in the Makefile, and choose the compiler to use in src/Makefile 
    - in the top-level directory, do 'make clean', then 'make'
    - edit parameters/params.py
    - python revolver.py --par parameters/params.py
@@ -45,5 +49,5 @@ To run:
 Acknowledgments:
 
 The reconstruction section of this code was developed from a version written by Julian Bautista and with input from 
-Paul Carter, Will Percival and (indirectly) Angela Burden. Some elements of the ZOBOV void-finding section of code were 
+Paul Carter, Will Percival and (indirectly) Angela Burden. Hans Winther made several improvements. Some elements of the ZOBOV void-finding section of code were 
 developed with Shaun Hotchkiss. 
