@@ -1,17 +1,13 @@
 # Compiler choice:
-
-# Gcc
-CC    = gcc
+CC    = /usr/local/Cellar/clang-omp/2015-04-01/bin/clang-omp
+#CC    = gcc
 MPICC = mpicc
-CFLAGS = -O2 -g -ansi -Wno-unused-result
+CFLAGS = -Wall -O3 -fopenmp -Wunused-variable
 
 MLIBS	=   -lm
 
 QLIB = -L../qhull/src/ -lqhull
 QINC = -I../qhull/src/
-
-###############
-# I've removed the mpi executables from install, which is what is called by the parent Makefile... I did this because mpicc doesn't work on chadwick
 
 EXES = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol voz1b1_mpi checkedges
 EXES_NOMPI = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol checkedges

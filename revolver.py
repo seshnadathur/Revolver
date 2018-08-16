@@ -36,7 +36,8 @@ if parms.do_recon:
                       f=parms.f, smooth=parms.smooth, nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads)
     else:
         if not os.access(parms.randoms_file, os.F_OK):
-            sys.exit('ERROR: randoms data required but randoms file not provided or not found! Aborting.')
+            sys.exit('ERROR: randoms data required for reconstruction but randoms file not provided or not found!' +
+                     'Aborting.')
 
         # initializing randoms: note that in general we assume only FKP and systot weights are provided for randoms
         # this is overridden for special input formats (either boss_like and special_patchy are True)
@@ -81,35 +82,46 @@ if parms.run_voxelvoids:
                               boss_like=False, special_patchy=False, posn_cols=[0, 1, 2], fkp=0, noz=0, cp=0,
                               systot=1, veto=0)
     else:
-        # no reconstruction was performed: use original weights specification
+        # no reconstruction was performed: use original catalogue file with original weights specification
         cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
                               boss_like=parms.boss_like, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
                               fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)
 
+    # perform basic cuts on the data: vetomask and low redshift extent
+    wgal = np.logical_and((cat.veto == 1), (parms.z_low_cut < cat.redshift) & (cat.redshift < parms.z_high_cut))
+    cat.cut(wgal)
+
     if not parms.is_box:
         # randoms are required
-        if not os.access(parms.randoms_file, os.F_OK):
-            sys.exit('ERROR: randoms data required but randoms file not provided or not found! Aborting.')
+        if not parms.do_recon:
+            # randoms were not previously loaded
+            if not os.access(parms.randoms_file, os.F_OK):
+                sys.exit('ERROR: randoms data required for voxel voids but randoms file not provided or not found!' +
+                         'Aborting.')
 
-        # initializing randoms: note that in general we assume only FKP and systot weights are provided for randoms
-        # this is overridden for special input formats (if either boss_like and special_patchy are True)
-        ran = GalaxyCatalogue(parms.randoms_file, is_box=False, box_length=parms.box_length, boss_like=parms.boss_like,
-                              randoms=True, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
-                              fkp=parms.fkp, noz=0, cp=0, systot=1, veto=0)
+            # initializing randoms: note that in general we assume only FKP and systot weights are provided for randoms
+            # this is overridden for special input formats (if either boss_like and special_patchy are True)
+            ran = GalaxyCatalogue(parms.randoms_file, is_box=False, box_length=parms.box_length,
+                                  boss_like=parms.boss_like, randoms=True, special_patchy=parms.special_patchy,
+                                  posn_cols=parms.posn_cols, fkp=parms.fkp, noz=0, cp=0, systot=1, veto=0)
 
-        # perform basic cuts on the data: vetomask and low redshift extent
-        wgal = np.logical_and((cat.veto == 1), (parms.z_low_cut < cat.redshift) & (cat.redshift < parms.z_high_cut))
-        wran = np.logical_and((ran.veto == 1), (parms.z_low_cut < ran.redshift) & (ran.redshift < parms.z_high_cut))
-        cat.cut(wgal)
-        ran.cut(wran)
+            # perform basic cuts on the randoms: vetomask and low redshift extent
+            wran = np.logical_and((ran.veto == 1), (parms.z_low_cut < ran.redshift) & (ran.redshift < parms.z_high_cut))
+            ran.cut(wran)
+
+            pre_calc_ran = False
+        else:
+            # we already have the randoms, and their coordinates have already been calculated
+            pre_calc_ran = True
     else:
         # no randoms are required, so set to zero
         ran = 0.
+        pre_calc_ran = False  # irrelevant anyway
 
     # initialize ...
-    voidcat = VoxelVoids(cat, ran, handle=parms.handle, output_folder=parms.output_folder, is_box=parms.is_box,
-                         box_length=parms.box_length, omega_m=parms.omega_m, z_min=parms.z_min, z_max=parms.z_max,
-                         min_dens_cut=parms.min_dens_cut, use_barycentres=parms.use_barycentres,
+    voidcat = VoxelVoids(cat, ran, pre_calc_ran=pre_calc_ran, handle=parms.handle, output_folder=parms.output_folder,
+                         is_box=parms.is_box, box_length=parms.box_length, omega_m=parms.omega_m, z_min=parms.z_min,
+                         z_max=parms.z_max, min_dens_cut=parms.min_dens_cut, use_barycentres=parms.use_barycentres,
                          void_prefix=parms.void_prefix, find_clusters=parms.find_clusters,
                          max_dens_cut=parms.max_dens_cut, cluster_prefix=parms.cluster_prefix)
     # ... and run the void-finder
