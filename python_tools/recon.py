@@ -248,8 +248,8 @@ class Recon:
         sys.stdout.flush()
         shift_x, shift_y, shift_z = self.get_shift(cat, psi_x.real, psi_y.real, psi_z.real, use_newpos=True)
         # for debugging:
-        for i in range(10):
-            print('%0.3f %0.3f %0.3f %0.3f' % (shift_x[i], shift_y[i], shift_z[i], cat.newz[i]))
+        # for i in range(10):
+        #     print('%0.3f %0.3f %0.3f %0.3f' % (shift_x[i], shift_y[i], shift_z[i], cat.newz[i]))
 
         # now we update estimates of the Psi field in the following way:
         if iloop == 0:
@@ -436,7 +436,7 @@ class Recon:
 
             if not rsd_only:
                 # recalculate weights, as we don't want the FKP weighting for void-finding
-                self.ran.weight = self.ran.get_weights(fkp=0, noz=1, cp=1, syst=1)
+                self.ran.weight = self.ran.get_weights(fkp=0, noz=0, cp=0, syst=0)
                 output = np.zeros((self.ran.size, 4))
                 output[:, 0] = self.ran.ra
                 output[:, 1] = self.ran.dec
