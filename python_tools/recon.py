@@ -9,6 +9,7 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy.fftpack import fftfreq
 from cosmology import Cosmology
 import pyfftw
+import fastmult
 
 
 class Recon:
@@ -161,23 +162,11 @@ class Recon:
         if iloop == 0:  # first iteration requires initialization
             delta = pyfftw.empty_aligned((nbins, nbins, nbins), dtype='complex128')
             deltak = pyfftw.empty_aligned((nbins, nbins, nbins), dtype='complex128')
+            rho = pyfftw.empty_aligned((nbins, nbins, nbins), dtype='complex128')
+            rhok = pyfftw.empty_aligned((nbins, nbins, nbins), dtype='complex128')
             psi_x = pyfftw.empty_aligned((nbins, nbins, nbins), dtype='complex128')
             psi_y = pyfftw.empty_aligned((nbins, nbins, nbins), dtype='complex128')
             psi_z = pyfftw.empty_aligned((nbins, nbins, nbins), dtype='complex128')
-
-            if self.is_box:
-                deltar = 0
-            else:
-                print('Allocating randoms in cells...')
-                sys.stdout.flush()
-                begin = time.time()
-                deltar = self.allocate_gal_cic_fast(ran)
-                finish = time.time(); print('Time delta_r CIC %0.3f' % (finish - begin))
-                print('Smoothing...')
-                sys.stdout.flush()
-                begin = time.time()
-                deltar = gaussian_filter(deltar, smooth/binsize, mode='nearest')
-                finish = time.time(); print('Time delta_r smooth %0.3f' % (finish - begin))
 
             # -- Initialize FFT objects and load wisdom if available
             wisdom_file = "wisdom." + str(nbins) + "." + str(self.nthreads)
@@ -189,10 +178,37 @@ class Recon:
                 g.close()
             print('Creating FFTW objects...')
             sys.stdout.flush()
+            begin = time.time()
             fft_obj = pyfftw.FFTW(delta, delta, axes=[0, 1, 2], threads=self.nthreads)
             ifft_obj = pyfftw.FFTW(deltak, psi_x, axes=[0, 1, 2],
                                    threads=self.nthreads,
                                    direction='FFTW_BACKWARD')
+            finish = time.time()
+            print('Time creating fftw objects %0.3f' % (finish - begin))
+
+            if self.is_box:
+                deltar = 0
+            else:
+                print('Allocating randoms in cells...')
+                sys.stdout.flush()
+                begin = time.time()
+                # deltar = self.allocate_gal_cic_fast(ran)
+                deltar = np.empty((nbins, nbins, nbins))
+                fastmult.allocate_gal_cic(deltar, ran.x, ran.y, ran.z, ran.weight, ran.size, self.xmin, self.ymin,
+                                          self.zmin, self.box, nbins, 1.)
+                finish = time.time(); print('Time delta_r CIC %0.3f' % (finish - begin))
+                print('Smoothing...')
+                sys.stdout.flush()
+                begin = time.time()
+                # deltar = gaussian_filter(deltar, smooth/binsize, mode='nearest')
+                kr = fftfreq(nbins, d=binsize) * 2 * np.pi * self.smooth
+                norm = np.exp(-0.5 * (kr[:, None, None] ** 2 + kr[None, :, None] ** 2 + kr[None, None, :] ** 2))
+                fft_obj(input_array=deltar, output_array=rhok)
+                rhok = rhok * norm
+                ifft_obj(input_array=rhok, output_array=rho)
+                deltar = np.real(rho)
+                finish = time.time(); print('Time delta_r smooth %0.3f' % (finish - begin))
+
         else:
             delta = self.delta
             deltak = self.deltak
@@ -209,7 +225,10 @@ class Recon:
         sys.stdout.flush()
         begin = time.time()
         deltag = self.allocate_gal_cic_fast(cat)
-        finish = time.time();
+        # deltag = np.empty((nbins, nbins, nbins))
+        # fastmult.allocate_gal_cic(deltag, cat.x, cat.y, cat.z, cat.weight, cat.size, self.xmin, self.ymin, self.zmin,
+        #                           self.box, nbins, 1.)
+        finish = time.time()
         print('Time delta_g CIC %0.3f' % (finish - begin))
         print('Smoothing galaxy density field ...')
         sys.stdout.flush()
@@ -219,37 +238,46 @@ class Recon:
             # in this case the filter mode should not be important, due to the box padding
             # but just in case, use mode='nearest' to continue with zeros
             begin = time.time()
-            deltag = gaussian_filter(deltag, smooth / binsize, mode='nearest')
-            finish = time.time();
+            # deltag = gaussian_filter(deltag, smooth / binsize, mode='nearest')
+            fft_obj(input_array=deltag, output_array=rhok)
+            rhok = rhok * norm
+            ifft_obj(input_array=rhok, output_array=rho)
+            deltag = np.real(rho)
+            finish = time.time()
             print('Time delta_g smooth %0.3f' % (finish - begin))
 
         print('Computing density fluctuations, delta...')
         sys.stdout.flush()
         if self.is_box:
             # simply normalize based on (constant) mean galaxy number density
-            delta[:] = (deltag * self.box**3.)/(cat.size * self.binsize**3.) - 1.
+            # delta[:] = (deltag * self.box**3.)/(cat.size * self.binsize**3.) - 1.
+            fastmult.create_delta_box(delta, deltag, cat.size)
         else:
             # normalize using the randoms, avoiding possible divide-by-zero errors
             begin = time.time()
-            delta[:] = deltag - self.alpha * deltar
-            finish = time.time();
+            fastmult.create_delta_survey(delta, deltag, deltar, self.alpha, self.ran_min)
+            finish = time.time()
             print('Time delta norm %0.3f' % (finish - begin))
-            begin = time.time()
-            w = np.where(deltar > self.ran_min)
-            finish = time.time();
-            print('Time w %0.3f' % (finish - begin))
-            delta[w] = delta[w] / (self.alpha * deltar[w])
-            begin = time.time()
-            w2 = np.where((deltar <= self.ran_min))  # possible divide-by-zero sites, density estimate not reliable here
-            finish = time.time();
-            print('Time w2 %0.3f' % (finish - begin))
-            delta[w2] = 0.
-            # additionally, remove the highest peaks of delta to reduce noise (if required?)
-            # w3 = np.where(delta > np.percentile(delta[w].ravel(), 99))
-            # delta[w3] = 0.
-            # del w3
-            del w
-            del w2
+            # begin = time.time()
+            # delta[:] = deltag - self.alpha * deltar
+            # finish = time.time();
+            # print('Time delta norm %0.3f' % (finish - begin))
+            # begin = time.time()
+            # w = np.where(deltar > self.ran_min)
+            # finish = time.time();
+            # print('Time w %0.3f' % (finish - begin))
+            # delta[w] = delta[w] / (self.alpha * deltar[w])
+            # begin = time.time()
+            # w2 = np.where((deltar <= self.ran_min))  # possible divide-by-zero sites, density estimate not reliable here
+            # finish = time.time();
+            # print('Time w2 %0.3f' % (finish - begin))
+            # delta[w2] = 0.
+            # # additionally, remove the highest peaks of delta to reduce noise (if required?)
+            # # w3 = np.where(delta > np.percentile(delta[w].ravel(), 99))
+            # # delta[w3] = 0.
+            # # del w3
+            # del w
+            # del w2
         del deltag  # deltag no longer required anywhere
 
         print('Fourier transforming delta field...')
@@ -264,27 +292,34 @@ class Recon:
         k = fftfreq(self.nbins, d=binsize) * 2 * np.pi
         finish = time.time();
         print('Time k %0.3f' % (finish - begin))
+
+        # begin = time.time()
+        # ksq = k[:, None, None] ** 2 + k[None, :, None] ** 2 + k[None, None, :] ** 2
+        # finish = time.time();
+        # print('Time ksq %0.3f' % (finish - begin))
+        # # avoid divide by zero
+        # begin = time.time()
+        # ksq[ksq == 0] = 1.
+        # finish = time.time();
+        # print('Time ksq=0 %0.3f' % (finish - begin))
+        # begin = time.time()
+        # delta /= ksq
+        # # set zero mode to 0
+        # delta[0, 0, 0] = 0
+        # finish = time.time();
+        # print('Time delta/ksq %0.3f' % (finish - begin))
+
         begin = time.time()
-        ksq = k[:, None, None] ** 2 + k[None, :, None] ** 2 + k[None, None, :] ** 2
-        finish = time.time();
-        print('Time ksq %0.3f' % (finish - begin))
-        # avoid divide by zero
-        begin = time.time()
-        ksq[ksq == 0] = 1.
-        finish = time.time();
-        print('Time ksq=0 %0.3f' % (finish - begin))
-        begin = time.time()
-        delta /= ksq
-        finish = time.time();
-        print('Time delta/ksq %0.3f' % (finish - begin))
-        # set zero mode to 0
-        delta[0, 0, 0] = 0
+        fastmult.divide_k2(delta, delta, k)
+        finish = time.time()
+        print('Time fast delta/ksq %0.3f' % (finish - begin))
 
         # now solve the basic building block: IFFT[-i k delta(k)/(b k^2)]
         print('Inverse Fourier transforming to get psi...')
         sys.stdout.flush()
         begin = time.time()
-        deltak[:] = delta * -1j * k[:, None, None] / bias
+        # deltak[:] = delta * -1j * k[:, None, None] / bias
+        fastmult.mult_kx(deltak, delta, k, bias)
         finish = time.time();
         print('Time deltak_x %0.3f' % (finish - begin))
         begin = time.time()
@@ -292,7 +327,8 @@ class Recon:
         finish = time.time();
         print('Time IFFT %0.3f' % (finish - begin))
         begin = time.time()
-        deltak[:] = delta * -1j * k[None, :, None] / bias
+        # deltak[:] = delta * -1j * k[None, :, None] / bias
+        fastmult.mult_ky(deltak, delta, k, bias)
         finish = time.time();
         print('Time deltak_y %0.3f' % (finish - begin))
         begin = time.time()
@@ -300,7 +336,8 @@ class Recon:
         finish = time.time();
         print('Time IFFT %0.3f' % (finish - begin))
         begin = time.time()
-        deltak[:] = delta * -1j * k[None, None, :] / bias
+        # deltak[:] = delta * -1j * k[None, None, :] / bias
+        fastmult.mult_kz(deltak, delta, k, bias)
         finish = time.time();
         print('Time deltak_z %0.3f' % (finish - begin))
         begin = time.time()

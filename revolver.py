@@ -27,9 +27,12 @@ if parms.do_recon:
     start = time.time()
     print('\n ==== Running reconstruction for real-space positions ==== ')
 
+    begin = time.time()
     cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
                           boss_like=parms.boss_like, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
                           fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)
+    finish = time.time()
+    print('Time cat initialization %0.3f' % (finish - begin))
 
     if parms.is_box:
         recon = Recon(cat, ran=cat, is_box=True, box_length=parms.box_length, omega_m=parms.omega_m, bias=parms.bias,
@@ -41,18 +44,36 @@ if parms.do_recon:
 
         # initializing randoms: note that in general we assume only FKP and systot weights are provided for randoms
         # this is overridden for special input formats (either boss_like and special_patchy are True)
+        begin = time.time()
         ran = GalaxyCatalogue(parms.randoms_file, is_box=False, box_length=parms.box_length, boss_like=parms.boss_like,
                               randoms=True, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
                               fkp=parms.fkp, noz=0, cp=0, systot=0, veto=0)
+        finish = time.time()
+        print('Time ran initialization %0.3f' % (finish - begin))
 
         # perform basic cuts on the data: vetomask and low redshift extent
+        begin = time.time()
         wgal = np.logical_and((cat.veto == 1), (parms.z_low_cut < cat.redshift) & (cat.redshift < parms.z_high_cut))
+        finish = time.time()
+        print('Time cat logical %0.3f' % (finish - begin))
+        begin = time.time()
         wran = np.logical_and((ran.veto == 1), (parms.z_low_cut < ran.redshift) & (ran.redshift < parms.z_high_cut))
+        finish = time.time()
+        print('Time ran logical %0.3f' % (finish - begin))
+        begin = time.time()
         cat.cut(wgal)
+        finish = time.time()
+        print('Time cat cut %0.3f' % (finish - begin))
+        begin = time.time()
         ran.cut(wran)
+        finish = time.time()
+        print('Time ran cut %0.3f' % (finish - begin))
 
+        begin = time.time()
         recon = Recon(cat, ran, is_box=False, omega_m=parms.omega_m, bias=parms.bias, f=parms.f, smooth=parms.smooth,
                       nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads)
+        finish = time.time()
+        print('Time recon initialization %0.3f' % (finish - begin))
 
     # now run the iteration loop to solve for displacement field
     for i in range(parms.niter):
