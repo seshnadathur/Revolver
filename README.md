@@ -34,7 +34,7 @@ Requirements:
    - healpy 1.9.0
    - pyfftw 0.10.3
    - astropy 1.0.6
-   - SWIG-3.0.12
+   - cython 0.25.2
 
 Some earlier versions of numpy and scipy will fail due to changes in functionality of some methods (numpy.unique 
 and scipy.spatial.cKDTree). The code has only been tested with the stated versions of the other packages: other versions

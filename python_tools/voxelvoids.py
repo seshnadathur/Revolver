@@ -3,16 +3,16 @@ import os
 import sys
 import numpy as np
 import subprocess
-import cic
+import fastmodules
 from scipy.ndimage.filters import gaussian_filter
 from cosmology import Cosmology
 
 
 class VoxelVoids:
 
-    def __init__(self, cat, ran, pre_calc_ran=True, handle="", output_folder="", is_box=True, box_length=2500.0,
-                 omega_m=0.308, z_min=0, z_max = 1, min_dens_cut=1.0, use_barycentres=True, void_prefix="",
-                 find_clusters=False, max_dens_cut=1.0, cluster_prefix=""):
+    def __init__(self, cat, ran, handle="", output_folder="", is_box=True, box_length=2500.0, omega_m=0.308, z_min=0,
+                 z_max = 1, min_dens_cut=1.0, use_barycentres=True, void_prefix="", find_clusters=False,
+                 max_dens_cut=1.0, cluster_prefix=""):
 
         print("\n ==== Starting the void-finding with voxel-based method ==== ")
         sys.stdout.flush()
@@ -34,7 +34,6 @@ class VoxelVoids:
         print("%d tracers found" % cat.size)
 
         if self.is_box:
-
             self.box_length = box_length
             self.cat = cat
 
@@ -53,23 +52,10 @@ class VoxelVoids:
             self.zmin = 0
 
         else:
-
-            # convert sky coords to Cartesian
             cosmo = Cosmology(omega_m=omega_m)
-            cat.dist = cosmo.get_comoving_distance(cat.redshift)
-            cat.x = cat.dist * np.cos(cat.dec * np.pi / 180) * np.cos(cat.ra * np.pi / 180)
-            cat.y = cat.dist * np.cos(cat.dec * np.pi / 180) * np.sin(cat.ra * np.pi / 180)
-            cat.z = cat.dist * np.sin(cat.dec * np.pi / 180)
-            if not pre_calc_ran:
-                ran.dist = cosmo.get_comoving_distance(ran.redshift)
-                ran.x = ran.dist * np.cos(ran.dec * np.pi / 180) * np.cos(ran.ra * np.pi / 180)
-                ran.y = ran.dist * np.cos(ran.dec * np.pi / 180) * np.sin(ran.ra * np.pi / 180)
-                ran.z = ran.dist * np.sin(ran.dec * np.pi / 180)
-
             # get the weights for data and randoms
             cat.weight = cat.get_weights(fkp=0, noz=1, cp=1, syst=1)
-            if not pre_calc_ran:
-                ran.weight = ran.get_weights(fkp=0, noz=0, cp=0, syst=0)
+            ran.weight = ran.get_weights(fkp=0, noz=0, cp=0, syst=0)
 
             # relative weighting of galaxies and randoms
             sum_wgal = np.sum(cat.weight)
@@ -124,7 +110,10 @@ class VoxelVoids:
 
         # now approximately check true survey volume and recalculate mean density
         ran = self.ran
-        rhor = self.allocate_gal_cic_fast(ran)
+        rhor = np.zeros((self.nbins, self.nbins, self.nbins), dtype='float64')
+        fastmodules.allocate_gal_cic(rhor, ran.x, ran.y, ran.z, ran.weight, ran.size, self.xmin, self.ymin,
+                                     self.zmin, self.box_length, self.nbins, 1.)
+        # rhor = self.allocate_gal_cic_fast(ran)
         filled_cells = np.sum(rhor.flatten() > 0)
         mean_dens = np.sum(self.cat.weight) / (filled_cells * self.binsize**3.)
         # thus get better choice of bin size
@@ -172,7 +161,10 @@ class VoxelVoids:
         # measure the galaxy density field
         print('Allocating galaxies in cells...')
         sys.stdout.flush()
-        rhog = self.allocate_gal_cic_fast(self.cat)
+        rhog = np.zeros((self.nbins, self.nbins, self.nbins), dtype='float64')
+        fastmodules.allocate_gal_cic(rhog, self.cat.x, self.cat.y, self.cat.z, self.cat.weight, self.cat.size,
+                                     self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 1.)
+        # rhog = self.allocate_gal_cic_fast(self.cat)
         if self.is_box:
             # smooth with pre-determined smoothing scale
             print('Smoothing galaxy density field ...')
@@ -180,13 +172,21 @@ class VoxelVoids:
             rhog = gaussian_filter(rhog, self.smooth / self.binsize, mode='wrap')
 
             # then normalize number counts to get density in units of mean (i.e. 1 + delta)
-            rhog = (rhog * self.box_length ** 3.) / (self.cat.size * self.binsize ** 3.)
+            # rhog = (rhog * self.box_length ** 3.) / (self.cat.size * self.binsize ** 3.)
+            fastmodules.normalize_rho_box(rhog, self.cat.size)
+            self.rhoflat = rhog.flatten()
         else:
             print('Allocating randoms in cells...')
             sys.stdout.flush()
-            rhor = self.allocate_gal_cic_fast(self.ran)
+            # rhor = self.allocate_gal_cic_fast(self.ran)
+            rhor = np.zeros((self.nbins, self.nbins, self.nbins), dtype='float64')
+            fastmodules.allocate_gal_cic(rhor, self.ran.x, self.ran.y, self.ran.z, self.ran.weight, self.ran.size,
+                                         self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 1.)
+
             # identify "empty" cells for later cuts on void catalogue
-            mask_cut = np.where((rhor.flatten() <= self.ran_min))
+            mask_cut = np.zeros(self.nbins**3)
+            fastmodules.survey_mask(mask_cut, rhor, self.ran_min)
+            # mask_cut = np.where((rhor.flatten() <= self.ran_min))
             self.mask_cut = mask_cut
 
             # smooth both galaxy and randoms with pre-determined smoothing scale
@@ -194,23 +194,25 @@ class VoxelVoids:
             sys.stdout.flush()
             rhog = gaussian_filter(rhog, self.smooth / self.binsize, mode='nearest')
             rhor = gaussian_filter(rhor, self.smooth / self.binsize, mode='nearest')
-            w = np.where(rhor > self.ran_min)
-            w2 = np.where((rhor <= self.ran_min))  # empty or boundary cells; set to mean density now and flag later
 
-            # normalize densities using the randoms, avoiding possible divide-by-zero errors
-            delta = rhog - self.alpha * rhor
-            delta[w] = delta[w] / (self.alpha * rhor[w])
-            delta[w2] = 0.
-            rhog = delta + 1.
-            del w
+            rho = np.empty((self.nbins, self.nbins, self.nbins), dtype='float64')
+            fastmodules.normalize_rho_survey(rho, rhog, rhor, self.alpha, self.ran_min)
+            self.rhoflat = rho.flatten()
 
-            # flag the empty cells
-            rhog[w2] = 0.9e30
-
-        self.rhog = rhog
+            # w = np.where(rhor > self.ran_min)
+            # w2 = np.where((rhor <= self.ran_min))  # empty or boundary cells; set to mean density now and flag later
+            # # normalize densities using the randoms, avoiding possible divide-by-zero errors
+            # delta = rhog - self.alpha * rhor
+            # delta[w] = delta[w] / (self.alpha * rhor[w])
+            # delta[w2] = 0.
+            # rhog = delta + 1.
+            # del w
+            #
+            # # flag the empty cells
+            # rhog[w2] = 0.9e30
 
         # write this to file for jozov-grid to read
-        rhogflat = np.array(np.copy(rhog.flatten()), dtype=np.float32)
+        rhogflat = np.array(self.rhoflat, dtype=np.float32)
         # print('Debug: rho_g[0] = %0.4e, rho_g[-1] = %0.4e' % (rhogflat[0], rhogflat[-1]))
         with open(raw_dir + 'density_n%d.dat' % self.nbins, 'w') as F:
             rhogflat.tofile(F, format='%f')
@@ -249,7 +251,7 @@ class VoxelVoids:
         raw_dir = self.output_folder + "rawVoxelInfo/"
         rawdata = np.loadtxt(raw_dir + self.handle + ".txt", skiprows=2)
         nvox = self.nbins ** 3
-        masked_vox = np.arange(nvox)[self.mask_cut]
+        # masked_vox = np.arange(nvox)[self.mask_cut]
 
         # load the void hierarchy data to record void leak density ratio, even though this is
         # possibly not useful for anything at all
@@ -267,16 +269,22 @@ class VoxelVoids:
         hierarchy = np.asarray(hierarchy, dtype=str)
 
         # remove voids that: a) don't meet minimum density cut, b) are edge voids, or c) lie in a masked voxel
-        select = rawdata[:, 3] < self.min_dens_cut                     # a
-        select_edge = rawdata[:, 1] == 0                               # b
-        select = np.logical_and(select, select_edge)
+        select = np.zeros(rawdata.shape[0], dtype='int')
+        fastmodules.voxelvoids_cuts(select, self.mask_cut, rawdata, self.min_dens_cut)
         rawdata = rawdata[select]
         densratio = densratio[select]
         hierarchy = hierarchy[select]
-        select_mask = np.in1d(rawdata[:, 2], masked_vox, invert=True)  # c
-        rawdata = rawdata[select_mask]
-        densratio = densratio[select_mask]
-        hierarchy = hierarchy[select_mask]
+
+        # select = rawdata[:, 3] < self.min_dens_cut                     # a
+        # select_edge = rawdata[:, 1] == 0                               # b
+        # select = np.logical_and(select, select_edge)
+        # rawdata = rawdata[select]
+        # densratio = densratio[select]
+        # hierarchy = hierarchy[select]
+        # select_mask = np.in1d(rawdata[:, 2], masked_vox, invert=True)  # c
+        # rawdata = rawdata[select_mask]
+        # densratio = densratio[select_mask]
+        # hierarchy = hierarchy[select_mask]
 
         # void minimum density centre locations
         xpos, ypos, zpos = self.voxel_position(rawdata[:, 2])
@@ -310,10 +318,11 @@ class VoxelVoids:
         # void average densities and barycentres
         avgdens = np.zeros(len(rawdata))
         barycentres = np.zeros((len(rawdata), 3))
-        rhoflat = self.rhog.flatten()
         for i in range(len(rawdata)):
             member_voxels = np.fromstring(hierarchy[i], dtype=int, sep=' ')[1:]
-            member_dens = rhoflat[member_voxels]
+            member_dens = np.zeros(len(member_voxels), dtype='float64')
+            fastmodules.get_member_densities(member_dens, member_voxels, self.rhoflat)
+            # member_dens = self.rhoflat[member_voxels]
             avgdens[i] = np.mean(member_dens) - 1.
             if self.use_barycentres:
                 member_x, member_y, member_z = self.voxel_position(member_voxels)
@@ -395,7 +404,13 @@ class VoxelVoids:
             hierarchy = F.readlines()
 
         nvox = self.nbins ** 3
-        masked_vox = np.arange(nvox)[self.mask_cut]
+        # masked_vox = np.arange(nvox)[self.mask_cut]
+
+        select = np.zeros(rawdata.shape[0], dtype='int')
+        fastmodules.voxelcluster_cuts(select, self.mask_cut, rawdata, self.min_dens_cut)
+        rawdata = rawdata[select]
+        densratio = densratio[select]
+        hierarchy = hierarchy[select]
 
         # cluster effective radii
         vols = (rawdata[:, 5] * self.binsize ** 3.)
@@ -406,10 +421,11 @@ class VoxelVoids:
         maxdens = rawdata[:, 3] - 1.
         # cluster average densities
         avgdens = np.zeros(len(rawdata))
-        rhoflat = self.rhog.flatten()
         for i in range(len(rawdata)):
             member_voxels = np.fromstring(hierarchy[i], dtype=int, sep=' ')[1:]
-            member_dens = rhoflat[member_voxels]
+            member_dens = np.zeros(len(member_voxels), dtype='float64')
+            fastmodules.get_member_densities(member_dens, member_voxels, self.rhoflat)
+            # member_dens = self.rhoflat[member_voxels]
             avgdens[i] = np.mean(member_dens) - 1.
         # record cluster lambda value, even though usefulness of this has only been shown for ZOBOV clusters so far
         cluster_lambda = avgdens * (rads ** 1.6)
@@ -438,21 +454,6 @@ class VoxelVoids:
         output[:, 6] = avgdens
         output[:, 7] = cluster_lambda
         output[:, 8] = densratio
-
-        # now apply various cuts
-        # remove clusters that don't meet maximum density criterion
-        select = rawdata[:, 3] > self.max_dens_cut
-        if not self.is_box:
-            # remove all clusters whose maximum density centre lies in a (conservatively) masked voxel
-            select_mask = np.in1d(rawdata[:, 2], masked_vox, invert=True)
-            # and further cut to remove all 'edge' voids
-            select_edge = rawdata[:, 1] == 0
-            select_skypos = np.logical_and(select_mask, select_edge)
-            select = np.logical_and(select, select_skypos)
-            # finally, remove all cluster with maximum density centres outside specified redshift range
-            select_z = np.logical_and(output[:, 3] > self.z_min, output[:, 3] < self.z_max)
-            select = np.logical_and(select, select_z)
-        output = output[select]
 
         print('Total %d clusters pass all cuts' % len(output))
         sys.stdout.flush()

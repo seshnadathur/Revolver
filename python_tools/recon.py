@@ -3,13 +3,10 @@ import numpy as np
 import os
 import json
 import sys
-import cic
-import time
-from scipy.ndimage.filters import gaussian_filter
 from scipy.fftpack import fftfreq
 from cosmology import Cosmology
 import pyfftw
-import fastmult
+import fastmodules
 
 
 class Recon:
@@ -43,40 +40,11 @@ class Recon:
         if not self.is_box:
 
             # get the weights for data and randoms
-            begin = time.time()
             cat.weight = cat.get_weights(fkp=1, noz=1, cp=1, syst=1)
-            finish = time.time(); print('Time cat get weights %0.3f' % (finish - begin))
-            begin = time.time()
             ran.weight = ran.get_weights(fkp=1, noz=0, cp=0, syst=0)
-            finish = time.time(); print('Time ran get weights %0.3f' % (finish - begin))
 
-            # compute Cartesian positions for data and randoms
-            begin = time.time()
-            cat.dist = cosmo.get_comoving_distance(cat.redshift)
-            cat.x = cat.dist * np.cos(cat.dec * np.pi / 180) * np.cos(cat.ra * np.pi / 180)
-            cat.y = cat.dist * np.cos(cat.dec * np.pi / 180) * np.sin(cat.ra * np.pi / 180)
-            cat.z = cat.dist * np.sin(cat.dec * np.pi / 180)
-            cat.newx = cat.x * 1.
-            cat.newy = cat.y * 1.
-            cat.newz = cat.z * 1.
-            finish = time.time(); print('Time cat cartesian %0.3f' % (finish - begin))
-            begin = time.time()
-            ran.dist = cosmo.get_comoving_distance(ran.redshift)
-            ran.x = ran.dist * np.cos(ran.dec * np.pi / 180) * np.cos(ran.ra * np.pi / 180)
-            ran.y = ran.dist * np.cos(ran.dec * np.pi / 180) * np.sin(ran.ra * np.pi / 180)
-            ran.z = ran.dist * np.sin(ran.dec * np.pi / 180)
-            ran.newx = ran.x * 1.
-            ran.newy = ran.y * 1.
-            ran.newz = ran.z * 1.
-            finish = time.time(); print('Time ran cartesian %0.3f' % (finish - begin))
-
-            # print('Randoms min of x, y, z', min(ran.x), min(ran.y), min(ran.z))
-            # print('Randoms max of x, y, z', max(ran.x), max(ran.y), max(ran.z))
-
-            begin = time.time()
             sum_wgal = np.sum(cat.weight)
             sum_wran = np.sum(ran.weight)
-            finish = time.time(); print('Time sum weights %0.3f' % (finish - begin))
             # relative weighting of galaxies and randoms
             alpha = sum_wgal / sum_wran
             ran_min = 0.01 * sum_wran / ran.size
@@ -85,10 +53,8 @@ class Recon:
             self.ran_min = ran_min
             self.alpha = alpha
             self.deltar = 0
-            begin = time.time()
             self.xmin, self.ymin, self.zmin, self.box, self.binsize = \
                 self.compute_box(padding=padding, optimize_box=opt_box)
-            finish = time.time(); print('Time compute box %0.3f' % (finish - begin))
 
         else:
             self.ran = cat  # we will not use this!
@@ -150,7 +116,6 @@ class Recon:
     def iterate(self, iloop, save_wisdom=1):
         cat = self.cat
         ran = self.ran
-        smooth = self.smooth
         binsize = self.binsize
         beta = self.beta
         bias = self.bias
@@ -178,186 +143,97 @@ class Recon:
                 g.close()
             print('Creating FFTW objects...')
             sys.stdout.flush()
-            begin = time.time()
             fft_obj = pyfftw.FFTW(delta, delta, axes=[0, 1, 2], threads=self.nthreads)
             ifft_obj = pyfftw.FFTW(deltak, psi_x, axes=[0, 1, 2],
                                    threads=self.nthreads,
                                    direction='FFTW_BACKWARD')
-            finish = time.time()
-            print('Time creating fftw objects %0.3f' % (finish - begin))
+            kr = fftfreq(nbins, d=binsize) * 2 * np.pi * self.smooth
+            norm = np.exp(-0.5 * (kr[:, None, None] ** 2 + kr[None, :, None] ** 2 + kr[None, None, :] ** 2))
 
             if self.is_box:
                 deltar = 0
             else:
                 print('Allocating randoms in cells...')
                 sys.stdout.flush()
-                begin = time.time()
-                # deltar = self.allocate_gal_cic_fast(ran)
-                deltar = np.empty((nbins, nbins, nbins))
-                fastmult.allocate_gal_cic(deltar, ran.x, ran.y, ran.z, ran.weight, ran.size, self.xmin, self.ymin,
-                                          self.zmin, self.box, nbins, 1.)
-                finish = time.time(); print('Time delta_r CIC %0.3f' % (finish - begin))
+                deltar = np.zeros((nbins, nbins, nbins), dtype='float64')
+                fastmodules.allocate_gal_cic(deltar, ran.x, ran.y, ran.z, ran.weight, ran.size, self.xmin, self.ymin,
+                                         self.zmin, self.box, nbins, 1.)
                 print('Smoothing...')
                 sys.stdout.flush()
-                begin = time.time()
-                # deltar = gaussian_filter(deltar, smooth/binsize, mode='nearest')
-                kr = fftfreq(nbins, d=binsize) * 2 * np.pi * self.smooth
-                norm = np.exp(-0.5 * (kr[:, None, None] ** 2 + kr[None, :, None] ** 2 + kr[None, None, :] ** 2))
-                fft_obj(input_array=deltar, output_array=rhok)
-                rhok = rhok * norm
+                # NOTE - we do the smoothing via FFTs rather than scipy's gaussian_filter because if using several
+                # threads for pyfftw it is much faster this way (if only using 1 thread gains are negligible)
+                rho = deltar + 0.0j
+                fft_obj(input_array=rho, output_array=rhok)
+                fastmodules.mult_norm(rhok, rhok, norm)
                 ifft_obj(input_array=rhok, output_array=rho)
-                deltar = np.real(rho)
-                finish = time.time(); print('Time delta_r smooth %0.3f' % (finish - begin))
+                deltar = rho.real
 
         else:
             delta = self.delta
             deltak = self.deltak
             deltar = self.deltar
+            rho = self.rho
+            rhok = self.rhok
             psi_x = self.psi_x
             psi_y = self.psi_y
             psi_z = self.psi_z
             fft_obj = self.fft_obj
             ifft_obj = self.ifft_obj
+            norm = self.norm
 
         # -- Allocate galaxies and randoms to grid with CIC method
         # -- using new positions
         print('Allocating galaxies in cells...')
         sys.stdout.flush()
-        begin = time.time()
-        deltag = self.allocate_gal_cic_fast(cat)
-        # deltag = np.empty((nbins, nbins, nbins))
-        # fastmult.allocate_gal_cic(deltag, cat.x, cat.y, cat.z, cat.weight, cat.size, self.xmin, self.ymin, self.zmin,
-        #                           self.box, nbins, 1.)
-        finish = time.time()
-        print('Time delta_g CIC %0.3f' % (finish - begin))
+        deltag = np.zeros((nbins, nbins, nbins), dtype='float64')
+        fastmodules.allocate_gal_cic(deltag, cat.newx, cat.newy, cat.newz, cat.weight, cat.size, self.xmin, self.ymin,
+                                  self.zmin, self.box, nbins, 1.)
         print('Smoothing galaxy density field ...')
         sys.stdout.flush()
-        if self.is_box:
-            deltag = gaussian_filter(deltag, smooth/binsize, mode='wrap')  # mode='wrap' for PBC
-        else:
-            # in this case the filter mode should not be important, due to the box padding
-            # but just in case, use mode='nearest' to continue with zeros
-            begin = time.time()
-            # deltag = gaussian_filter(deltag, smooth / binsize, mode='nearest')
-            fft_obj(input_array=deltag, output_array=rhok)
-            rhok = rhok * norm
-            ifft_obj(input_array=rhok, output_array=rho)
-            deltag = np.real(rho)
-            finish = time.time()
-            print('Time delta_g smooth %0.3f' % (finish - begin))
+        # NOTE - smoothing via FFTs
+        rho = deltag + 0.0j
+        fft_obj(input_array=rho, output_array=rhok)
+        fastmodules.mult_norm(rhok, rhok, norm)
+        ifft_obj(input_array=rhok, output_array=rho)
+        deltag = rho.real
 
         print('Computing density fluctuations, delta...')
         sys.stdout.flush()
         if self.is_box:
             # simply normalize based on (constant) mean galaxy number density
-            # delta[:] = (deltag * self.box**3.)/(cat.size * self.binsize**3.) - 1.
-            fastmult.create_delta_box(delta, deltag, cat.size)
+            fastmodules.normalize_delta_box(delta, deltag, cat.size)
         else:
             # normalize using the randoms, avoiding possible divide-by-zero errors
-            begin = time.time()
-            fastmult.create_delta_survey(delta, deltag, deltar, self.alpha, self.ran_min)
-            finish = time.time()
-            print('Time delta norm %0.3f' % (finish - begin))
-            # begin = time.time()
-            # delta[:] = deltag - self.alpha * deltar
-            # finish = time.time();
-            # print('Time delta norm %0.3f' % (finish - begin))
-            # begin = time.time()
-            # w = np.where(deltar > self.ran_min)
-            # finish = time.time();
-            # print('Time w %0.3f' % (finish - begin))
-            # delta[w] = delta[w] / (self.alpha * deltar[w])
-            # begin = time.time()
-            # w2 = np.where((deltar <= self.ran_min))  # possible divide-by-zero sites, density estimate not reliable here
-            # finish = time.time();
-            # print('Time w2 %0.3f' % (finish - begin))
-            # delta[w2] = 0.
-            # # additionally, remove the highest peaks of delta to reduce noise (if required?)
-            # # w3 = np.where(delta > np.percentile(delta[w].ravel(), 99))
-            # # delta[w3] = 0.
-            # # del w3
-            # del w
-            # del w2
+            fastmodules.normalize_delta_survey(delta, deltag, deltar, self.alpha, self.ran_min)
         del deltag  # deltag no longer required anywhere
 
         print('Fourier transforming delta field...')
         sys.stdout.flush()
-        begin = time.time()
         fft_obj(input_array=delta, output_array=delta)
-        finish = time.time();
-        print('Time FFT %0.3f' % (finish - begin))
 
         # -- delta/k**2
-        begin = time.time()
         k = fftfreq(self.nbins, d=binsize) * 2 * np.pi
-        finish = time.time();
-        print('Time k %0.3f' % (finish - begin))
-
-        # begin = time.time()
-        # ksq = k[:, None, None] ** 2 + k[None, :, None] ** 2 + k[None, None, :] ** 2
-        # finish = time.time();
-        # print('Time ksq %0.3f' % (finish - begin))
-        # # avoid divide by zero
-        # begin = time.time()
-        # ksq[ksq == 0] = 1.
-        # finish = time.time();
-        # print('Time ksq=0 %0.3f' % (finish - begin))
-        # begin = time.time()
-        # delta /= ksq
-        # # set zero mode to 0
-        # delta[0, 0, 0] = 0
-        # finish = time.time();
-        # print('Time delta/ksq %0.3f' % (finish - begin))
-
-        begin = time.time()
-        fastmult.divide_k2(delta, delta, k)
-        finish = time.time()
-        print('Time fast delta/ksq %0.3f' % (finish - begin))
+        fastmodules.divide_k2(delta, delta, k)
 
         # now solve the basic building block: IFFT[-i k delta(k)/(b k^2)]
         print('Inverse Fourier transforming to get psi...')
         sys.stdout.flush()
-        begin = time.time()
-        # deltak[:] = delta * -1j * k[:, None, None] / bias
-        fastmult.mult_kx(deltak, delta, k, bias)
-        finish = time.time();
-        print('Time deltak_x %0.3f' % (finish - begin))
-        begin = time.time()
+        fastmodules.mult_kx(deltak, delta, k, bias)
         ifft_obj(input_array=deltak, output_array=psi_x)
-        finish = time.time();
-        print('Time IFFT %0.3f' % (finish - begin))
-        begin = time.time()
-        # deltak[:] = delta * -1j * k[None, :, None] / bias
-        fastmult.mult_ky(deltak, delta, k, bias)
-        finish = time.time();
-        print('Time deltak_y %0.3f' % (finish - begin))
-        begin = time.time()
+        fastmodules.mult_ky(deltak, delta, k, bias)
         ifft_obj(input_array=deltak, output_array=psi_y)
-        finish = time.time();
-        print('Time IFFT %0.3f' % (finish - begin))
-        begin = time.time()
-        # deltak[:] = delta * -1j * k[None, None, :] / bias
-        fastmult.mult_kz(deltak, delta, k, bias)
-        finish = time.time();
-        print('Time deltak_z %0.3f' % (finish - begin))
-        begin = time.time()
+        fastmodules.mult_kz(deltak, delta, k, bias)
         ifft_obj(input_array=deltak, output_array=psi_z)
-        finish = time.time();
-        print('Time IFFT %0.3f' % (finish - begin))
 
         # from grid values of Psi_est = IFFT[-i k delta(k)/(b k^2)], compute the values at the galaxy positions
         print('Calculating shifts...')
         sys.stdout.flush()
-        begin = time.time()
         shift_x, shift_y, shift_z = self.get_shift(cat, psi_x.real, psi_y.real, psi_z.real, use_newpos=True)
-        finish = time.time();
-        print('Time get_shift %0.3f' % (finish - begin))
         # for debugging:
         # for i in range(10):
         #     print('%0.3f %0.3f %0.3f %0.3f' % (shift_x[i], shift_y[i], shift_z[i], cat.newz[i]))
 
         # now we update estimates of the Psi field in the following way:
-        begin = time.time()
         if iloop == 0:
             # starting estimate chosen according to Eq. 12 of Burden et al 2015, in order to improve convergence
             if self.is_box:
@@ -382,22 +258,22 @@ class Recon:
             cat.newx = cat.x + f * psi_dot_rhat * cat.x / cat.dist
             cat.newy = cat.y + f * psi_dot_rhat * cat.y / cat.dist
             cat.newz = cat.z + f * psi_dot_rhat * cat.z / cat.dist
-        finish = time.time();
-        print('Time apply shifts %0.3f' % (finish - begin))
 
         # in the next loop of iteration, these new positions are used to compute next approximation of
         # the (real-space) galaxy density, and then this is used to get new estimate of Psi, etc.
         # at the end of the iterations, newx, newy, newz should be the real-space galaxy positions (or best
         # estimate thereof)
-
         self.deltar = deltar
         self.delta = delta
         self.deltak = deltak
+        self.rho = rho
+        self.rhok = rhok
         self.psi_x = psi_x
         self.psi_y = psi_y
         self.psi_z = psi_z
         self.fft_obj = fft_obj
         self.ifft_obj = ifft_obj
+        self.norm = norm
 
         # -- save wisdom
         wisdom_file = "wisdom." + str(nbins) + "." + str(self.nthreads)
@@ -451,29 +327,6 @@ class Recon:
         print('Shifts stats:')
         for s in [sx, sy, sz]:
             print(np.std(s), np.percentile(s, 16), np.percentile(s, 84), np.min(s), np.max(s))
-
-    def allocate_gal_cic_fast(self, c):
-        """ Allocate galaxies to grid cells using a CIC scheme in order to determine galaxy
-        densities on the grid"""
-
-        xmin = self.xmin
-        ymin = self.ymin
-        zmin = self.zmin
-        nbins = self.nbins
-        boxsize = self.binsize * nbins
-
-        # Scale positions to lie inside [0,1]
-        xpos = (c.newx - xmin) / boxsize
-        ypos = (c.newy - ymin) / boxsize
-        zpos = (c.newz - zmin) / boxsize
-
-        # Make output array (as written it works with doubles only, but can be changed)
-        delta = np.zeros((nbins, nbins, nbins), dtype='float64')
-
-        # need to add a wrap condition here if self.is_box is True!
-        cic.perform_cic_3D_w(delta, xpos, ypos, zpos, c.weight)
-
-        return delta
 
     def get_shift(self, c, f_x, f_y, f_z, use_newpos=False):
         """Given grid of f_x, f_y and f_z values, uses interpolation scheme to compute

@@ -8,6 +8,7 @@ from python_tools.zobov import ZobovVoids
 from python_tools.voxelvoids import VoxelVoids
 from python_tools.galaxycat import GalaxyCatalogue
 from python_tools.recon import Recon
+from python_tools.fastmult import survey_cuts_logical
 
 # Read in settings
 parser = argparse.ArgumentParser(description='options')
@@ -53,11 +54,17 @@ if parms.do_recon:
 
         # perform basic cuts on the data: vetomask and low redshift extent
         begin = time.time()
-        wgal = np.logical_and((cat.veto == 1), (parms.z_low_cut < cat.redshift) & (cat.redshift < parms.z_high_cut))
+        # wgal = np.logical_and((cat.veto == 1), (parms.z_low_cut < cat.redshift) & (cat.redshift < parms.z_high_cut))
+        wgal = np.empty(cat.size, dtype=int)
+        survey_cuts_logical(wgal, cat.veto, cat.redshift, parms.z_low_cut, parms.z_high_cut)
+        wgal = np.asarray(wgal, dtype=bool)
         finish = time.time()
         print('Time cat logical %0.3f' % (finish - begin))
         begin = time.time()
-        wran = np.logical_and((ran.veto == 1), (parms.z_low_cut < ran.redshift) & (ran.redshift < parms.z_high_cut))
+        # wran = np.logical_and((ran.veto == 1), (parms.z_low_cut < ran.redshift) & (ran.redshift < parms.z_high_cut))
+        wran = np.empty(ran.size, dtype=int)
+        survey_cuts_logical(wran, ran.veto, ran.redshift, parms.z_low_cut, parms.z_high_cut)
+        wran = np.asarray(wran, dtype=bool)
         finish = time.time()
         print('Time ran logical %0.3f' % (finish - begin))
         begin = time.time()
