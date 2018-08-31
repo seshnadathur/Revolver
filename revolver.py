@@ -8,7 +8,7 @@ from python_tools.zobov import ZobovVoids
 from python_tools.voxelvoids import VoxelVoids
 from python_tools.galaxycat import GalaxyCatalogue
 from python_tools.recon import Recon
-from python_tools.fastmult import survey_cuts_logical
+from fastmodules import survey_cuts_logical
 
 # Read in settings
 parser = argparse.ArgumentParser(description='options')
