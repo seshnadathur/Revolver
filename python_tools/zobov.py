@@ -13,6 +13,7 @@ from cosmology import Cosmology
 from astropy.io import fits
 from scipy.signal import savgol_filter
 from scipy.interpolate import InterpolatedUnivariateSpline
+import time
 
 
 class ZobovVoids:
@@ -174,6 +175,7 @@ class ZobovVoids:
                 self.generate_selfn(nbins=15)
             self.use_ang_wts = use_ang_wts
 
+            begin = time.time()
             if do_tessellation:
                 # options for buffer mocks around survey boundaries
                 if mock_file == '':
@@ -206,6 +208,8 @@ class ZobovVoids:
                     self.mock_file = mock_file
                 # shift Cartesian positions from observer to box coordinates
                 self.tracers[:, :3] += 0.5 * self.box_length
+            finish = time.time()
+            print('Time making buffer %0.3f' % (finish - begin))
 
         # for easy debugging: write all tracer positions to file
         # np.save(self.posn_file.replace('pos.dat', 'pos.npy'), self.tracers)
@@ -629,6 +633,8 @@ class ZobovVoids:
         self.num_non_edge = parms.num_non_edge
         self.box_length = parms.box_length
         self.tracer_dens = parms.tracer_dens
+        self.num_part_total = parms.num_mocks + parms.num_tracers
+        self.num_tracers = parms.num_tracers
 
     def zobov_wrapper(self, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
         """Wrapper function to call C-based ZOBOV codes
@@ -640,6 +646,7 @@ class ZobovVoids:
 
         """
 
+        begin = time.time()
         # ---run the tessellation--- #
         if use_vozisol:
             print("Calling vozisol to do the tessellation...")
@@ -701,7 +708,10 @@ class ZobovVoids:
 
         print("Tessellation done.\n")
         sys.stdout.flush()
+        finish = time.time()
+        print('Time tessellation %0.3f' % (finish - begin))
 
+        begin = time.time()
         # ---prepare files for running jozov--- #
         if self.is_box:
             # no preparation is required for void-finding (no buffer mocks, no z-weights, no angular weights)
@@ -769,6 +779,10 @@ class ZobovVoids:
             # ---Step 7: set the number of non-edge galaxies--- #
             self.num_non_edge = self.num_tracers - sum(edgemask)
 
+        finish = time.time()
+        print('Time preparation for jozov %0.3f' % (finish - begin))
+
+        begin = time.time()
         # ---run jozov to perform the void-finding--- #
         cmd = ["./bin/jozovtrvol", "v", self.handle, str(0), str(0)]
         log = open(logfile, 'a')
@@ -777,6 +791,8 @@ class ZobovVoids:
         # this call to (modified version of) jozov sets NO density threshold, so
         # ALL voids are merged without limit and the FULL merged void heirarchy is
         # output to file; distinct voids are later obtained in post-processing
+        finish = time.time()
+        print('Time jozov %0.3f' % (finish - begin))
 
         # ---if finding clusters, run jozov again--- #
         if self.find_clusters:
@@ -828,6 +844,7 @@ class ZobovVoids:
                 strip_density_threshold = max(self.min_dens_cut, link_density_threshold)
         # --------------------------------- #
 
+        begin = time.time()
         # the files with ZOBOV output
         zone_file = self.output_folder + 'rawZOBOV/' + self.handle + '.zone'
         void_file = self.output_folder + 'rawZOBOV/' + self.handle + '.void'
@@ -883,7 +900,10 @@ class ZobovVoids:
 
         # mean volume per particle in box (including all buffer mocks)
         meanvol_trc = (self.box_length ** 3.) / self.num_part_total
+        finish = time.time()
+        print('Time loading everything %0.3f' % (finish - begin))
 
+        begin = time.time()
         # parse the list of structures, separating distinct voids and performing minimal pruning
         with open(new_void_file, 'w') as Fnewvoid:
             with open(new_list_file, 'w') as Fnewlist:
@@ -892,7 +912,7 @@ class ZobovVoids:
                 counted_zones = np.empty(0, dtype=int)
                 edge_flag = np.empty(0, dtype=int)
                 wtd_avg_dens = np.empty(0, dtype=int)
-                num__acc = 0
+                num_acc = 0
 
                 for i in range(num_voids):
                     coredens = voidsread[i, 3]
@@ -907,7 +927,7 @@ class ZobovVoids:
                             and (count_all_voids or vid[i] not in counted_zones):
                         # this void passes basic pruning
                         add_more = True
-                        num__acc += 1
+                        num_acc += 1
                         zonelist = vid[i]
                         total_vol = vollist[i]
                         total_num_parts = numpartlist[i]
@@ -974,27 +994,39 @@ class ZobovVoids:
                                                                              int(voidsread[i, 5]), num_adds + 1,
                                                                              total_num_parts, total_vol * meanvol_trc,
                                                                              rstopadd))
+        finish = time.time()
+        print('Time getting the hierarchy %0.3f' % (finish - begin))
 
+        begin = time.time()
         # tidy up the files
         # insert first line with number of voids to the new .void file
         with open(new_void_file, 'r+') as Fnewvoid:
             old = Fnewvoid.read()
             Fnewvoid.seek(0)
-            topline = "%d\n" % num__acc
+            topline = "%d\n" % num_acc
             Fnewvoid.write(topline + old)
 
         # insert header to the _list.txt file
         listdata = np.loadtxt(new_list_file)
-        header = '%d non-edge tracers in %s, %d voids\n' % (self.num_non_edge, self.handle, num__acc)
+        header = '%d non-edge tracers in %s, %d voids\n' % (self.num_non_edge, self.handle, num_acc)
         header = header + 'VoidID CoreParticle CoreDens Zone#Parts Void#Zones Void#Parts VoidVol(Mpc/h^3) VoidDensRatio'
         np.savetxt(new_list_file, listdata, fmt='%d %d %0.6f %d %d %d %0.6f %0.6f', header=header)
+        finish = time.time()
+        print('Time tidying up hierarchy %0.3f' % (finish - begin))
 
         # now find void centres and create the void catalogue files
-        edge_flag = self.find_void_circumcentres(num__acc, wtd_avg_dens, edge_flag)
+        begin = time.time()
+        edge_flag = self.find_void_circumcentres(num_acc, wtd_avg_dens, edge_flag)
+        finish = time.time()
+        print('Time getting circumcentres %0.3f' % (finish - begin))
+
+        begin = time.time()
         if self.use_barycentres:
             if not os.access(self.output_folder + "barycentres/", os.F_OK):
                 os.makedirs(self.output_folder + "barycentres/")
-            self.find_void_barycentres(num__acc, edge_flag, use_stripping, strip_density_threshold)
+            self.find_void_barycentres(num_acc, edge_flag, use_stripping, strip_density_threshold)
+        finish = time.time()
+        print('Time getting barycentres %0.3f' % (finish - begin))
 
     def find_void_circumcentres(self, num_struct, wtd_avg_dens, edge_flag):
         """Method that checks a list of processed voids, finds the void minimum density centres and writes
@@ -1009,6 +1041,7 @@ class ZobovVoids:
         print("Identified %d voids. Now extracting circumcentres ..." % num_struct)
         sys.stdout.flush()
 
+        begin = time.time()
         # set the filenames
         densities_file = self.output_folder + "rawZOBOV/" + self.handle + ".vol"
         adjacency_file = self.output_folder + "rawZOBOV/" + self.handle + ".adj"
@@ -1029,11 +1062,14 @@ class ZobovVoids:
             self.reread_tracer_info()
         # extract the x,y,z positions of the galaxies only (no buffer mocks)
         positions = self.tracers[:self.num_tracers, :3]
+        finish = time.time()
+        print('Time reloading everything %0.3f' % (finish - begin))
 
         list_array = np.loadtxt(list_file)
         v_id = np.asarray(list_array[:, 0], dtype=int)
         corepart = np.asarray(list_array[:, 1], dtype=int)
 
+        begin = time.time()
         # read and assign adjacencies from ZOBOV output
         with open(adjacency_file, 'r') as AdjFile:
             npfromadj = np.fromfile(AdjFile, dtype=np.int32, count=1)
@@ -1060,13 +1096,17 @@ class ZobovVoids:
                     for index in adjpartnumbers:
                         partadjs[index].append(i)
                     partadjcount[adjpartnumbers] += 1
+        finish = time.time()
+        print('Time loading adjacencies %0.3f' % (finish - begin))
 
         if self.is_box:
             info_output = np.zeros((num_struct, 9))
         else:
             info_output = np.zeros((num_struct, 11))
-        circumcentre = np.empty(3)
+        circumcentres = np.empty((num_struct, 3))
+        eff_rad = (3.0 * list_array[:, 6] / (4 * np.pi)) ** (1.0 / 3)
 
+        begin = time.time()
         # loop over void cores, calculating circumcentres and writing to file
         for i in range(num_struct):
             # get adjacencies of the core particle
@@ -1075,16 +1115,16 @@ class ZobovVoids:
 
             # get the 3 lowest density mutually adjacent neighbours of the core particle
             first_nbr = coreadjs[np.argmin(adj_dens)]
-            mutualadjs = np.intersect1d(coreadjs, partadjs[first_nbr])
+            mutualadjs = np.intersect1d(coreadjs, partadjs[first_nbr], assume_unique=True)
             if len(mutualadjs) == 0:
-                circumcentre = np.asarray([0, 0, 0])
+                circumcentres[i] = np.asarray([0, 0, 0])
                 edge_flag[i] = 2
             else:
                 mutualadj_dens = densities[mutualadjs]
                 second_nbr = mutualadjs[np.argmin(mutualadj_dens)]
-                finaladjs = np.intersect1d(mutualadjs, partadjs[second_nbr])
+                finaladjs = np.intersect1d(mutualadjs, partadjs[second_nbr], assume_unique=True)
                 if len(finaladjs) == 0:  # something has gone wrong at tessellation stage!
-                    circumcentre = np.asarray([0, 0, 0])
+                    circumcentres[i] = np.asarray([0, 0, 0])
                     edge_flag[i] = 2
                 else:  # can calculate circumcentre position
                     finaladj_dens = densities[finaladjs]
@@ -1114,58 +1154,56 @@ class ZobovVoids:
                     b = np.hstack((np.sum(vertex_pos * vertex_pos, axis=1), np.ones((1))))
                     x = np.linalg.solve(a, b)
                     bary_coords = x[:-1]
-                    circumcentre[:] = np.dot(bary_coords, vertex_pos)
+                    circumcentres[i, :] = np.dot(bary_coords, vertex_pos)
 
             if self.is_box:
                 # put centre coords back within the fiducial box if they have leaked out
-                if circumcentre[0] < 0 or circumcentre[0] > self.box_length:
-                    circumcentre[0] -= self.box_length * np.sign(circumcentre[0])
-                if circumcentre[1] < 0 or circumcentre[1] > self.box_length:
-                    circumcentre[1] -= self.box_length * np.sign(circumcentre[1])
-                if circumcentre[2] < 0 or circumcentre[2] > self.box_length:
-                    circumcentre[2] -= self.box_length * np.sign(circumcentre[2])
+                if circumcentres[i, 0] < 0 or circumcentres[i, 0] > self.box_length:
+                    circumcentres[i, 0] -= self.box_length * np.sign(circumcentres[i, 0])
+                if circumcentres[i, 1] < 0 or circumcentres[i, 1] > self.box_length:
+                    circumcentres[i, 1] -= self.box_length * np.sign(circumcentres[i, 1])
+                if circumcentres[i, 2] < 0 or circumcentres[i, 2] > self.box_length:
+                    circumcentres[i, 2] -= self.box_length * np.sign(circumcentres[i, 2])
 
-            # calculate void effective radius
-            eff_rad = (3.0 * list_array[i, 6] / (4 * np.pi)) ** (1.0 / 3)
+        info_output[:, 0] = v_id
+        info_output[:, 4] = eff_rad
+        info_output[:, 5] = list_array[:, 2] - 1.
+        info_output[:, 6] = wtd_avg_dens - 1.
+        info_output[:, 7] = (wtd_avg_dens - 1.) * eff_rad**1.2
+        info_output[:, 8] = list_array[:, 7]
+        if self.is_box:
+            info_output[:, 1:4] = circumcentres[:, :3]
+        else:
+            centre_obs = circumcentres - self.box_length / 2.0
+            rdist = np.linalg.norm(centre_obs, axis=1)
+            eff_angrad = np.degrees(eff_rad / rdist)
+            centre_redshifts = self.cosmo.get_redshift(rdist)
+            centre_dec = 90 - np.degrees((np.arccos(centre_obs[:, 2] / rdist)))
+            centre_ra = np.degrees(np.arctan2(centre_obs[:, 1], centre_obs[:, 0]))
+            centre_ra[centre_ra < 0] += 360
+            mask = hp.read_map(self.mask_file, verbose=False)
+            nside = hp.get_nside(mask)
+            pixel = hp.ang2pix(nside, np.deg2rad(90 - centre_dec), np.deg2rad(centre_ra))
+            centre_redshifts[mask[pixel] == 0] = -1
+            centre_dec[mask[pixel] == 0] = -60
+            centre_ra[mask[pixel] == 0] = -60
+            eff_angrad[mask[pixel] == 0] = 0
+            edge_flag[mask[pixel] == 0] = 2
+            out_of_redshift = np.logical_or(centre_redshifts < self.z_min, centre_redshifts > self.z_max)
+            centre_redshifts[out_of_redshift] = -1
+            centre_dec[out_of_redshift] = -60
+            centre_ra[out_of_redshift] = -60
+            eff_angrad[out_of_redshift] = 0
+            edge_flag[out_of_redshift] = 2
 
-            # if required, write sky positions to file
-            if self.is_box:
-                info_output[i] = [v_id[i], circumcentre[0], circumcentre[1], circumcentre[2], eff_rad,
-                                  (list_array[i, 2] - 1.), (wtd_avg_dens[i] - 1.),
-                                  (wtd_avg_dens[i] - 1) * eff_rad ** 1.2,
-                                  list_array[i, 7]]
-            else:
-                # convert void centre position to observer coordinates
-                centre_obs = circumcentre - self.box_length / 2.0  # move back into observer coordinates
-                rdist = np.linalg.norm(centre_obs)
-                eff_angrad = np.degrees(eff_rad / rdist)
-                # calculate the sky coordinates of the void centre
-                # (this step also allows fallback check of undetected tessellation leakage)
-                if (rdist >= self.cosmo.get_comoving_distance(self.z_min)) and (
-                        rdist <= self.cosmo.get_comoving_distance(self.z_max)):
-                    centre_redshift = self.cosmo.get_redshift(rdist)
-                    centre_dec = 90 - np.degrees(np.arccos(centre_obs[2] / rdist))
-                    centre_ra = np.degrees(np.arctan2(centre_obs[1], centre_obs[0]))
-                    if centre_ra < 0:
-                        centre_ra += 360  # to get RA in the range 0 to 360
-                    mask = hp.read_map(self.mask_file, verbose=False)
-                    nside = hp.get_nside(mask)
-                    pixel = hp.ang2pix(nside, np.deg2rad(90 - centre_dec), np.deg2rad(centre_ra))
-                    if mask[pixel] == 0:  # something has gone wrong at tessellation stage
-                        centre_redshift = -1
-                        centre_dec = -60
-                        centre_ra = -60
-                        eff_angrad = 0
-                        edge_flag[i] = 2
-                else:  # something has gone wrong at tessellation stage
-                    centre_redshift = -1
-                    centre_dec = -60
-                    centre_ra = -60
-                    eff_angrad = 0
-                    edge_flag[i] = 2
-                info_output[i] = [v_id[i], centre_ra, centre_dec, centre_redshift, eff_rad, (list_array[i, 2] - 1.),
-                                  (wtd_avg_dens[i] - 1.), (wtd_avg_dens[i] - 1) * eff_rad ** 1.2, list_array[i, 7],
-                                  eff_angrad, edge_flag[i]]
+            info_output[:, 1] = centre_ra
+            info_output[:, 2] = centre_dec
+            info_output[:, 3] = centre_redshifts
+            info_output[:, 9] = eff_angrad
+            info_output[:, 10] = edge_flag
+
+        finish = time.time()
+        print('Time circumcentre loop %0.3f' % (finish - begin))
 
         # save output data to file
         header = "%d voids from %s\n" % (num_struct, self.handle)
@@ -1236,6 +1274,10 @@ class ZobovVoids:
             info_output = np.zeros((num_struct, 9))
         else:
             info_output = np.zeros((num_struct, 11))
+        centres = np.empty((num_struct, 3))
+        eff_rad = np.zeros(num_struct)
+        wtd_avg_dens = np.zeros(num_struct)
+
         with open(hierarchy_file, 'r') as FHierarchy:
             FHierarchy.readline()  # skip the first line, contains total number of structures
             for i in range(num_struct):
@@ -1276,63 +1318,62 @@ class ZobovVoids:
                     member_z += shift_vec[:, 2]
 
                 # volume-weighted barycentre of the structure
-                centre = np.empty(3)
-                centre[0] = np.sum(member_x * member_vols / np.sum(member_vols)) + positions[int(list_array[i, 1]), 0]
-                centre[1] = np.sum(member_y * member_vols / np.sum(member_vols)) + positions[int(list_array[i, 1]), 1]
-                centre[2] = np.sum(member_z * member_vols / np.sum(member_vols)) + positions[int(list_array[i, 1]), 2]
+                centres[i, 0] = np.average(member_x, weights=member_vols) + positions[int(list_array[i, 1]), 0]
+                centres[i, 1] = np.average(member_y, weights=member_vols) + positions[int(list_array[i, 1]), 1]
+                centres[i, 2] = np.average(member_z, weights=member_vols) + positions[int(list_array[i, 1]), 2]
 
                 # put centre coords back within the fiducial box if they have leaked out
                 if self.is_box:
-                    if centre[0] < 0 or centre[0] > self.box_length:
-                        centre[0] -= self.box_length * np.sign(centre[0])
-                    if centre[1] < 0 or centre[1] > self.box_length:
-                        centre[1] -= self.box_length * np.sign(centre[1])
-                    if centre[2] < 0 or centre[2] > self.box_length:
-                        centre[2] -= self.box_length * np.sign(centre[2])
+                    if centres[i, 0] < 0 or centres[i, 0] > self.box_length:
+                        centres[i, 0] -= self.box_length * np.sign(centres[i, 0])
+                    if centres[i, 1] < 0 or centres[i, 1] > self.box_length:
+                        centres[i, 1] -= self.box_length * np.sign(centres[i, 1])
+                    if centres[i, 2] < 0 or centres[i,2] > self.box_length:
+                        centres[i, 2] -= self.box_length * np.sign(centres[i, 2])
 
                 # total volume of structure in Mpc/h, and effective radius
                 void_vol = np.sum(member_vols) * meanvol_trc
-                eff_rad = (3.0 * void_vol / (4 * np.pi)) ** (1.0 / 3)
+                eff_rad[i] = (3.0 * void_vol / (4 * np.pi)) ** (1.0 / 3)
 
                 # average density of member cells weighted by cell volumes
-                wtd_avg_dens = np.sum(member_dens * member_vols) / np.sum(member_vols)
+                wtd_avg_dens[i] = np.average(member_dens, weights=member_vols)
 
-                lambda_v = (wtd_avg_dens - 1) * eff_rad ** 1.2
+            info_output[:, 0] = list_array[:, 0]
+            info_output[:, 4] = eff_rad
+            info_output[:, 5] = list_array[:, 2] - 1.
+            info_output[:, 6] = wtd_avg_dens - 1.
+            info_output[:, 7] = (wtd_avg_dens - 1.) * eff_rad ** 1.2
+            info_output[:, 8] = list_array[:, 7]
+            if self.is_box:
+                info_output[:, 1:4] = centres[:, :3]
+            else:
+                centre_obs = centres - self.box_length / 2.0
+                rdist = np.linalg.norm(centre_obs, axis=1)
+                eff_angrad = np.degrees(eff_rad / rdist)
+                centre_redshifts = self.cosmo.get_redshift(rdist)
+                centre_dec = 90 - np.degrees((np.arccos(centre_obs[:, 2] / rdist)))
+                centre_ra = np.degrees(np.arctan2(centre_obs[:, 1], centre_obs[:, 0]))
+                centre_ra[centre_ra < 0] += 360
+                mask = hp.read_map(self.mask_file, verbose=False)
+                nside = hp.get_nside(mask)
+                pixel = hp.ang2pix(nside, np.deg2rad(90 - centre_dec), np.deg2rad(centre_ra))
+                centre_redshifts[mask[pixel] == 0] = -1
+                centre_dec[mask[pixel] == 0] = -60
+                centre_ra[mask[pixel] == 0] = -60
+                eff_angrad[mask[pixel] == 0] = 0
+                edge_flag[mask[pixel] == 0] = 2
+                out_of_redshift = np.logical_or(centre_redshifts < self.z_min, centre_redshifts > self.z_max)
+                centre_redshifts[out_of_redshift] = -1
+                centre_dec[out_of_redshift] = -60
+                centre_ra[out_of_redshift] = -60
+                eff_angrad[out_of_redshift] = 0
+                edge_flag[out_of_redshift] = 2
 
-                # if required, write sky positions to file
-                if self.is_box:
-                    info_output[i] = [list_array[i, 0], centre[0], centre[1], centre[2], eff_rad,
-                                      (list_array[i, 2] - 1.),
-                                      (wtd_avg_dens - 1.), lambda_v, list_array[i, 7]]
-                else:
-                    centre_obs = centre - self.box_length / 2.0  # move back into observer coordinates
-                    rdist = np.linalg.norm(centre_obs)
-                    eff_angrad = np.degrees(eff_rad / rdist)
-                    if (rdist >= self.cosmo.get_comoving_distance(self.z_min)) and (
-                            rdist <= self.cosmo.get_comoving_distance(self.z_max)):
-                        centre_redshift = self.cosmo.get_redshift(rdist)
-                        centre_dec = 90 - np.degrees(np.arccos(centre_obs[2] / rdist))
-                        centre_ra = np.degrees(np.arctan2(centre_obs[1], centre_obs[0]))
-                        if centre_ra < 0:
-                            centre_ra += 360  # to get RA in the range 0 to 360
-                        mask = hp.read_map(self.mask_file, verbose=False)
-                        nside = hp.get_nside(mask)
-                        pixel = hp.ang2pix(nside, np.deg2rad(90 - centre_dec), np.deg2rad(centre_ra))
-                        if mask[pixel] == 0:  # something has gone wrong at tessellation stage
-                            centre_redshift = -1
-                            centre_dec = -60
-                            centre_ra = -60
-                            eff_angrad = 0
-                            edge_flag[i] = 2
-                    else:  # something has gone wrong at tessellation stage
-                        centre_redshift = -1
-                        centre_dec = -60
-                        centre_ra = -60
-                        eff_angrad = 0
-                        edge_flag[i] = 2
-                    info_output[i] = [list_array[i, 0], centre_ra, centre_dec, centre_redshift, eff_rad,
-                                      (list_array[i, 2] - 1.), (wtd_avg_dens - 1.), lambda_v, list_array[i, 7],
-                                      eff_angrad, edge_flag[i]]
+                info_output[:, 1] = centre_ra
+                info_output[:, 2] = centre_dec
+                info_output[:, 3] = centre_redshifts
+                info_output[:, 9] = eff_angrad
+                info_output[:, 10] = edge_flag
 
         # save output data to file
         header = "%d voids from %s\n" % (num_struct, self.handle)
@@ -1444,7 +1485,7 @@ class ZobovVoids:
                 counted_zones = np.empty(0, dtype=int)
                 edge_flag = np.empty(0, dtype=int)
                 wtd_avg_dens = np.empty(0, dtype=int)
-                num__acc = 0
+                num_acc = 0
 
                 for i in range(num_clusters):
                     coredens = clustersread[i, 3]
@@ -1459,7 +1500,7 @@ class ZobovVoids:
                             and (count_all_clusters or vid[i] not in counted_zones):
                         # this zone qualifies as a seed zone
                         add_more = True
-                        num__acc += 1
+                        num_acc += 1
                         zonelist = [vid[i]]
                         total_vol = vollist[i]
                         total_num_parts = numpartlist[i]
@@ -1528,12 +1569,12 @@ class ZobovVoids:
         with open(new_clust_file, 'r+') as Fnewclust:
             old = Fnewclust.read()
             Fnewclust.seek(0)
-            topline = "%d\n" % num__acc
+            topline = "%d\n" % num_acc
             Fnewclust.write(topline + old)
 
         # insert header to the output _list.txt file
         listdata = np.loadtxt(new_list_file)
-        header = "%d non-edge tracers in %s, %d clusters\n" % (self.num_non_edge, self.handle, num__acc)
+        header = "%d non-edge tracers in %s, %d clusters\n" % (self.num_non_edge, self.handle, num_acc)
         header = header + "ClusterID CoreParticle CoreDens Zone#Parts Cluster#Zones Cluster#Parts" + \
                  "ClusterVol(Mpc/h^3) ClusterDensRatio"
         np.savetxt(new_list_file, listdata, fmt='%d %d %0.6f %d %d %d %0.6f %0.6f', header=header)
@@ -1541,12 +1582,16 @@ class ZobovVoids:
         # now find the maximum density centre locations of the superclusters
         list_array = np.loadtxt(new_list_file)
         if self.is_box:
-            info_output = np.zeros((num__acc, 9))
+            info_output = np.zeros((num_acc, 9))
         else:
-            info_output = np.zeros((num__acc, 11))
+            info_output = np.zeros((num_acc, 11))
+        eff_rad = np.zeros(num_acc)
+        wtd_avg_dens = np.zeros(num_acc)
+        centres = np.empty((num_acc, 3))
+
         with open(new_clust_file, 'r') as FHierarchy:
             FHierarchy.readline()  # skip the first line, contains total number of structures
-            for i in range(num__acc):
+            for i in range(num_acc):
                 # get the member zones of the structure
                 structline = (FHierarchy.readline()).split()
                 pos = 1
@@ -1569,34 +1614,40 @@ class ZobovVoids:
 
                 # centre location is position of max. density member particle
                 core_part_id = int(list_array[i, 1])
-                centre = positions[core_part_id]
+                centres[i, :] = positions[core_part_id]
 
                 # total volume of structure in Mpc/h, and effective radius
                 cluster_vol = np.sum(member_vol) * meanvol_trc
-                eff_rad = (3.0 * cluster_vol / (4 * np.pi)) ** (1.0 / 3)
+                eff_rad[i] = (3.0 * cluster_vol / (4 * np.pi)) ** (1.0 / 3)
 
                 # average density of member cells weighted by cell volumes
-                wtd_avg_dens = np.sum(member_dens * member_vol) / np.sum(member_vol)
+                wtd_avg_dens[i] = np.sum(member_dens * member_vol) / np.sum(member_vol)
 
-                if self.is_box:
-                    info_output[i] = [list_array[i, 0], centre[0], centre[1], centre[2], eff_rad, list_array[i, 2],
-                                      wtd_avg_dens, (wtd_avg_dens - 1) * eff_rad ** 1.6, list_array[i, 7]]
-                else:
-                    centre_obs = centre - self.box_length / 2.0  # move back into observer coordinates
-                    rdist = np.linalg.norm(centre_obs)
-                    centre_redshift = self.cosmo.get_redshift(rdist)
-                    centre_dec = 90 - np.degrees(np.arccos(centre_obs[2] / rdist))
-                    centre_ra = np.degrees(np.arctan2(centre_obs[1], centre_obs[0]))
-                    if centre_ra < 0:
-                        centre_ra += 360  # to get RA in the range 0 to 360
-                    eff_ang_rad = np.degrees(eff_rad / rdist)
-                    info_output[i] = [list_array[i, 0], centre_ra, centre_dec, centre_redshift, eff_rad,
-                                      list_array[i, 2],
-                                      wtd_avg_dens, (wtd_avg_dens - 1) * eff_rad ** 1.6, list_array[i, 7],
-                                      eff_ang_rad, edge_flag[i]]
+            info_output[:, 0] = list_array[:, 0]
+            info_output[:, 4] = eff_rad
+            info_output[:, 5] = list_array[:, 2] - 1.
+            info_output[:, 6] = wtd_avg_dens - 1.
+            info_output[:, 7] = (wtd_avg_dens - 1.) * eff_rad ** 1.6
+            info_output[:, 8] = list_array[:, 7]
+            if self.is_box:
+                info_output[:, 1:4] = centres[:, :3]
+            else:
+                centre_obs = centres - self.box_length / 2.0
+                rdist = np.linalg.norm(centre_obs, axis=1)
+                eff_angrad = np.degrees(eff_rad / rdist)
+                centre_redshifts = self.cosmo.get_redshift(rdist)
+                centre_dec = 90 - np.degrees((np.arccos(centre_obs[:, 2] / rdist)))
+                centre_ra = np.degrees(np.arctan2(centre_obs[:, 1], centre_obs[:, 0]))
+                centre_ra[centre_ra < 0] += 360
+
+                info_output[:, 1] = centre_ra
+                info_output[:, 2] = centre_dec
+                info_output[:, 3] = centre_redshifts
+                info_output[:, 9] = eff_angrad
+                info_output[:, 10] = edge_flag
 
         # save output data to file
-        header = "%d superclusters from %s\n" % (num__acc, self.handle)
+        header = "%d superclusters from %s\n" % (num_acc, self.handle)
         if self.is_box:
             header = header + 'ClusterID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_max delta_avg lambda_c DensRatio'
             np.savetxt(info_file, info_output, fmt='%d %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %0.6f %d %d',

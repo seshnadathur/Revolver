@@ -1,5 +1,13 @@
 cimport numpy as np
 from libc.math cimport exp
+from libc.stdio cimport FILE, fopen, fread, fclose
+from libc.stdlib cimport malloc, free
+
+
+cdef struct PARTICLE:
+  int nadj
+  int nadj_count
+  int *adj
 
 def mult_kx(np.ndarray [np.complex128_t, ndim=3] deltaout, np.ndarray [np.complex128_t, ndim=3] delta,
             np.ndarray [np.float64_t, ndim=1] k, double bias):
@@ -258,3 +266,4 @@ def get_member_densities(np.ndarray [np.float64_t, ndim=1] member_dens, np.ndarr
     member_dens[i] = rho[voxels[i]]
 
   return member_dens
+

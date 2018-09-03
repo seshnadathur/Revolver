@@ -169,6 +169,7 @@ if parms.run_zobov:
     parms.z_min = max(parms.z_min, parms.z_low_cut)
     parms.z_max = min(parms.z_max, parms.z_high_cut)
 
+    begin = time.time()
     if parms.do_recon:
         voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
                              output_folder=parms.output_folder, is_box=parms.is_box, boss_like=False,
@@ -191,7 +192,10 @@ if parms.run_zobov:
                              use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
                              find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
                              cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix)
+    finish = time.time()
+    print('Time initialize %0.3f' % (finish - begin))
 
+    begin = time.time()
     if parms.do_tessellation:
         # write the tracer information to ZOBOV-readable format
         voidcat.write_box_zobov()
@@ -203,12 +207,17 @@ if parms.run_zobov:
     else:
         # read the config file from a previous run
         voidcat.read_config()
+    finish = time.time()
+    print('Time ZOBOV %0.3f' % (finish - begin))
 
     # post-process the raw ZOBOV output to make catalogues
+    begin = time.time()
     voidcat.postprocess_voids()
     if voidcat.find_clusters:
         voidcat.postprocess_clusters()
     print(" ==== Finished with ZOBOV-based method ==== ")
+    finish = time.time()
+    print('Time postprocess %0.3f' % (finish - begin))
 
     end = time.time()
     print("ZOBOV took %0.3f seconds" % (end - start))
