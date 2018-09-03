@@ -128,28 +128,28 @@ class VoxelVoids:
 
         return mean_dens
 
-    def allocate_gal_cic_fast(self, c):
-        """ Allocate galaxies to grid cells using a CIC scheme in order to determine galaxy
-        densities on the grid"""
-
-        xmin = self.xmin
-        ymin = self.ymin
-        zmin = self.zmin
-        nbins = self.nbins
-        boxsize = self.binsize * nbins
-
-        # Scale positions to lie inside [0,1]
-        xpos = (c.x - xmin) / boxsize
-        ypos = (c.y - ymin) / boxsize
-        zpos = (c.z - zmin) / boxsize
-
-        # Make output array (as written it works with doubles only, but can be changed)
-        delta = np.zeros((nbins, nbins, nbins), dtype='float64')
-
-        # need to add a wrap condition here if self.is_box is True!
-        cic.perform_cic_3D_w(delta, xpos, ypos, zpos, c.weight)
-
-        return delta
+    # def allocate_gal_cic_fast(self, c):
+    #     """ Allocate galaxies to grid cells using a CIC scheme in order to determine galaxy
+    #     densities on the grid"""
+    #
+    #     xmin = self.xmin
+    #     ymin = self.ymin
+    #     zmin = self.zmin
+    #     nbins = self.nbins
+    #     boxsize = self.binsize * nbins
+    #
+    #     # Scale positions to lie inside [0,1]
+    #     xpos = (c.x - xmin) / boxsize
+    #     ypos = (c.y - ymin) / boxsize
+    #     zpos = (c.z - zmin) / boxsize
+    #
+    #     # Make output array (as written it works with doubles only, but can be changed)
+    #     delta = np.zeros((nbins, nbins, nbins), dtype='float64')
+    #
+    #     # need to add a wrap condition here if self.is_box is True!
+    #     cic.perform_cic_3D_w(delta, xpos, ypos, zpos, c.weight)
+    #
+    #     return delta
 
     def run_voidfinder(self):
 
@@ -184,10 +184,12 @@ class VoxelVoids:
                                          self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 1.)
 
             # identify "empty" cells for later cuts on void catalogue
-            mask_cut = np.zeros(self.nbins**3)
+            mask_cut = np.zeros(self.nbins**3, dtype='int')
             fastmodules.survey_mask(mask_cut, rhor, self.ran_min)
             # mask_cut = np.where((rhor.flatten() <= self.ran_min))
             self.mask_cut = mask_cut
+            # np.save(self.output_folder + 'testmask.npy', testmask_cut)
+            # np.save(self.output_folder + 'oldmask.npy', mask_cut)
 
             # smooth both galaxy and randoms with pre-determined smoothing scale
             print('Smoothing density fields ...')
@@ -270,7 +272,8 @@ class VoxelVoids:
 
         # remove voids that: a) don't meet minimum density cut, b) are edge voids, or c) lie in a masked voxel
         select = np.zeros(rawdata.shape[0], dtype='int')
-        fastmodules.voxelvoids_cuts(select, self.mask_cut, rawdata, self.min_dens_cut)
+        fastmodules.voxelvoid_cuts(select, self.mask_cut, rawdata, self.min_dens_cut)
+        select = np.asarray(select, dtype=bool)
         rawdata = rawdata[select]
         densratio = densratio[select]
         hierarchy = hierarchy[select]

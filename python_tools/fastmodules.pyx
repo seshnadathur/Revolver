@@ -203,7 +203,7 @@ def survey_mask(np.ndarray [np.int_t, ndim=1] mask, np.ndarray [np.float64_t, nd
   for ix in range(N):
     for iy in range(N):
       for iz in range(N):
-        if rhor[ix, iy, iz] < ran_min:
+        if rhor[ix, iy, iz] <= ran_min:
           mask[ix*N*N + iy*N + iz] = 1
 
   return mask
