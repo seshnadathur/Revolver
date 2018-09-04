@@ -12,7 +12,7 @@ QLIB = -L../qhull/src/ -lqhull
 QINC = -I../qhull/src/
 
 EXES = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol voz1b1_mpi mpifor checkedges
-EXES_NOMPI = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol checkedges
+EXES_NOMPI = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol mpifor checkedges
 
 jovoz: jovoz.o findrtop.o voz.h
 	$(CC) $(CFLAGS) -o jovoz jovoz.o findrtop.o $(MLIBS)
@@ -43,9 +43,6 @@ voztie: voztie.o readfiles.o voz.h
 
 vozisol: vozisol.o readfiles.o vozutil.o  voz.h
 	$(CC)  -o vozisol $(CFLAGS) vozisol.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
-
-voz1b1_openmp: voz1b1_openmp.o voz1b1.o readfiles.o vozutil.o  voz.h
-	$(CC)  -o voz1b1_openmp $(CFLAGS) voz1b1_openmp.o voz1b1.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
 
 voz1b1_mpi: voz1b1_mpi.o voz1b1.o readfiles.o vozutil.o voz.h
 	$(MPICC) -o voz1b1_mpi.o $(CFLAGS) -c voz1b1_mpi.c $(QINC)

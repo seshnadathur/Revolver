@@ -11,7 +11,7 @@ qhull:
 	make -C qhull/src
 
 voboz:
-	make -C src all
+	make -C src install
 
 fastmodules:
 	python2.7 python_tools/setup.py build_ext --inplace

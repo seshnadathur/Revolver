@@ -679,7 +679,7 @@ class ZobovVoids:
             cmd += 'ncpu="%d"\n' % nthreads
             cmd += 'mpirun -np $ncpu ./bin/mpifor '
             cmd += '"./bin/voz1b1 %s %f %f %s %d \$((i/$parts2)) \$((i/$parts % $parts)) \$((i % $parts))" ' + \
-                    '$partslist' % (self.posn_file, zobov_buffer, self.box_length, zobov_box_div)
+                    '$partslist' % (self.posn_file, zobov_buffer, self.box_length, self.handle, zobov_box_div)
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
 
