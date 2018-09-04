@@ -678,8 +678,9 @@ class ZobovVoids:
             cmd += 'parts3=`expr $parts \* $parts \* $parts`\npartslist="$(seq 0 $((parts3-1)))"\n'
             cmd += 'ncpu="%d"\n' % nthreads
             cmd += 'mpirun -np $ncpu ./bin/mpifor '
-            cmd += '"./bin/voz1b1 %s %f %f %s %d \$((i/$parts2)) \$((i/$parts % $parts)) \$((i % $parts))" ' + \
-                    '$partslist' % (self.posn_file, zobov_buffer, self.box_length, self.handle, zobov_box_div)
+            intermed = '%s %f %f %s %d' % (self.posn_file, zobov_buffer, self.box_length, self.handle,
+                                               zobov_box_div)
+            cmd += '"./bin/voz1b1 %s \$((i/$parts2)) \$((i/$parts % $parts)) \$((i % $parts))" $partslist' % intermed
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
 
