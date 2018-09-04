@@ -636,7 +636,7 @@ class ZobovVoids:
         self.num_part_total = parms.num_mocks + parms.num_tracers
         self.num_tracers = parms.num_tracers
 
-    def zobov_wrapper(self, use_vozisol=False, zobov_box_div=2, zobov_buffer=0.1):
+    def zobov_wrapper(self, use_mpi=False, zobov_box_div=2, zobov_buffer=0.1, nthreads=2):
         """Wrapper function to call C-based ZOBOV codes
 
         Arguments:
@@ -648,7 +648,7 @@ class ZobovVoids:
 
         begin = time.time()
         # ---run the tessellation--- #
-        if use_vozisol:
+        if not use_mpi:
             print("Calling vozisol to do the tessellation...")
             sys.stdout.flush()
             logfolder = self.output_folder + 'log/'
@@ -665,24 +665,26 @@ class ZobovVoids:
             if not os.access("%s.vol" % self.handle, os.F_OK):
                 sys.exit("Something went wrong with the tessellation. Aborting ...")
         else:
-            print("Calling vozinit, voz1b1 and voztie to do the tessellation...")
+            print("MPI run: calling voz1b1 and voztie to do the tessellation...")
             sys.stdout.flush()
 
             # ---Step 1: call vozinit to write the script used to call voz1b1 and voztie--- #
             logfolder = self.output_folder + 'log/'
             if not os.access(logfolder, os.F_OK):
                 os.makedirs(logfolder)
-            logfile = logfolder + self.handle + '.out'
+            logfile = logfolder + self.handle + '-mpirun.out'
             log = open(logfile, "w")
-            cmd = ["./bin/vozinit", self.posn_file, str(zobov_buffer), str(self.box_length),
-                   str(zobov_box_div), self.handle]
+            cmd = 'parts="%d"\nparts2=`expr $parts \* $parts`\n' % zobov_box_div
+            cmd += 'parts3=`expr $parts \* $parts \* $parts`\npartslist="$(seq 0 $((parts3-1)))"\n'
+            cmd += 'ncpu="%d"\n' % nthreads
+            cmd += 'mpirun -np $ncpu ./bin/mpifor '
+            cmd += '"./bin/voz1b1 %s %f %f %s %d \$((i/$parts2)) \$((i/$parts % $parts)) \$((i % $parts))" ' + \
+                    '$partslist' % (self.posn_file, zobov_buffer, self.box_length, zobov_box_div)
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
 
-            # ---Step 2: call this script to do the tessellation--- #
-            voz_script = "scr" + self.handle
-            cmd = ["./%s" % voz_script]
-            log = open(logfile, 'a')
+            log = open(logfile, "a")
+            cmd = ["./bin/voztie", str(zobov_box_div), self.handle]
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
 
@@ -690,11 +692,7 @@ class ZobovVoids:
             if not os.access("%s.vol" % self.handle, os.F_OK):
                 sys.exit("Something went wrong with the tessellation. Aborting ...")
 
-            # ---Step 4: remove the script file--- #
-            if os.access(voz_script, os.F_OK):
-                os.unlink(voz_script)
-
-            # ---Step 5: copy the .vol files to .trvol--- #
+             # ---Step 5: copy the .vol files to .trvol--- #
             cmd = ["cp", "%s.vol" % self.handle, "%s.trvol" % self.handle]
             subprocess.call(cmd)
 
@@ -705,6 +703,47 @@ class ZobovVoids:
                 log = open(logfile, 'a')
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
+
+            # print("Calling vozinit, voz1b1 and voztie to do the tessellation...")
+            # sys.stdout.flush()
+            #
+            # # ---Step 1: call vozinit to write the script used to call voz1b1 and voztie--- #
+            # logfolder = self.output_folder + 'log/'
+            # if not os.access(logfolder, os.F_OK):
+            #     os.makedirs(logfolder)
+            # logfile = logfolder + self.handle + '.out'
+            # log = open(logfile, "w")
+            # cmd = ["./bin/vozinit", self.posn_file, str(zobov_buffer), str(self.box_length),
+            #        str(zobov_box_div), self.handle]
+            # subprocess.call(cmd, stdout=log, stderr=log)
+            # log.close()
+            #
+            # # ---Step 2: call this script to do the tessellation--- #
+            # voz_script = "scr" + self.handle
+            # cmd = ["./%s" % voz_script]
+            # log = open(logfile, 'a')
+            # subprocess.call(cmd, stdout=log, stderr=log)
+            # log.close()
+            #
+            # # ---Step 3: check the tessellation was successful--- #
+            # if not os.access("%s.vol" % self.handle, os.F_OK):
+            #     sys.exit("Something went wrong with the tessellation. Aborting ...")
+            #
+            # # # ---Step 4: remove the script file--- #
+            # if os.access(voz_script, os.F_OK):
+            #     os.unlink(voz_script)
+            #
+            # # ---Step 5: copy the .vol files to .trvol--- #
+            # cmd = ["cp", "%s.vol" % self.handle, "%s.trvol" % self.handle]
+            # subprocess.call(cmd)
+            #
+            # # ---Step 6: if buffer mocks were used, remove them and flag edge galaxies--- #
+            # # (necessary because voz1b1 and voztie do not do this automatically)
+            # if self.num_mocks > 0:
+            #     cmd = ["./bin/checkedges", self.handle, str(self.num_tracers), str(0.9e30)]
+            #     log = open(logfile, 'a')
+            #     subprocess.call(cmd, stdout=log, stderr=log)
+            #     log.close()
 
         print("Tessellation done.\n")
         sys.stdout.flush()

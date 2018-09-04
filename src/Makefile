@@ -1,19 +1,18 @@
 # Compiler choice:
 CC    = gcc
+# CC    = /usr/local/Cellar/clang-omp/2015-04-01/bin/clang-omp
 MPICC = mpicc
+MPICXX = mpicxx
 CFLAGS = -O2 -g -ansi -Wno-unused-result
+MPICFLAGS = -O2 -g -ansi
 
 MLIBS	=   -lm
 
 QLIB = -L../qhull/src/ -lqhull
 QINC = -I../qhull/src/
 
-EXES = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol voz1b1_mpi checkedges
+EXES = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol voz1b1_mpi mpifor checkedges
 EXES_NOMPI = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol checkedges
-
-all: $(EXES)
-
-all_nompi: $(EXES_NOMPI)
 
 jovoz: jovoz.o findrtop.o voz.h
 	$(CC) $(CFLAGS) -o jovoz jovoz.o findrtop.o $(MLIBS)
@@ -45,9 +44,20 @@ voztie: voztie.o readfiles.o voz.h
 vozisol: vozisol.o readfiles.o vozutil.o  voz.h
 	$(CC)  -o vozisol $(CFLAGS) vozisol.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
 
+voz1b1_openmp: voz1b1_openmp.o voz1b1.o readfiles.o vozutil.o  voz.h
+	$(CC)  -o voz1b1_openmp $(CFLAGS) voz1b1_openmp.o voz1b1.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
+
 voz1b1_mpi: voz1b1_mpi.o voz1b1.o readfiles.o vozutil.o voz.h
 	$(MPICC) -o voz1b1_mpi.o $(CFLAGS) -c voz1b1_mpi.c $(QINC)
-	$(MPICC) $(CFLAGS) -o voz1b1_mpi voz1b1_mpi.o voz1b1.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
+	$(MPICC) $(MPICFLAGS) -o voz1b1_mpi voz1b1_mpi.o voz1b1.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
+
+mpifor:
+	$(MPICXX) mpifor.cpp -o mpifor
+
+all: $(EXES)
+	mv $(EXES) ../bin
+
+all_nompi: $(EXES_NOMPI)
 
 install: $(EXES_NOMPI)
 	mv $(EXES_NOMPI) ../bin

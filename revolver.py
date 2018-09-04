@@ -202,8 +202,8 @@ if parms.run_zobov:
         # write a config file
         voidcat.write_config()
         # run ZOBOV
-        voidcat.zobov_wrapper(use_vozisol=parms.use_vozisol, zobov_box_div=parms.zobov_box_div,
-                              zobov_buffer=parms.zobov_buffer)
+        voidcat.zobov_wrapper(use_mpi=parms.use_mpi, zobov_box_div=parms.zobov_box_div,
+                              zobov_buffer=parms.zobov_buffer, nthreads=parms.nthreads)
     else:
         # read the config file from a previous run
         voidcat.read_config()

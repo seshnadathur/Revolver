@@ -87,9 +87,9 @@ int main(int argc, char *argv[]) {
 	    p[i].adj[p[i].nadj_count] = j;
 	    p[j].adj[p[j].nadj_count] = i;
 	    p[i].nadj_count++; p[j].nadj_count++;
-	  } else{
+	  } /*else{
 	    printf("weird#adj,p %d or %d\t",i,j);
-	  }
+	  }*/
 	} else {
 	  printf("adj(%d)=%d>np\n",i,j); FF;
 	}

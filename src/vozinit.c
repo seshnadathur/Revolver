@@ -34,7 +34,6 @@ int main(int argc, char *argv[]) {
   }
   posfile = argv[1];
   suffix = argv[2];
-
   if (sscanf(suffix,"%"vozRealSym,&border) != 1) {
     printf("That's no border size; try again.\n");
     exit(0);
@@ -56,7 +55,8 @@ int main(int argc, char *argv[]) {
 
   suffix = argv[5];
 
-  /* chunked read doesn't allocate memory */
+  /*
+  // chunked read doesn't allocate memory
   rfloat = (realT **)malloc(N_CHUNK*sizeof(realT *));
   for (i = 0; i < N_CHUNK; i++) {
     rfloat[i] = (realT *)malloc(3*sizeof(realT));
@@ -67,17 +67,17 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  /* Open the position file */
+  // Open the position file
   np = openfile(posfile, &pos);
 
-  /* Boxsize should be the range in r, yielding a range 0-1 */
+  // Boxsize should be the range in r, yielding a range 0-1
 
   width = 1./(realT)numdiv;
   width2 = 0.5*width;
   if (border > 0.) bf = border;
   else bf = 0.1;
 
-  /* In units of 0-1, the thickness of each subregion's buffer*/
+  // In units of 0-1, the thickness of each subregion's buffer
   totwidth = width+2.*bf;
   totwidth2 = width2 + bf;
   
@@ -94,56 +94,55 @@ int main(int argc, char *argv[]) {
   nvpmax = 0; nvpbufmax = 0; nvpmin = np; nvpbufmin = np;
   
   for (b[0] = 0; b[0] < numdiv; b[0]++) {
-   c[0] = ((realT)b[0]+0.5)*width;
-   for (b[1] = 0; b[1] < numdiv; b[1]++) {
-    c[1] = ((realT)b[1]+0.5)*width;
-    for (b[2] = 0; b[2] < numdiv; b[2]++) {
-      c[2] = ((realT)b[2]+0.5)*width;
+    c[0] = ((realT)b[0]+0.5)*width;
+    for (b[1] = 0; b[1] < numdiv; b[1]++) {
+      c[1] = ((realT)b[1]+0.5)*width;
+      for (b[2] = 0; b[2] < numdiv; b[2]++) {
+        c[2] = ((realT)b[2]+0.5)*width;
 
-      nvp = 0; /* Number of particles excluding buffer */
-      nvpbuf = 0; /* Number of particles to tesselate, including
-		     buffer */
-      xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
+        nvp = 0; // Number of particles excluding buffer
+        nvpbuf = 0; // Number of particles to tesselate, including buffer
+        xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
 
-      /* put chunked read here */
-      np_tot = 0;
-      while(np_tot < np){
-	np_current = posread_chunk(pos, rfloat, 1./boxsize, np, np_tot);
-	for (i=0; i< np_current; i++) {
-	  isitinbuf = 1; isitinmain = 1;
-	  for (d=0; d<3; d++) {
-	    rtemp[d] = rfloat[i][d] - c[d];
-	    if (rtemp[d] > 0.5) rtemp[d] --;
-	    if (rtemp[d] < -0.5) rtemp[d] ++;
-	    isitinbuf = isitinbuf && (fabs(rtemp[d]) < totwidth2);
-	    isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
-	  }
-	  if (isitinbuf) {
-	    nvpbuf++;
-	  }
-	  if (isitinmain) {
-	    nvp++;
-	    if (rtemp[0] < xmin) xmin = rtemp[0];
-	    if (rtemp[0] > xmax) xmax = rtemp[0];
-	    if (rtemp[1] < ymin) ymin = rtemp[1];
-	    if (rtemp[1] > ymax) ymax = rtemp[1];
-	    if (rtemp[2] < zmin) zmin = rtemp[2];
-	    if (rtemp[2] > zmax) zmax = rtemp[2];
-	  }
-	}
-	np_tot += np_current;
+        // put chunked read here
+        np_tot = 0;
+        while(np_tot < np){
+	      np_current = posread_chunk(pos, rfloat, 1./boxsize, np, np_tot);
+	      for (i=0; i< np_current; i++) {
+	        isitinbuf = 1; isitinmain = 1;
+	        for (d=0; d<3; d++) {
+	          rtemp[d] = rfloat[i][d] - c[d];
+	          if (rtemp[d] > 0.5) rtemp[d] --;
+	          if (rtemp[d] < -0.5) rtemp[d] ++;
+ 	          isitinbuf = isitinbuf && (fabs(rtemp[d]) < totwidth2);
+	          isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
+	        }
+	        if (isitinbuf) {
+	          nvpbuf++;
+	        }
+	        if (isitinmain) {
+	          nvp++;
+	          if (rtemp[0] < xmin) xmin = rtemp[0];
+	          if (rtemp[0] > xmax) xmax = rtemp[0];
+	          if (rtemp[1] < ymin) ymin = rtemp[1];
+	          if (rtemp[1] > ymax) ymax = rtemp[1];
+	          if (rtemp[2] < zmin) zmin = rtemp[2];
+	          if (rtemp[2] > zmax) zmax = rtemp[2];
+	        }
+	      }
+	      np_tot += np_current;
+        }
+        // end chunked read here
+
+        if (nvp > nvpmax) nvpmax = nvp;
+        if (nvpbuf > nvpbufmax) nvpbufmax = nvpbuf;
+        if (nvp < nvpmin) nvpmin = nvp;
+        if (nvpbuf < nvpbufmin) nvpbufmin = nvpbuf;
+
+        printf("b=(%d,%d,%d), c=(%g,%g,%g), nvp=%d, nvpbuf=%d\n",
+	        b[0],b[1],b[2],c[0],c[1],c[2],nvp,nvpbuf);
       }
-      /* end chunked read here */
-
-      if (nvp > nvpmax) nvpmax = nvp;
-      if (nvpbuf > nvpbufmax) nvpbufmax = nvpbuf;
-      if (nvp < nvpmin) nvpmin = nvp;
-      if (nvpbuf < nvpbufmin) nvpbufmin = nvpbuf;
-
-      printf("b=(%d,%d,%d), c=(%g,%g,%g), nvp=%d, nvpbuf=%d\n",
-	     b[0],b[1],b[2],c[0],c[1],c[2],nvp,nvpbuf);
     }
-   }
   }
 
   for (i = 0; i < N_CHUNK; i++) {
@@ -154,8 +153,9 @@ int main(int argc, char *argv[]) {
   fclose(pos);
   printf("Nvp range: %d,%d\n",nvpmin,nvpmax);
   printf("Nvpbuf range: %d,%d\n",nvpbufmin,nvpbufmax);
+  */
 
-  /* Output script file */
+  // Output script file
   sprintf(scrfile,"scr%s",suffix);
   printf("Writing script file to %s.\n",scrfile);fflush(stdout);
   scr = fopen(scrfile,"w");

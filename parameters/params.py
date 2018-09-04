@@ -84,9 +84,8 @@ max_dens_cut = 1.0  # cluster maximum galaxy density (in units of mean density) 
 
 # -- Tessellation options -- #
 do_tessellation = True    # if True, does tessellation; if False, only post-processes a previous run
-# vozisol code performs entire tessellation in one shot: more memory-intensive, but handles survey data better
-use_vozisol = True  # set True for survey data or small simulation boxes
-# if not using vozisol, tessellation code divides data into chunks to save memory and requires following two options
+use_mpi = True
+# if using MPI, the number of CPUs is taken from nthreads above; following two options control how tasks are split
 zobov_box_div = 2   # no. of subdivisions per box side
 zobov_buffer = 0.1  # fraction of box length overlap between subdivisions
 # -------------------------- #
