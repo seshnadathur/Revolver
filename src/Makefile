@@ -11,8 +11,8 @@ MLIBS	=   -lm
 QLIB = -L../qhull/src/ -lqhull
 QINC = -I../qhull/src/
 
-EXES = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol voz1b1_mpi checkedges
-EXES_NOMPI = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol checkedges
+EXES = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol voz1b1_mpi mpifor checkedges
+EXES_NOMPI = vozinit voz1b1 voztie jovoz boz jozov jozovtrvol jozov-grid vozisol mpifor checkedges
 
 jovoz: jovoz.o findrtop.o voz.h
 	$(CC) $(CFLAGS) -o jovoz jovoz.o findrtop.o $(MLIBS)
@@ -45,11 +45,11 @@ vozisol: vozisol.o readfiles.o vozutil.o  voz.h
 	$(CC)  -o vozisol $(CFLAGS) vozisol.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
 
 voz1b1_mpi: voz1b1_mpi.o voz1b1.o readfiles.o vozutil.o voz.h
-	$(MPICC) -o voz1b1_mpi.o $(MPICFLAGS) -c voz1b1_mpi.c $(QINC)
+	# $(MPICC) -o voz1b1_mpi.o $(CFLAGS) -c voz1b1_mpi.c $(QINC)
 	$(MPICC) $(MPICFLAGS) -o voz1b1_mpi voz1b1_mpi.o voz1b1.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
 
-# mpifor:
-#	$(MPICXX) mpifor.cpp -o mpifor
+mpifor:
+	$(MPICXX) mpifor.cpp -o mpifor
 
 all: $(EXES)
 	mv $(EXES) ../bin
