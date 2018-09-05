@@ -45,7 +45,7 @@ vozisol: vozisol.o readfiles.o vozutil.o  voz.h
 	$(CC)  -o vozisol $(CFLAGS) vozisol.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
 
 voz1b1_mpi: voz1b1_mpi.o voz1b1.o readfiles.o vozutil.o voz.h
-	$(MPICC) -o voz1b1_mpi.o $(CFLAGS) -c voz1b1_mpi.c $(QINC)
+	$(MPICC) -o voz1b1_mpi.o $(MPICFLAGS) -c voz1b1_mpi.c $(QINC)
 	$(MPICC) $(MPICFLAGS) -o voz1b1_mpi voz1b1_mpi.o voz1b1.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
 
 # mpifor:
