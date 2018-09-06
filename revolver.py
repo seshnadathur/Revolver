@@ -56,14 +56,12 @@ if parms.do_recon:
         ran.cut(wran)
 
         recon = Recon(cat, ran, is_box=False, omega_m=parms.omega_m, bias=parms.bias, f=parms.f, smooth=parms.smooth,
-                      nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads, verbose=False)
-        # set verbose=True to get more informative output
+                      nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads, verbose=parms.verbose)
 
     start = time.time()
     # now run the iteration loop to solve for displacement field
     for i in range(parms.niter):
-        recon.iterate(i, debug=False)
-        # set debug=True to view a few sample displacements in each iteration
+        recon.iterate(i, debug=parms.debug)
 
     # get new ra, dec and redshift for real-space positions
     if not parms.is_box:
@@ -94,7 +92,9 @@ if parms.run_voxelvoids:
                               fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)
 
     # perform basic cuts on the data: vetomask and low redshift extent
-    wgal = np.logical_and((cat.veto == 1), (parms.z_low_cut < cat.redshift) & (cat.redshift < parms.z_high_cut))
+    wgal = np.empty(cat.size, dtype=int)
+    survey_cuts_logical(wgal, cat.veto, cat.redshift, parms.z_low_cut, parms.z_high_cut)
+    wgal = np.asarray(wgal, dtype=bool)
     cat.cut(wgal)
 
     if not parms.is_box:
@@ -112,7 +112,9 @@ if parms.run_voxelvoids:
                                   posn_cols=parms.posn_cols, fkp=parms.fkp, noz=0, cp=0, systot=1, veto=0)
 
             # perform basic cuts on the randoms: vetomask and low redshift extent
-            wran = np.logical_and((ran.veto == 1), (parms.z_low_cut < ran.redshift) & (ran.redshift < parms.z_high_cut))
+            wran = np.empty(ran.size, dtype=int)
+            survey_cuts_logical(wran, ran.veto, ran.redshift, parms.z_low_cut, parms.z_high_cut)
+            wran = np.asarray(wran, dtype=bool)
             ran.cut(wran)
 
             pre_calc_ran = False
@@ -129,7 +131,7 @@ if parms.run_voxelvoids:
                          box_length=parms.box_length, omega_m=parms.omega_m, z_min=parms.z_min, z_max=parms.z_max,
                          min_dens_cut=parms.min_dens_cut, use_barycentres=parms.use_barycentres,
                          void_prefix=parms.void_prefix, find_clusters=parms.find_clusters,
-                         max_dens_cut=parms.max_dens_cut, cluster_prefix=parms.cluster_prefix)
+                         max_dens_cut=parms.max_dens_cut, cluster_prefix=parms.cluster_prefix, verbose=parms.verbose)
     # ... and run the void-finder
     start = time.time()
     voidcat.run_voidfinder()

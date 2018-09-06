@@ -12,7 +12,7 @@ class VoxelVoids:
 
     def __init__(self, cat, ran, handle="", output_folder="", is_box=True, box_length=2500.0, omega_m=0.308, z_min=0,
                  z_max = 1, min_dens_cut=1.0, use_barycentres=True, void_prefix="", find_clusters=False,
-                 max_dens_cut=1.0, cluster_prefix=""):
+                 max_dens_cut=1.0, cluster_prefix="", verbose=False):
 
         print("\n ==== Starting the void-finding with voxel-based method ==== ")
         sys.stdout.flush()
@@ -30,6 +30,7 @@ class VoxelVoids:
         self.mask_cut = []
         self.z_min = z_min
         self.z_max = z_max
+        self.verbose = verbose
 
         print("%d tracers found" % cat.size)
 
@@ -46,6 +47,7 @@ class VoxelVoids:
             # choose an appropriate smoothing scale
             self.smooth = mean_dens ** (-1. / 3)
             print('Smoothing scale [Mpc/h]:', self.smooth)
+            sys.stdout.flush()
 
             self.xmin = 0
             self.ymin = 0
@@ -106,7 +108,8 @@ class VoxelVoids:
         # starting estimate for bin size
         self.nbins = int(np.floor(box / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
         self.binsize = self.box_length / self.nbins
-        print('Initial bin size [Mpc/h]: %0.2f, nbins = %d' % (self.binsize, self.nbins))
+        if self.verbose:
+            print('Initial bin size [Mpc/h]: %0.2f, nbins = %d' % (self.binsize, self.nbins))
 
         # now approximately check true survey volume and recalculate mean density
         ran = self.ran
@@ -124,6 +127,7 @@ class VoxelVoids:
         smooth = mean_dens ** (-1./3)
         self.smooth = smooth
         print('Smoothing scale [Mpc/h]: %0.2f' % self.smooth)
+        sys.stdout.flush()
 
         return mean_dens
 
@@ -135,7 +139,8 @@ class VoxelVoids:
             os.makedirs(raw_dir)
 
         # measure the galaxy density field
-        print('Allocating galaxies in cells...')
+        if self.verbose:
+            print('Allocating galaxies in cells...')
         sys.stdout.flush()
         rhog = np.zeros((self.nbins, self.nbins, self.nbins), dtype='float64')
         fastmodules.allocate_gal_cic(rhog, self.cat.x, self.cat.y, self.cat.z, self.cat.weight, self.cat.size,
@@ -143,7 +148,8 @@ class VoxelVoids:
         # rhog = self.allocate_gal_cic_fast(self.cat)
         if self.is_box:
             # smooth with pre-determined smoothing scale
-            print('Smoothing galaxy density field ...')
+            if self.verbose:
+                print('Smoothing galaxy density field ...')
             sys.stdout.flush()
             rhog = gaussian_filter(rhog, self.smooth / self.binsize, mode='wrap')
 
@@ -151,7 +157,8 @@ class VoxelVoids:
             fastmodules.normalize_rho_box(rhog, self.cat.size)
             self.rhoflat = rhog.flatten()
         else:
-            print('Allocating randoms in cells...')
+            if self.verbose:
+                print('Allocating randoms in cells...')
             sys.stdout.flush()
             rhor = np.zeros((self.nbins, self.nbins, self.nbins), dtype='float64')
             fastmodules.allocate_gal_cic(rhor, self.ran.x, self.ran.y, self.ran.z, self.ran.weight, self.ran.size,
@@ -163,7 +170,8 @@ class VoxelVoids:
             self.mask_cut = mask_cut
 
             # smooth both galaxy and randoms with pre-determined smoothing scale
-            print('Smoothing density fields ...')
+            if self.verbose:
+                print('Smoothing density fields ...')
             sys.stdout.flush()
             rhog = gaussian_filter(rhog, self.smooth / self.binsize, mode='nearest')
             rhor = gaussian_filter(rhor, self.smooth / self.binsize, mode='nearest')
