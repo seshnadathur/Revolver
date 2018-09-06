@@ -8,6 +8,7 @@ from python_tools.zobov import ZobovVoids
 from python_tools.voxelvoids import VoxelVoids
 from python_tools.galaxycat import GalaxyCatalogue
 from python_tools.recon import Recon
+from fastmodules import survey_cuts_logical
 
 # Read in settings
 parser = argparse.ArgumentParser(description='options')
@@ -24,7 +25,6 @@ if not os.access(parms.output_folder, os.F_OK):
     os.makedirs(parms.output_folder)
 
 if parms.do_recon:
-    start = time.time()
     print('\n ==== Running reconstruction for real-space positions ==== ')
 
     cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
@@ -46,17 +46,22 @@ if parms.do_recon:
                               fkp=parms.fkp, noz=0, cp=0, systot=0, veto=0)
 
         # perform basic cuts on the data: vetomask and low redshift extent
-        wgal = np.logical_and((cat.veto == 1), (parms.z_low_cut < cat.redshift) & (cat.redshift < parms.z_high_cut))
-        wran = np.logical_and((ran.veto == 1), (parms.z_low_cut < ran.redshift) & (ran.redshift < parms.z_high_cut))
+        wgal = np.empty(cat.size, dtype=int)
+        survey_cuts_logical(wgal, cat.veto, cat.redshift, parms.z_low_cut, parms.z_high_cut)
+        wgal = np.asarray(wgal, dtype=bool)
+        wran = np.empty(ran.size, dtype=int)
+        survey_cuts_logical(wran, ran.veto, ran.redshift, parms.z_low_cut, parms.z_high_cut)
+        wran = np.asarray(wran, dtype=bool)
         cat.cut(wgal)
         ran.cut(wran)
 
         recon = Recon(cat, ran, is_box=False, omega_m=parms.omega_m, bias=parms.bias, f=parms.f, smooth=parms.smooth,
-                      nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads)
+                      nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads, verbose=parms.verbose)
 
+    start = time.time()
     # now run the iteration loop to solve for displacement field
     for i in range(parms.niter):
-        recon.iterate(i)
+        recon.iterate(i, debug=parms.debug)
 
     # get new ra, dec and redshift for real-space positions
     if not parms.is_box:
@@ -75,7 +80,6 @@ if parms.do_recon:
 
 if parms.run_voxelvoids:
 
-    start = time.time()
     if parms.do_recon:
         # new tracer file after reconstruction only contains single consolidated weights column
         cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
@@ -88,7 +92,9 @@ if parms.run_voxelvoids:
                               fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)
 
     # perform basic cuts on the data: vetomask and low redshift extent
-    wgal = np.logical_and((cat.veto == 1), (parms.z_low_cut < cat.redshift) & (cat.redshift < parms.z_high_cut))
+    wgal = np.empty(cat.size, dtype=int)
+    survey_cuts_logical(wgal, cat.veto, cat.redshift, parms.z_low_cut, parms.z_high_cut)
+    wgal = np.asarray(wgal, dtype=bool)
     cat.cut(wgal)
 
     if not parms.is_box:
@@ -106,7 +112,9 @@ if parms.run_voxelvoids:
                                   posn_cols=parms.posn_cols, fkp=parms.fkp, noz=0, cp=0, systot=1, veto=0)
 
             # perform basic cuts on the randoms: vetomask and low redshift extent
-            wran = np.logical_and((ran.veto == 1), (parms.z_low_cut < ran.redshift) & (ran.redshift < parms.z_high_cut))
+            wran = np.empty(ran.size, dtype=int)
+            survey_cuts_logical(wran, ran.veto, ran.redshift, parms.z_low_cut, parms.z_high_cut)
+            wran = np.asarray(wran, dtype=bool)
             ran.cut(wran)
 
             pre_calc_ran = False
@@ -119,20 +127,19 @@ if parms.run_voxelvoids:
         pre_calc_ran = False  # irrelevant anyway
 
     # initialize ...
-    voidcat = VoxelVoids(cat, ran, pre_calc_ran=pre_calc_ran, handle=parms.handle, output_folder=parms.output_folder,
-                         is_box=parms.is_box, box_length=parms.box_length, omega_m=parms.omega_m, z_min=parms.z_min,
-                         z_max=parms.z_max, min_dens_cut=parms.min_dens_cut, use_barycentres=parms.use_barycentres,
+    voidcat = VoxelVoids(cat, ran, handle=parms.handle, output_folder=parms.output_folder, is_box=parms.is_box,
+                         box_length=parms.box_length, omega_m=parms.omega_m, z_min=parms.z_min, z_max=parms.z_max,
+                         min_dens_cut=parms.min_dens_cut, use_barycentres=parms.use_barycentres,
                          void_prefix=parms.void_prefix, find_clusters=parms.find_clusters,
-                         max_dens_cut=parms.max_dens_cut, cluster_prefix=parms.cluster_prefix)
+                         max_dens_cut=parms.max_dens_cut, cluster_prefix=parms.cluster_prefix, verbose=parms.verbose)
     # ... and run the void-finder
+    start = time.time()
     voidcat.run_voidfinder()
-
     end = time.time()
     print("Voxel voids took %0.3f seconds" % (end - start))
 
 if parms.run_zobov:
 
-    start = time.time()
     if parms.run_voxelvoids:
         # need to differentiate the output file names
         parms.void_prefix = parms.void_prefix + '-zobov'
@@ -151,7 +158,8 @@ if parms.run_zobov:
                              min_dens_cut=parms.min_dens_cut, void_min_num=parms.void_min_num,
                              use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
                              find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
-                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix)
+                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix,
+                             verbose=parms.verbose)
     else:
         voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
                              output_folder=parms.output_folder, is_box=parms.is_box, boss_like=parms.boss_like,
@@ -162,16 +170,18 @@ if parms.run_zobov:
                              min_dens_cut=parms.min_dens_cut, void_min_num=parms.void_min_num,
                              use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
                              find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
-                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix)
+                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix,
+                             verbose=parms.verbose)
 
+    start = time.time()
     if parms.do_tessellation:
         # write the tracer information to ZOBOV-readable format
         voidcat.write_box_zobov()
         # write a config file
         voidcat.write_config()
         # run ZOBOV
-        voidcat.zobov_wrapper(use_vozisol=parms.use_vozisol, zobov_box_div=parms.zobov_box_div,
-                              zobov_buffer=parms.zobov_buffer)
+        voidcat.zobov_wrapper(use_mpi=parms.use_mpi, zobov_box_div=parms.zobov_box_div,
+                              zobov_buffer=parms.zobov_buffer, nthreads=parms.nthreads)
     else:
         # read the config file from a previous run
         voidcat.read_config()
@@ -181,6 +191,5 @@ if parms.run_zobov:
     if voidcat.find_clusters:
         voidcat.postprocess_clusters()
     print(" ==== Finished with ZOBOV-based method ==== ")
-
     end = time.time()
     print("ZOBOV took %0.3f seconds" % (end - start))

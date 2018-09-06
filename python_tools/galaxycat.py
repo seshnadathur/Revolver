@@ -1,12 +1,14 @@
 import numpy as np
 import sys
 from astropy.io import fits
+from cosmology import Cosmology
 
 
 class GalaxyCatalogue:
 
     def __init__(self, catalogue_file, is_box=False, box_length=1000., randoms=False, boss_like=True,
-                 special_patchy=False, posn_cols=np.array([0, 1, 2]), fkp=1, noz=1, cp=1, systot=1, veto=1):
+                 special_patchy=False, posn_cols=np.array([0, 1, 2]), omega_m=0.308, fkp=1, noz=1, cp=1, systot=1, 
+                 veto=1):
 
         if not is_box and randoms and catalogue_file == '':
             sys.exit('ERROR: no randoms file provided! Randoms required for survey reconstruction')
@@ -29,16 +31,17 @@ class GalaxyCatalogue:
             self.veto = np.ones(self.size)  # all vetoes have already been applied!
 
             # change the name 'z'-->'redshift' to avoid confusion
-            self.redshift = self.z
+            self.redshift = self.z.astype('float64')  # explicit float64 specification necessary for Cython use
 
             # initialize Cartesian positions and observer distance
-            self.x = np.zeros_like(self.ra)
-            self.y = np.zeros_like(self.ra)
-            self.z = np.zeros_like(self.ra)
-            self.newx = np.zeros_like(self.ra)
-            self.newy = np.zeros_like(self.ra)
-            self.newz = np.zeros_like(self.ra)
-            self.dist = np.zeros_like(self.ra)
+            cosmo = Cosmology(omega_m=omega_m)
+            self.dist = cosmo.get_comoving_distance(self.redshift)
+            self.x = self.dist * np.cos(self.dec * np.pi / 180) * np.cos(self.ra * np.pi / 180)
+            self.y = self.dist * np.cos(self.dec * np.pi / 180) * np.sin(self.ra * np.pi / 180)
+            self.z = self.dist * np.sin(self.dec * np.pi / 180)
+            self.newx = self.x * 1.
+            self.newy = self.y * 1.
+            self.newz = self.z * 1.
 
         else:
             # ASCII and NPY formatted input files are supported
@@ -71,13 +74,14 @@ class GalaxyCatalogue:
                 self.size = self.ra.size
 
                 # Cartesian positions and observer distance initialized to zero, calculated later
-                self.x = np.zeros(self.size)
-                self.y = np.zeros(self.size)
-                self.z = np.zeros(self.size)
-                self.newx = np.zeros(self.size)
-                self.newy = np.zeros(self.size)
-                self.newz = np.zeros(self.size)
-                self.dist = np.zeros(self.size)
+                cosmo = Cosmology(omega_m=omega_m)
+                self.dist = cosmo.get_comoving_distance(self.redshift)
+                self.x = self.dist * np.cos(self.dec * np.pi / 180) * np.cos(self.ra * np.pi / 180)
+                self.y = self.dist * np.cos(self.dec * np.pi / 180) * np.sin(self.ra * np.pi / 180)
+                self.z = self.dist * np.sin(self.dec * np.pi / 180)
+                self.newx = self.x * 1.
+                self.newy = self.y * 1.
+                self.newz = self.z * 1.
 
                 # by default, set all weights and veto to 1
                 self.weight_fkp = np.ones(self.size)
@@ -141,4 +145,4 @@ class GalaxyCatalogue:
         if syst:
             weights *= self.weight_systot
 
-        return weights
+        return weights.astype('float64')  # have to specify this because sometimes it was returning float32!
