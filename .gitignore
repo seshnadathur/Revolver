@@ -22,3 +22,6 @@ python_tools/fastmodules.c
 build/
 python_tools/pyCUTE/test/
 python_tools/pyCUTE/test.py
+python_tools/pyCUTE/CUTEPython_wrap.*
+python_tools/pyCUTE/CUTEPython.py*
+python_tools/pyCUTE/_CUTEPython.so
