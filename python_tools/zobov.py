@@ -22,10 +22,12 @@ class ZobovVoids:
                  special_patchy=False, posn_cols=np.array([0, 1, 2]), box_length=2500.0, omega_m=0.308, mask_file="",
                  use_z_wts=True, use_ang_wts=True, z_min=0.43, z_max=0.7, mock_file="", mock_dens_ratio=10,
                  min_dens_cut=1.0, void_min_num=1, use_barycentres=True, void_prefix="", find_clusters=False,
-                 max_dens_cut=1.0, cluster_min_num=1, cluster_prefix=""):
+                 max_dens_cut=1.0, cluster_min_num=1, cluster_prefix="", verbose=False):
 
         print("\n ==== Starting the void-finding with ZOBOV ==== ")
         sys.stdout.flush()
+
+        self.verbose=verbose
 
         # the prefix/handle used for all output file names
         self.handle = handle
@@ -373,7 +375,8 @@ class ZobovVoids:
         # farthest buffer particle
         self.r_far = np.max(rdist)
 
-        print("\tplaced %d buffer mocks at high-redshift cap" % num_high_mocks)
+        if self.verbose:
+            print("\tplaced %d buffer mocks at high-redshift cap" % num_high_mocks)
 
         buffers = high_mocks
         self.num_mocks = num_high_mocks
@@ -421,12 +424,14 @@ class ZobovVoids:
             # closest buffer particle
             self.r_near = np.min(rdist)
 
-            print("\tplaced %d buffer mocks at low-redshift cap" % num_low_mocks)
+            if self.verbose:
+                print("\tplaced %d buffer mocks at low-redshift cap" % num_low_mocks)
 
             buffers = np.vstack([buffers, low_mocks])
             self.num_mocks += num_low_mocks
         else:
-            print("\tno buffer mocks required at low-redshift cap")
+            if self.verbose:
+                print("\tno buffer mocks required at low-redshift cap")
         sys.stdout.flush()
         # ------------------------------------------------------------- #
 
@@ -470,18 +475,21 @@ class ZobovVoids:
             bound_mocks[:, 4] = 90 - theta * 180. / np.pi
             bound_mocks[:, 5] = -1.  # all buffer particles are given redshift -1 to aid identification
 
-            print("\tplaced %d buffer mocks along the survey boundary edges" % num_bound_mocks)
+            if self.verbose:
+                print("\tplaced %d buffer mocks along the survey boundary edges" % num_bound_mocks)
 
             buffers = np.vstack([buffers, bound_mocks])
             self.num_mocks += num_bound_mocks
         else:
-            print("\tdata covers the full sky, no buffer mocks required along edges")
+            if self.verbose:
+                print("\tdata covers the full sky, no buffer mocks required along edges")
         sys.stdout.flush()
         # ------------------------------------------------------------- #
 
         # determine the size of the cubic box required
         self.box_length = 2.0 * np.max(np.abs(buffers[:, :3])) + 1.
-        print("\tUsing box length %0.2f" % self.box_length)
+        if self.verbose:
+            print("\tUsing box length %0.2f" % self.box_length)
 
         # ------ Step 4: guard buffers to stabilize the tessellation-------- #
         # (strictly speaking, this gives a lot of redundancy as the box is very big;
@@ -512,7 +520,8 @@ class ZobovVoids:
         guard_mocks[:, 3:5] = -60.  # guards are given RA and Dec -60 as well to distinguish them from other buffers
         guard_mocks[:, 5] = -1.
 
-        print("\tadded %d guards to stabilize the tessellation" % num_guard_mocks)
+        if self.verbose:
+            print("\tadded %d guards to stabilize the tessellation" % num_guard_mocks)
 
         buffers = np.vstack([buffers, guard_mocks])
         self.num_mocks += num_guard_mocks
@@ -520,7 +529,8 @@ class ZobovVoids:
 
         # write the buffer information to file for later reference
         mock_file = self.posn_file.replace('pos.dat', 'mocks.npy')
-        print('Buffer mocks written to file %s' % mock_file)
+        if self.verbose:
+            print('Buffer mocks written to file %s' % mock_file)
         np.save(mock_file, buffers)
         self.mock_file = mock_file
         sys.stdout.flush()
@@ -538,7 +548,8 @@ class ZobovVoids:
           nbins: number of bins to use
         """
 
-        print('Determining survey redshift selection function ...')
+        if self.verbose:
+            print('Determining survey redshift selection function ...')
         sys.stdout.flush()
 
         # first determine the equal volume bins
@@ -683,7 +694,7 @@ class ZobovVoids:
 
             # ---Step 3: check the tessellation was successful--- #
             if not os.access("%s.vol" % self.handle, os.F_OK):
-                sys.exit("Something went wrong with the tessellation. Aborting ...")
+                sys.exit("Something went wrong with the tessellation. Check log file!\nAborting ...")
 
              # ---Step 4: copy the .vol files to .trvol--- #
             cmd = ["cp", "%s.vol" % self.handle, "%s.trvol" % self.handle]
@@ -718,7 +729,7 @@ class ZobovVoids:
             modvols[np.logical_not(edgemask)] *= (self.tracer_dens * self.box_length ** 3.) / self.num_part_total
             # check for failures!
             if np.any(modvols[np.logical_not(edgemask)] == 0):
-                sys.exit('Tessellation gave some zero-volume Voronoi cells!!\nAborting...')
+                sys.exit('Tessellation gave some zero-volume Voronoi cells - check log file!!\nAborting...')
 
             # ---Step 3: scale volumes accounting for z-dependent selection--- #
             if self.use_z_wts:
@@ -735,7 +746,7 @@ class ZobovVoids:
                 modvols[np.logical_not(edgemask)] *= modfactors
                 # check for failures!
                 if np.any(modvols[np.logical_not(edgemask)] == 0):
-                    sys.exit('Use of z-weights caused some zero-volume Voronoi cells!!\nAborting...')
+                    sys.exit('Use of z-weights caused some zero-volume Voronoi cells - check input!!\nAborting...')
 
             # ---Step 4: scale volumes accounting for angular completeness--- #
             if self.use_ang_wts:
@@ -749,7 +760,7 @@ class ZobovVoids:
                 modfactors = mask[pixels]
                 modvols[np.logical_not(edgemask)] *= modfactors[np.logical_not(edgemask)]
                 if np.any(modvols[np.logical_not(edgemask)] == 0):
-                    sys.exit('Use of angular weights caused some zero-volume Voronoi cells!!\nAborting...')
+                    sys.exit('Use of angular weights caused some zero-volume Voronoi cells - check input!!\nAborting...')
 
             # ---Step 5: write the scaled volumes to file--- #
             with open("./%s.vol" % self.handle, 'w') as F:

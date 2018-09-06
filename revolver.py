@@ -158,7 +158,8 @@ if parms.run_zobov:
                              min_dens_cut=parms.min_dens_cut, void_min_num=parms.void_min_num,
                              use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
                              find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
-                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix)
+                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix,
+                             verbose=parms.verbose)
     else:
         voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
                              output_folder=parms.output_folder, is_box=parms.is_box, boss_like=parms.boss_like,
@@ -169,7 +170,8 @@ if parms.run_zobov:
                              min_dens_cut=parms.min_dens_cut, void_min_num=parms.void_min_num,
                              use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
                              find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
-                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix)
+                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix,
+                             verbose=parms.verbose)
 
     start = time.time()
     if parms.do_tessellation:
