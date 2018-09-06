@@ -27,7 +27,7 @@ attempt to generate an approximate one, but the acccuracy of results will be com
 For survey data, pre-computed FKP weights (and other galaxy weight/veto information) are not necessary, but should be 
 provided for best performance. 
 
-Requirements:
+##### Requirements:
    - python 2.7, but should be compatible with python 3
    - numpy 1.14.5
    - scipy 0.18.1
@@ -39,15 +39,28 @@ Requirements:
 Some earlier versions of numpy and scipy will fail due to changes in functionality of some methods (numpy.unique 
 and scipy.spatial.cKDTree). The code has only been tested with the stated versions of the other packages: other versions
 may or may not work!
-  
+
+##### MPI and parallel processing:
+For ZOBOV-based void-finding, there is an option to perform the slow tessellation step in 
+separate chunks run in parallel, achieved using MPI. If you have several (i.e. ~10) CPUs available, this will 
+be faster than doing it in one shot. If not, single-shot tessellation is usually faster (set use_mpi = False in the 
+params.py file). 
+
+Separately, the FFTs used in reconstruction can be performed over multiple CPUs (without using MPI). This is *always*
+beneficial, more is faster. Set nthreads in the parameter file to the number of cores available.
+ 
+##### Installation and running:
 To install and run:
-   - edit the python paths in the Makefile, and choose the compiler to use in src/Makefile 
+   - if you don't have MPI compilers/headers, in the Makefile change the line 'make -C src all' to 'make -C src all_nompi' 
    - in the top-level directory, do 'make clean', then 'make'
-   - edit parameters/params.py
+   - edit parameters/params.py according to instructions given there
    - python revolver.py --par parameters/params.py
    
-Acknowledgments:
+##### Acknowledgments:
 
-The reconstruction section of this code was developed from a version written by Julian Bautista and with input from 
-Paul Carter, Will Percival and (indirectly) Angela Burden. Hans Winther made several improvements. Some elements of the ZOBOV void-finding section of code were 
-developed with Shaun Hotchkiss. 
+The following people contributed to the concept, development and testing of this code in various ways:
+   - Hans Winther
+   - Julian Bautista
+   - Paul Carter
+   - Will Percival
+   - Shaun Hotchkiss
