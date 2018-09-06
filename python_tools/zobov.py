@@ -175,7 +175,6 @@ class ZobovVoids:
                 self.generate_selfn(nbins=15)
             self.use_ang_wts = use_ang_wts
 
-            begin = time.time()
             if do_tessellation:
                 # options for buffer mocks around survey boundaries
                 if mock_file == '':
@@ -208,8 +207,6 @@ class ZobovVoids:
                     self.mock_file = mock_file
                 # shift Cartesian positions from observer to box coordinates
                 self.tracers[:, :3] += 0.5 * self.box_length
-            finish = time.time()
-            print('Time making buffer %0.3f' % (finish - begin))
 
         # for easy debugging: write all tracer positions to file
         # np.save(self.posn_file.replace('pos.dat', 'pos.npy'), self.tracers)
@@ -646,7 +643,6 @@ class ZobovVoids:
 
         """
 
-        begin = time.time()
         # ---run the tessellation--- #
         if not use_mpi:
             print("Calling vozisol to do the tessellation...")
@@ -703,10 +699,7 @@ class ZobovVoids:
 
         print("Tessellation done.\n")
         sys.stdout.flush()
-        finish = time.time()
-        print('Time tessellation %0.3f' % (finish - begin))
 
-        begin = time.time()
         # ---prepare files for running jozov--- #
         if self.is_box:
             # no preparation is required for void-finding (no buffer mocks, no z-weights, no angular weights)
@@ -774,20 +767,14 @@ class ZobovVoids:
             # ---Step 7: set the number of non-edge galaxies--- #
             self.num_non_edge = self.num_tracers - sum(edgemask)
 
-        finish = time.time()
-        print('Time preparation for jozov %0.3f' % (finish - begin))
-
-        begin = time.time()
         # ---run jozov to perform the void-finding--- #
         cmd = ["./bin/jozovtrvol", "v", self.handle, str(0), str(0)]
         log = open(logfile, 'a')
         subprocess.call(cmd, stdout=log, stderr=log)
         log.close()
-        # this call to (modified version of) jozov sets NO density threshold, so
-        # ALL voids are merged without limit and the FULL merged void heirarchy is
-        # output to file; distinct voids are later obtained in post-processing
-        finish = time.time()
-        print('Time jozov %0.3f' % (finish - begin))
+        # this call to (modified version of) jozov sets NO density threshold, so ALL voids are merged without limit
+        # and the FULL merged void heirarchy is output to file; distinct non-overlapping voids are later
+        # obtained in post-processing
 
         # ---if finding clusters, run jozov again--- #
         if self.find_clusters:
@@ -839,7 +826,6 @@ class ZobovVoids:
                 strip_density_threshold = max(self.min_dens_cut, link_density_threshold)
         # --------------------------------- #
 
-        begin = time.time()
         # the files with ZOBOV output
         zone_file = self.output_folder + 'rawZOBOV/' + self.handle + '.zone'
         void_file = self.output_folder + 'rawZOBOV/' + self.handle + '.void'
@@ -895,10 +881,7 @@ class ZobovVoids:
 
         # mean volume per particle in box (including all buffer mocks)
         meanvol_trc = (self.box_length ** 3.) / self.num_part_total
-        finish = time.time()
-        print('Time loading everything %0.3f' % (finish - begin))
 
-        begin = time.time()
         # parse the list of structures, separating distinct voids and performing minimal pruning
         with open(new_void_file, 'w') as Fnewvoid:
             with open(new_list_file, 'w') as Fnewlist:
@@ -989,10 +972,7 @@ class ZobovVoids:
                                                                              int(voidsread[i, 5]), num_adds + 1,
                                                                              total_num_parts, total_vol * meanvol_trc,
                                                                              rstopadd))
-        finish = time.time()
-        print('Time getting the hierarchy %0.3f' % (finish - begin))
 
-        begin = time.time()
         # tidy up the files
         # insert first line with number of voids to the new .void file
         with open(new_void_file, 'r+') as Fnewvoid:
@@ -1006,22 +986,14 @@ class ZobovVoids:
         header = '%d non-edge tracers in %s, %d voids\n' % (self.num_non_edge, self.handle, num_acc)
         header = header + 'VoidID CoreParticle CoreDens Zone#Parts Void#Zones Void#Parts VoidVol(Mpc/h^3) VoidDensRatio'
         np.savetxt(new_list_file, listdata, fmt='%d %d %0.6f %d %d %d %0.6f %0.6f', header=header)
-        finish = time.time()
-        print('Time tidying up hierarchy %0.3f' % (finish - begin))
 
         # now find void centres and create the void catalogue files
-        begin = time.time()
         edge_flag = self.find_void_circumcentres(num_acc, wtd_avg_dens, edge_flag)
-        finish = time.time()
-        print('Time getting circumcentres %0.3f' % (finish - begin))
 
-        begin = time.time()
         if self.use_barycentres:
             if not os.access(self.output_folder + "barycentres/", os.F_OK):
                 os.makedirs(self.output_folder + "barycentres/")
             self.find_void_barycentres(num_acc, edge_flag, use_stripping, strip_density_threshold)
-        finish = time.time()
-        print('Time getting barycentres %0.3f' % (finish - begin))
 
     def find_void_circumcentres(self, num_struct, wtd_avg_dens, edge_flag):
         """Method that checks a list of processed voids, finds the void minimum density centres and writes
@@ -1036,7 +1008,6 @@ class ZobovVoids:
         print("Identified %d potential voids. Now extracting circumcentres ..." % num_struct)
         sys.stdout.flush()
 
-        begin = time.time()
         # set the filenames
         densities_file = self.output_folder + "rawZOBOV/" + self.handle + ".vol"
         adjacency_file = self.output_folder + "rawZOBOV/" + self.handle + ".adj"
@@ -1057,14 +1028,11 @@ class ZobovVoids:
             self.reread_tracer_info()
         # extract the x,y,z positions of the galaxies only (no buffer mocks)
         positions = self.tracers[:self.num_tracers, :3]
-        finish = time.time()
-        print('Time reloading everything %0.3f' % (finish - begin))
 
         list_array = np.loadtxt(list_file)
         v_id = np.asarray(list_array[:, 0], dtype=int)
         corepart = np.asarray(list_array[:, 1], dtype=int)
 
-        begin = time.time()
         # read and assign adjacencies from ZOBOV output
         with open(adjacency_file, 'r') as AdjFile:
             npfromadj = np.fromfile(AdjFile, dtype=np.int32, count=1)
@@ -1091,8 +1059,6 @@ class ZobovVoids:
                     for index in adjpartnumbers:
                         partadjs[index].append(i)
                     partadjcount[adjpartnumbers] += 1
-        finish = time.time()
-        print('Time loading adjacencies %0.3f' % (finish - begin))
 
         if self.is_box:
             info_output = np.zeros((num_struct, 9))
@@ -1101,7 +1067,6 @@ class ZobovVoids:
         circumcentres = np.empty((num_struct, 3))
         eff_rad = (3.0 * list_array[:, 6] / (4 * np.pi)) ** (1.0 / 3)
 
-        begin = time.time()
         # loop over void cores, calculating circumcentres and writing to file
         for i in range(num_struct):
             # get adjacencies of the core particle
@@ -1199,9 +1164,6 @@ class ZobovVoids:
 
         info_output = info_output[edge_flag < 2]  # remove all the tessellation failures
         print('Removed %d edge failures' % (num_struct - len(info_output)))
-
-        finish = time.time()
-        print('Time circumcentre loop %0.3f' % (finish - begin))
 
         # save output data to file
         header = "%d voids from %s\n" % (len(info_output), self.handle)

@@ -25,15 +25,11 @@ if not os.access(parms.output_folder, os.F_OK):
     os.makedirs(parms.output_folder)
 
 if parms.do_recon:
-    start = time.time()
     print('\n ==== Running reconstruction for real-space positions ==== ')
 
-    begin = time.time()
     cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
                           boss_like=parms.boss_like, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
                           fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)
-    finish = time.time()
-    print('Time cat initialization %0.3f' % (finish - begin))
 
     if parms.is_box:
         recon = Recon(cat, ran=cat, is_box=True, box_length=parms.box_length, omega_m=parms.omega_m, bias=parms.bias,
@@ -45,43 +41,24 @@ if parms.do_recon:
 
         # initializing randoms: note that in general we assume only FKP and systot weights are provided for randoms
         # this is overridden for special input formats (either boss_like and special_patchy are True)
-        begin = time.time()
         ran = GalaxyCatalogue(parms.randoms_file, is_box=False, box_length=parms.box_length, boss_like=parms.boss_like,
                               randoms=True, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
                               fkp=parms.fkp, noz=0, cp=0, systot=0, veto=0)
-        finish = time.time()
-        print('Time ran initialization %0.3f' % (finish - begin))
 
         # perform basic cuts on the data: vetomask and low redshift extent
-        begin = time.time()
-        # wgal = np.logical_and((cat.veto == 1), (parms.z_low_cut < cat.redshift) & (cat.redshift < parms.z_high_cut))
         wgal = np.empty(cat.size, dtype=int)
         survey_cuts_logical(wgal, cat.veto, cat.redshift, parms.z_low_cut, parms.z_high_cut)
         wgal = np.asarray(wgal, dtype=bool)
-        finish = time.time()
-        print('Time cat logical %0.3f' % (finish - begin))
-        begin = time.time()
-        # wran = np.logical_and((ran.veto == 1), (parms.z_low_cut < ran.redshift) & (ran.redshift < parms.z_high_cut))
         wran = np.empty(ran.size, dtype=int)
         survey_cuts_logical(wran, ran.veto, ran.redshift, parms.z_low_cut, parms.z_high_cut)
         wran = np.asarray(wran, dtype=bool)
-        finish = time.time()
-        print('Time ran logical %0.3f' % (finish - begin))
-        begin = time.time()
         cat.cut(wgal)
-        finish = time.time()
-        print('Time cat cut %0.3f' % (finish - begin))
-        begin = time.time()
         ran.cut(wran)
-        finish = time.time()
-        print('Time ran cut %0.3f' % (finish - begin))
 
-        begin = time.time()
         recon = Recon(cat, ran, is_box=False, omega_m=parms.omega_m, bias=parms.bias, f=parms.f, smooth=parms.smooth,
                       nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads)
-        finish = time.time()
-        print('Time recon initialization %0.3f' % (finish - begin))
 
+    start = time.time()
     # now run the iteration loop to solve for displacement field
     for i in range(parms.niter):
         recon.iterate(i)
@@ -103,7 +80,6 @@ if parms.do_recon:
 
 if parms.run_voxelvoids:
 
-    start = time.time()
     if parms.do_recon:
         # new tracer file after reconstruction only contains single consolidated weights column
         cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
@@ -153,14 +129,13 @@ if parms.run_voxelvoids:
                          void_prefix=parms.void_prefix, find_clusters=parms.find_clusters,
                          max_dens_cut=parms.max_dens_cut, cluster_prefix=parms.cluster_prefix)
     # ... and run the void-finder
+    start = time.time()
     voidcat.run_voidfinder()
-
     end = time.time()
     print("Voxel voids took %0.3f seconds" % (end - start))
 
 if parms.run_zobov:
 
-    start = time.time()
     if parms.run_voxelvoids:
         # need to differentiate the output file names
         parms.void_prefix = parms.void_prefix + '-zobov'
@@ -169,7 +144,6 @@ if parms.run_zobov:
     parms.z_min = max(parms.z_min, parms.z_low_cut)
     parms.z_max = min(parms.z_max, parms.z_high_cut)
 
-    begin = time.time()
     if parms.do_recon:
         voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
                              output_folder=parms.output_folder, is_box=parms.is_box, boss_like=False,
@@ -192,10 +166,8 @@ if parms.run_zobov:
                              use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
                              find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
                              cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix)
-    finish = time.time()
-    print('Time initialize %0.3f' % (finish - begin))
 
-    begin = time.time()
+    start = time.time()
     if parms.do_tessellation:
         # write the tracer information to ZOBOV-readable format
         voidcat.write_box_zobov()
@@ -207,17 +179,11 @@ if parms.run_zobov:
     else:
         # read the config file from a previous run
         voidcat.read_config()
-    finish = time.time()
-    print('Time ZOBOV %0.3f' % (finish - begin))
 
     # post-process the raw ZOBOV output to make catalogues
-    begin = time.time()
     voidcat.postprocess_voids()
     if voidcat.find_clusters:
         voidcat.postprocess_clusters()
     print(" ==== Finished with ZOBOV-based method ==== ")
-    finish = time.time()
-    print('Time postprocess %0.3f' % (finish - begin))
-
     end = time.time()
     print("ZOBOV took %0.3f seconds" % (end - start))
