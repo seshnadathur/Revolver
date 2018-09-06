@@ -18,14 +18,14 @@ particle-mesh interpolation to estimate the tracer density, and then uses a simi
 Input data files can be in FITS format (with data fields as for BOSS/eBOSS), or ASCII- or NPY-formatted data arrays.
 Read the comments in parameters/params.py for more information about the input file formatting. 
 
-For galaxy survey data, the reconstruction and voxel-based void-finding require a file containing with appropriate 
+For galaxy survey data, the reconstruction and voxel-based void-finding require a file containing appropriate 
 randoms for the survey. The ZOBOV-based void-finding does not require randoms, but instead requires an appropriate
 survey mask file (in HEALPix FITS format) combining the survey geometry, completeness, missing pixels etc. Example masks
 for the BOSS DR12 public data releases are provided with this code. If a mask file is not specified, the code will 
-attempt to generate an approximate one, but the acccuracy of results will be compromised.
+attempt to generate an approximate one, but the accuracy of results will be compromised.
 
 For survey data, pre-computed FKP weights (and other galaxy weight/veto information) are not necessary, but should be 
-provided for best performance. 
+provided for best performance. See parameters/params.py for information on how to specify these weights. 
 
 ##### Requirements:
    - python 2.7, but should be compatible with python 3
