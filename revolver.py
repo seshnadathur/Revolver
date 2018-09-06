@@ -8,9 +8,9 @@ from python_tools.zobov import ZobovVoids
 from python_tools.voxelvoids import VoxelVoids
 from python_tools.galaxycat import GalaxyCatalogue
 from python_tools.recon import Recon
-from fastmodules import survey_cuts_logical
+from python_tools.fastmodules import survey_cuts_logical
 
-# Read in settings
+# ==== Read in settings ==== #
 parser = argparse.ArgumentParser(description='options')
 parser.add_argument('--par', dest='par', default="", help='path to parameter file')
 args = parser.parse_args()
@@ -20,10 +20,14 @@ if os.access(filename, os.F_OK):
     parms = imp.load_source("name", filename)
 else:
     sys.exit('Did not find settings file %s, aborting' % filename)
+# ========================= #
 
+# === check output path === #
 if not os.access(parms.output_folder, os.F_OK):
     os.makedirs(parms.output_folder)
+# ========================= #
 
+# ==== run reconstruction ==== #
 if parms.do_recon:
     print('\n ==== Running reconstruction for real-space positions ==== ')
 
@@ -77,7 +81,9 @@ if parms.do_recon:
 
     # galaxy input for void-finding will now be read from new file with shifted data
     parms.tracer_file = root + '_shift.npy'
+# ============================ #
 
+# === run voxel void-finding === #
 if parms.run_voxelvoids:
 
     if parms.do_recon:
@@ -137,7 +143,9 @@ if parms.run_voxelvoids:
     voidcat.run_voidfinder()
     end = time.time()
     print("Voxel voids took %0.3f seconds" % (end - start))
+# ============================== #
 
+# === run ZOBOV void-finding === #
 if parms.run_zobov:
 
     if parms.run_voxelvoids:
@@ -193,3 +201,4 @@ if parms.run_zobov:
     print(" ==== Finished with ZOBOV-based method ==== ")
     end = time.time()
     print("ZOBOV took %0.3f seconds" % (end - start))
+# ============================== #
