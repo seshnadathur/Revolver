@@ -20,3 +20,4 @@ wisdom*
 fastmodules.so
 python_tools/fastmodules.c
 build/
+python_tools/pyCUTE
