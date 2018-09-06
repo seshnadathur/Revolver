@@ -12,16 +12,18 @@ import fastmodules
 class Recon:
 
     def __init__(self, cat, ran, is_box=False, box_length=1000., omega_m=0.308, bias=2.3, f=0.817, smooth=10.,
-                 nbins=256, padding=200., opt_box=1, nthreads=1):
+                 nbins=256, padding=200., opt_box=1, nthreads=1, verbose=False):
 
         beta = f / bias
         self.is_box = is_box
+        self.verbose = verbose
 
         # -- parameters of box
         cosmo = Cosmology(omega_m=omega_m)
         print('Using values of growth rate f = %0.3f and bias b = %0.3f' % (f, bias))
-        print('Number of bins:', nbins)
         print('Smoothing scale [Mpc/h]:', smooth)
+        if self.verbose:
+            print('Number of bins:', nbins)
         sys.stdout.flush()
 
         # initialize the basics common to all analyses
@@ -63,8 +65,9 @@ class Recon:
             self.zmin = 0
             self.box = box_length
             self.binsize = self.box / self.nbins
-            print('Box size [Mpc/h]: %0.2f' % self.box)
-            print('Bin size [Mpc/h]: %0.2f' % self.binsize)
+            if self.verbose:
+                print('Box size [Mpc/h]: %0.2f' % self.box)
+                print('Bin size [Mpc/h]: %0.2f' % self.binsize)
 
         sys.stdout.flush()
         self.cat = cat
@@ -108,12 +111,13 @@ class Recon:
             box = box * 2.
             binsize = box / self.nbins
 
-        print('Box size [Mpc/h]: %0.2f' % box)
-        print('Bin size [Mpc/h]: %0.2f' % binsize)
+        if self.verbose:
+            print('Box size [Mpc/h]: %0.2f' % box)
+            print('Bin size [Mpc/h]: %0.2f' % binsize)
 
         return xmin, ymin, zmin, box, binsize
 
-    def iterate(self, iloop, save_wisdom=1):
+    def iterate(self, iloop, save_wisdom=1, debug=False):
         cat = self.cat
         ran = self.ran
         binsize = self.binsize
@@ -153,12 +157,14 @@ class Recon:
             if self.is_box:
                 deltar = 0
             else:
-                print('Allocating randoms in cells...')
+                if self.verbose:
+                    print('Allocating randoms in cells...')
                 sys.stdout.flush()
                 deltar = np.zeros((nbins, nbins, nbins), dtype='float64')
                 fastmodules.allocate_gal_cic(deltar, ran.x, ran.y, ran.z, ran.weight, ran.size, self.xmin, self.ymin,
                                          self.zmin, self.box, nbins, 1.)
-                print('Smoothing...')
+                if self.verbose
+                    print('Smoothing...')
                 sys.stdout.flush()
                 # NOTE - we do the smoothing via FFTs rather than scipy's gaussian_filter because if using several
                 # threads for pyfftw it is much faster this way (if only using 1 thread gains are negligible)
@@ -183,12 +189,14 @@ class Recon:
 
         # -- Allocate galaxies and randoms to grid with CIC method
         # -- using new positions
-        print('Allocating galaxies in cells...')
+        if self.verbose:
+            print('Allocating galaxies in cells...')
         sys.stdout.flush()
         deltag = np.zeros((nbins, nbins, nbins), dtype='float64')
         fastmodules.allocate_gal_cic(deltag, cat.newx, cat.newy, cat.newz, cat.weight, cat.size, self.xmin, self.ymin,
                                   self.zmin, self.box, nbins, 1.)
-        print('Smoothing galaxy density field ...')
+        if self.verbose:
+            print('Smoothing galaxy density field ...')
         sys.stdout.flush()
         # NOTE - smoothing via FFTs
         rho = deltag + 0.0j
@@ -197,7 +205,8 @@ class Recon:
         ifft_obj(input_array=rhok, output_array=rho)
         deltag = rho.real
 
-        print('Computing density fluctuations, delta...')
+        if self.verbose:
+            print('Computing density fluctuations, delta...')
         sys.stdout.flush()
         if self.is_box:
             # simply normalize based on (constant) mean galaxy number density
@@ -207,7 +216,8 @@ class Recon:
             fastmodules.normalize_delta_survey(delta, deltag, deltar, self.alpha, self.ran_min)
         del deltag  # deltag no longer required anywhere
 
-        print('Fourier transforming delta field...')
+        if self.verbose:
+            print('Fourier transforming delta field...')
         sys.stdout.flush()
         fft_obj(input_array=delta, output_array=delta)
 
@@ -216,7 +226,8 @@ class Recon:
         fastmodules.divide_k2(delta, delta, k)
 
         # now solve the basic building block: IFFT[-i k delta(k)/(b k^2)]
-        print('Inverse Fourier transforming to get psi...')
+        if self.verbose:
+            print('Inverse Fourier transforming to get psi...')
         sys.stdout.flush()
         fastmodules.mult_kx(deltak, delta, k, bias)
         ifft_obj(input_array=deltak, output_array=psi_x)
@@ -226,12 +237,10 @@ class Recon:
         ifft_obj(input_array=deltak, output_array=psi_z)
 
         # from grid values of Psi_est = IFFT[-i k delta(k)/(b k^2)], compute the values at the galaxy positions
-        print('Calculating shifts...')
+        if self.verbose
+            print('Calculating shifts...')
         sys.stdout.flush()
         shift_x, shift_y, shift_z = self.get_shift(cat, psi_x.real, psi_y.real, psi_z.real, use_newpos=True)
-        # for debugging:
-        # for i in range(10):
-        #     print('%0.3f %0.3f %0.3f %0.3f' % (shift_x[i], shift_y[i], shift_z[i], cat.newz[i]))
 
         # now we update estimates of the Psi field in the following way:
         if iloop == 0:
@@ -258,6 +267,20 @@ class Recon:
             cat.newx = cat.x + f * psi_dot_rhat * cat.x / cat.dist
             cat.newy = cat.y + f * psi_dot_rhat * cat.y / cat.dist
             cat.newz = cat.z + f * psi_dot_rhat * cat.z / cat.dist
+
+        # for debugging:
+        if self.verbose and debug:
+            if self.is_box:
+                print('Debug: first 10 x,y,z shifts and old and new z positions')
+                for i in range(10):
+                    print('%0.3f %0.3f %0.3f %0.3f %0.3f' % (shift_x[i], shift_y[i], shift_z[i], cat.z[i], cat.newz[i]))
+
+            else:
+                print('Debug: first 10 x,y,z shifts and old and new observer distances')
+                for i in range(10):
+                    oldr = np.sqrt(cat.x[i] ** 2 + cat.y[i] ** 2 +cat.z[i] ** 2)
+                    newr = np.sqrt(cat.newx[i] ** 2 + cat.newy[i] ** 2 + cat.newz[i] ** 2)
+                    print('%0.3f %0.3f %0.3f %0.3f %0.3f' % (shift_x[i], shift_y[i], shift_z[i], oldr, newr))
 
         # in the next loop of iteration, these new positions are used to compute next approximation of
         # the (real-space) galaxy density, and then this is used to get new estimate of Psi, etc.

@@ -56,12 +56,14 @@ if parms.do_recon:
         ran.cut(wran)
 
         recon = Recon(cat, ran, is_box=False, omega_m=parms.omega_m, bias=parms.bias, f=parms.f, smooth=parms.smooth,
-                      nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads)
+                      nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads, verbose=False)
+        # set verbose=True to get more informative output
 
     start = time.time()
     # now run the iteration loop to solve for displacement field
     for i in range(parms.niter):
-        recon.iterate(i)
+        recon.iterate(i, debug=False)
+        # set debug=True to view a few sample displacements in each iteration
 
     # get new ra, dec and redshift for real-space positions
     if not parms.is_box:
