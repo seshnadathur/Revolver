@@ -2,6 +2,12 @@
 # however, depending on options chosen, not all quantities may be used in the code
 # distance units in this code are calculated in Mpc/h by default
 
+# ======= runtime options ======== #
+verbose = False  # True for more informative output statements
+debug = False    # True for output checks during reconstruction
+nthreads = 1    # set to the number of CPUs you have
+# ================================ #
+
 # ========= file handling options ========= #
 handle = ''         # string; used to identify the sample and set filenames
 output_folder = ''  # /path/to/folder/ where output should be placed
@@ -18,8 +24,7 @@ padding = 200.  # for survey data, the extra 'padding' for the cubic box, in Mpc
 smooth = 10.    # smoothing scale in Mpc/h
 bias = 2.0      # the linear galaxy/tracer bias value
 f = 0.8         # the linear growth rate at the mean redshift
-nthreads = 1    # number of threads used by pyFFTW
-niter = 3       # number of iterations in the FFT reconstruction method
+niter = 3       # number of iterations in the FFT reconstruction method, 3 is sufficient
 # ========================================= #
 
 # ======= input tracer data options =========== #
@@ -61,7 +66,7 @@ randoms_file = ''   # /path/to/file containing randoms data: must be formatted s
 
 # ========== void-finding choices ============= #
 run_voxelvoids = True  # watershed void-finding based on particle-mesh density field interpolation in voxels
-run_zobov = False   # watershed void-finding (using ZOBOV) based on Voronoi tessellation
+run_zobov = True   # watershed void-finding (using ZOBOV) based on Voronoi tessellation
 # note that these two options are not mutually exclusive - 2 sets of voids can be produced if desired
 
 z_min = 0.43        # minimum redshift extent
@@ -85,9 +90,11 @@ max_dens_cut = 1.0  # cluster maximum galaxy density (in units of mean density) 
 # -- Tessellation options -- #
 do_tessellation = True    # if True, does tessellation; if False, only post-processes a previous run
 use_mpi = True
-# if using MPI, the number of CPUs is taken from nthreads above; following two options control how tasks are split
-zobov_box_div = 2   # no. of subdivisions per box side
-zobov_buffer = 0.1  # fraction of box length overlap between subdivisions
+# use MPI if you have several (~10) CPUs available, otherwise it is generally faster to run without
+# if using MPI, the following two options control the division of tasks
+zobov_box_div = 4   # tessellation will be divided into (zobov_box_div)^3 chunks run in parallel
+zobov_buffer = 0.05  # fraction of box length overlap between sub-boxes
+# the default options above have been tested to work well for BOSS data with 15-20 CPUs
 # -------------------------- #
 
 # -- survey data handling options -- #
