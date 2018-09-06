@@ -34,7 +34,7 @@ voz1b1: voz1b1_serial.o voz1b1.o readfiles.o vozutil.o  voz.h
 	$(CC)  -o voz1b1 $(CFLAGS) voz1b1_serial.o voz1b1.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
 
 vozinit: vozinit.o readfiles.o voz.h
-	$(CC)  -o vozinit $(CFLAGS) vozinit.o readfiles.o -L. $(MLIBS) 
+	$(CC)  -o vozinit $(CFLAGS) vozinit.o readfiles.o -L. $(MLIBS)
 
 voztie: voztie.o readfiles.o voz.h
 	$(CC)  -o voztie $(CFLAGS) voztie.o readfiles.o
@@ -42,7 +42,7 @@ voztie: voztie.o readfiles.o voz.h
 vozisol: vozisol.o readfiles.o vozutil.o  voz.h
 	$(CC)  -o vozisol $(CFLAGS) vozisol.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
 
-voz1b1_mpi: voz1b1_mpi.o voz1b1.o readfiles.o vozutil.o voz.h
+voz1b1_mpi: voz1b1.o readfiles.o vozutil.o voz.h
 	$(MPICC) -o voz1b1_mpi.o $(CFLAGS) -c voz1b1_mpi.c $(QINC)
 	$(MPICC) $(MPICFLAGS) -o voz1b1_mpi voz1b1_mpi.o voz1b1.o readfiles.o vozutil.o -L. $(QLIB) $(MLIBS)
 
@@ -50,6 +50,7 @@ all: $(EXES)
 	mv $(EXES) ../bin
 
 all_nompi: $(EXES_NOMPI)
+	mv $(EXES_NOMPI) ../bin
 
 install: $(EXES_NOMPI)
 	mv $(EXES_NOMPI) ../bin

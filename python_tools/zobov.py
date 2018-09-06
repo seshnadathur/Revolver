@@ -668,25 +668,18 @@ class ZobovVoids:
             print("MPI run: calling voz1b1 and voztie to do the tessellation...")
             sys.stdout.flush()
 
-            # ---Step 1: call vozinit to write the script used to call voz1b1 and voztie--- #
+            # ---Step 1: run voz1b1 on the sub-boxes in parallel using voz1b1_mpi--- #
             logfolder = self.output_folder + 'log/'
             if not os.access(logfolder, os.F_OK):
                 os.makedirs(logfolder)
             logfile = logfolder + self.handle + '-mpirun.out'
             log = open(logfile, "w")
-            # cmd = 'parts="%d"\nparts2=`expr $parts \* $parts`\n' % zobov_box_div
-            # cmd += 'parts3=`expr $parts \* $parts \* $parts`\npartslist="$(seq 0 $((parts3-1)))"\n'
-            # cmd += 'ncpu="%d"\n' % nthreads
-            # cmd += 'mpirun -np $ncpu ./bin/mpifor '
-            # intermed = '%s %f %f %s %d' % (self.posn_file, zobov_buffer, self.box_length, self.handle,
-            #                                    zobov_box_div)
-            # cmd += '"./bin/voz1b1 %s \$((i/$parts2)) \$((i/$parts %% $parts)) \$((i %% $parts))" $partslist' % intermed
-            # print(cmd)
-            cmd = ["./bin/voz1b1_mpi", self.posn_file, str(zobov_buffer), str(self.box_length), str(zobov_box_div),
-                   self.handle]
+            cmd = ['mpirun', './bin/voz1b1_mpi', self.posn_file, str(zobov_buffer), str(self.box_length),
+                   str(zobov_box_div), self.handle]
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
 
+            # ---Step 2: tie the sub-boxes together using voztie--- #
             log = open(logfile, "a")
             cmd = ["./bin/voztie", str(zobov_box_div), self.handle]
             subprocess.call(cmd, stdout=log, stderr=log)
@@ -696,58 +689,17 @@ class ZobovVoids:
             if not os.access("%s.vol" % self.handle, os.F_OK):
                 sys.exit("Something went wrong with the tessellation. Aborting ...")
 
-             # ---Step 5: copy the .vol files to .trvol--- #
+             # ---Step 4: copy the .vol files to .trvol--- #
             cmd = ["cp", "%s.vol" % self.handle, "%s.trvol" % self.handle]
             subprocess.call(cmd)
 
-            # ---Step 6: if buffer mocks were used, remove them and flag edge galaxies--- #
+            # ---Step 5: if buffer mocks were used, remove them and flag edge galaxies--- #
             # (necessary because voz1b1 and voztie do not do this automatically)
             if self.num_mocks > 0:
                 cmd = ["./bin/checkedges", self.handle, str(self.num_tracers), str(0.9e30)]
                 log = open(logfile, 'a')
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
-
-            # print("Calling vozinit, voz1b1 and voztie to do the tessellation...")
-            # sys.stdout.flush()
-            #
-            # # ---Step 1: call vozinit to write the script used to call voz1b1 and voztie--- #
-            # logfolder = self.output_folder + 'log/'
-            # if not os.access(logfolder, os.F_OK):
-            #     os.makedirs(logfolder)
-            # logfile = logfolder + self.handle + '.out'
-            # log = open(logfile, "w")
-            # cmd = ["./bin/vozinit", self.posn_file, str(zobov_buffer), str(self.box_length),
-            #        str(zobov_box_div), self.handle]
-            # subprocess.call(cmd, stdout=log, stderr=log)
-            # log.close()
-            #
-            # # ---Step 2: call this script to do the tessellation--- #
-            # voz_script = "scr" + self.handle
-            # cmd = ["./%s" % voz_script]
-            # log = open(logfile, 'a')
-            # subprocess.call(cmd, stdout=log, stderr=log)
-            # log.close()
-            #
-            # # ---Step 3: check the tessellation was successful--- #
-            # if not os.access("%s.vol" % self.handle, os.F_OK):
-            #     sys.exit("Something went wrong with the tessellation. Aborting ...")
-            #
-            # # # ---Step 4: remove the script file--- #
-            # if os.access(voz_script, os.F_OK):
-            #     os.unlink(voz_script)
-            #
-            # # ---Step 5: copy the .vol files to .trvol--- #
-            # cmd = ["cp", "%s.vol" % self.handle, "%s.trvol" % self.handle]
-            # subprocess.call(cmd)
-            #
-            # # ---Step 6: if buffer mocks were used, remove them and flag edge galaxies--- #
-            # # (necessary because voz1b1 and voztie do not do this automatically)
-            # if self.num_mocks > 0:
-            #     cmd = ["./bin/checkedges", self.handle, str(self.num_tracers), str(0.9e30)]
-            #     log = open(logfile, 'a')
-            #     subprocess.call(cmd, stdout=log, stderr=log)
-            #     log.close()
 
         print("Tessellation done.\n")
         sys.stdout.flush()
@@ -1081,7 +1033,7 @@ class ZobovVoids:
             edge_flag: integer array of shape (num_struct,), edge contamination flags
         """
 
-        print("Identified %d voids. Now extracting circumcentres ..." % num_struct)
+        print("Identified %d potential voids. Now extracting circumcentres ..." % num_struct)
         sys.stdout.flush()
 
         begin = time.time()
@@ -1245,11 +1197,14 @@ class ZobovVoids:
             info_output[:, 9] = eff_angrad
             info_output[:, 10] = edge_flag
 
+        info_output = info_output[edge_flag < 2]  # remove all the tessellation failures
+        print('Removed %d edge failures' % (num_struct - len(info_output)))
+
         finish = time.time()
         print('Time circumcentre loop %0.3f' % (finish - begin))
 
         # save output data to file
-        header = "%d voids from %s\n" % (num_struct, self.handle)
+        header = "%d voids from %s\n" % (len(info_output), self.handle)
         if self.is_box:
             header = header + 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
             np.savetxt(info_file, info_output, fmt='%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f', header=header)
@@ -1418,8 +1373,10 @@ class ZobovVoids:
                 info_output[:, 9] = eff_angrad
                 info_output[:, 10] = edge_flag
 
+        info_output = info_output[edge_flag < 2]  # remove all the tessellation failures
+
         # save output data to file
-        header = "%d voids from %s\n" % (num_struct, self.handle)
+        header = "%d voids from %s\n" % (len(info_output), self.handle)
         if self.is_box:
             header = header + 'VoidID XYZ[3](Mpc/h) R_eff(Mpc/h) delta_min delta_avg lambda_v DensRatio'
             np.savetxt(info_file, info_output, fmt='%d %0.6f %0.6f %0.6f %0.3f %0.6f %0.6f %0.6f %0.6f', header=header)
