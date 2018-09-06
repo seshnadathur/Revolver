@@ -97,7 +97,7 @@ oldcat.cut(wgal)
 # === special case: if using previous reconstruction run, load reconstructed catalogue === #
 root = output_folder + handle + '_pos'
 cat = GalaxyCatalogue(root + '_shift.npy', is_box=False, randoms=False, boss_like=False, special_patchy=False,
-                         posn_cols=[0, 1, 2], fkp=0, noz=0, cp=0, systot=1, veto=0)
+                      posn_cols=[0, 1, 2], fkp=0, noz=0, cp=0, systot=1, veto=0)
 wgal = np.empty(cat.size, dtype=int)
 survey_cuts_logical(wgal, cat.veto, cat.redshift, z_low_cut, z_high_cut)
 wgal = np.asarray(wgal, dtype=bool)

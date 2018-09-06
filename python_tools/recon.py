@@ -162,8 +162,8 @@ class Recon:
                 sys.stdout.flush()
                 deltar = np.zeros((nbins, nbins, nbins), dtype='float64')
                 fastmodules.allocate_gal_cic(deltar, ran.x, ran.y, ran.z, ran.weight, ran.size, self.xmin, self.ymin,
-                                         self.zmin, self.box, nbins, 1.)
-                if self.verbose
+                                             self.zmin, self.box, nbins, 1.)
+                if self.verbose:
                     print('Smoothing...')
                 sys.stdout.flush()
                 # NOTE - we do the smoothing via FFTs rather than scipy's gaussian_filter because if using several
@@ -237,7 +237,7 @@ class Recon:
         ifft_obj(input_array=deltak, output_array=psi_z)
 
         # from grid values of Psi_est = IFFT[-i k delta(k)/(b k^2)], compute the values at the galaxy positions
-        if self.verbose
+        if self.verbose:
             print('Calculating shifts...')
         sys.stdout.flush()
         shift_x, shift_y, shift_z = self.get_shift(cat, psi_x.real, psi_y.real, psi_z.real, use_newpos=True)
@@ -278,7 +278,7 @@ class Recon:
             else:
                 print('Debug: first 10 x,y,z shifts and old and new observer distances')
                 for i in range(10):
-                    oldr = np.sqrt(cat.x[i] ** 2 + cat.y[i] ** 2 +cat.z[i] ** 2)
+                    oldr = np.sqrt(cat.x[i] ** 2 + cat.y[i] ** 2 + cat.z[i] ** 2)
                     newr = np.sqrt(cat.newx[i] ** 2 + cat.newy[i] ** 2 + cat.newz[i] ** 2)
                     print('%0.3f %0.3f %0.3f %0.3f %0.3f' % (shift_x[i], shift_y[i], shift_z[i], oldr, newr))
 
