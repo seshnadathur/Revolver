@@ -274,7 +274,6 @@ np.savetxt(output_filename, output, fmt='%0.2f %0.6f %0.6e %0.6e %0.6e %0.6e %0.
 
 # 1. create the CUTE catalogues
 voids = np.loadtxt(output_folder + handle + '-Voids_cat.txt')
-voids = voids[voids[:, 10] < 2]  # remove edge failures
 select = voids[:, 4] > np.median(voids[:, 4])
 voids = voids[select]
 rweight = ran.get_weights(fkp=0, noz=1, cp=1, syst=1)
