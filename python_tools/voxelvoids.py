@@ -156,6 +156,7 @@ class VoxelVoids:
             # then normalize number counts to get density in units of mean (i.e. 1 + delta)
             fastmodules.normalize_rho_box(rhog, self.cat.size)
             self.rhoflat = rhog.flatten()
+            self.mask_cut = np.zeros(self.nbins**3, dtype='int')
         else:
             if self.verbose:
                 print('Allocating randoms in cells...')
