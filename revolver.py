@@ -37,7 +37,8 @@ if parms.do_recon:
 
     if parms.is_box:
         recon = Recon(cat, ran=cat, is_box=True, box_length=parms.box_length, omega_m=parms.omega_m, bias=parms.bias,
-                      f=parms.f, smooth=parms.smooth, nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads)
+                      f=parms.f, smooth=parms.smooth, nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads,
+                      verbose=parms.verbose)
     else:
         if not os.access(parms.randoms_file, os.F_OK):
             sys.exit('ERROR: randoms data required for reconstruction but randoms file not provided or not found!' +
