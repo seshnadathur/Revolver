@@ -1345,8 +1345,7 @@ class ZobovVoids:
                 info_output[:, 3] = centre_redshifts
                 info_output[:, 9] = eff_angrad
                 info_output[:, 10] = edge_flag
-
-        info_output = info_output[edge_flag < 2]  # remove all the tessellation failures
+                info_output = info_output[edge_flag < 2]  # remove all the tessellation failures
 
         # save output data to file
         header = "%d voids from %s\n" % (len(info_output), self.handle)
