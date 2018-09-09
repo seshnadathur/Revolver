@@ -97,13 +97,13 @@ if parms.run_voxelvoids:
                               boss_like=parms.boss_like, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
                               fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)
 
-    # perform basic cuts on the data: vetomask and low redshift extent
-    wgal = np.empty(cat.size, dtype=int)
-    survey_cuts_logical(wgal, cat.veto, cat.redshift, parms.z_low_cut, parms.z_high_cut)
-    wgal = np.asarray(wgal, dtype=bool)
-    cat.cut(wgal)
-
     if not parms.is_box:
+        # perform basic cuts on the data: vetomask and low redshift extent
+        wgal = np.empty(cat.size, dtype=int)
+        survey_cuts_logical(wgal, cat.veto, cat.redshift, parms.z_low_cut, parms.z_high_cut)
+        wgal = np.asarray(wgal, dtype=bool)
+        cat.cut(wgal)
+
         # randoms are required
         if not parms.do_recon:
             # randoms were not previously loaded
