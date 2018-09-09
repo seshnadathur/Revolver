@@ -1173,8 +1173,8 @@ class ZobovVoids:
             info_output[:, 9] = eff_angrad
             info_output[:, 10] = edge_flag
 
-        info_output = info_output[edge_flag < 2]  # remove all the tessellation failures
-        print('Removed %d edge failures' % (num_struct - len(info_output)))
+            info_output = info_output[edge_flag < 2]  # remove all the tessellation failures
+            print('Removed %d edge failures' % (num_struct - len(info_output)))
 
         # save output data to file
         header = "%d voids from %s\n" % (len(info_output), self.handle)
