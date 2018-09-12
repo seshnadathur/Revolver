@@ -44,11 +44,11 @@ if parms.do_recon:
             sys.exit('ERROR: randoms data required for reconstruction but randoms file not provided or not found!' +
                      'Aborting.')
 
-        # initializing randoms: note that in general we assume only FKP and systot weights are provided for randoms
-        # this is overridden for special input formats (either boss_like and special_patchy are True)
+        # initializing randoms: note that in general we assume only FKP weights are provided for randoms
+        # this is overridden for special_patchy input format (where veto flags are provided and need to be used)
         ran = GalaxyCatalogue(parms.randoms_file, is_box=False, box_length=parms.box_length, boss_like=parms.boss_like,
                               randoms=True, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
-                              fkp=parms.fkp, noz=0, cp=0, systot=0, veto=0)
+                              fkp=parms.fkp, noz=False, cp=False, systot=False, veto=False)
 
         # perform basic cuts on the data: vetomask and low redshift extent
         wgal = np.empty(cat.size, dtype=int)
@@ -112,11 +112,12 @@ if parms.run_voxelvoids:
                 sys.exit('ERROR: randoms data required for voxel voids but randoms file not provided or not found!' +
                          'Aborting.')
 
-            # initializing randoms: note that in general we assume only FKP and systot weights are provided for randoms
-            # this is overridden for special input formats (if either boss_like and special_patchy are True)
+            # initializing randoms: note that in general we assume only FKP weights are provided for randoms
+            # this is overridden for special_patchy input format (where veto flags are provided and need to be used)
             ran = GalaxyCatalogue(parms.randoms_file, is_box=False, box_length=parms.box_length,
                                   boss_like=parms.boss_like, randoms=True, special_patchy=parms.special_patchy,
-                                  posn_cols=parms.posn_cols, fkp=parms.fkp, noz=0, cp=0, systot=1, veto=0)
+                                  posn_cols=parms.posn_cols, fkp=parms.fkp, noz=False, cp=False, systot=False,
+                                  veto=False)
 
             # perform basic cuts on the randoms: vetomask and low redshift extent
             wran = np.empty(ran.size, dtype=int)
