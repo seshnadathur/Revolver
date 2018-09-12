@@ -19,7 +19,8 @@ class GalaxyCatalogue:
             print('Loading galaxy data from file...')
 
         if boss_like:
-            a = fits.open(catalogue_file)[1].data
+            with fits.open(catalogue_file) as hdul:
+                a = hdul[1].data
             for f in a.names:
                 self.__dict__[f.lower()] = a.field(f)
             # NOTE: this takes the weights, in particular the FKP weights, directly from file.
