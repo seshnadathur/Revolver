@@ -7,8 +7,8 @@ from cosmology import Cosmology
 class GalaxyCatalogue:
 
     def __init__(self, catalogue_file, is_box=False, box_length=1000., randoms=False, boss_like=True,
-                 special_patchy=False, posn_cols=np.array([0, 1, 2]), omega_m=0.308, fkp=1, noz=1, cp=1, systot=1, 
-                 veto=1):
+                 special_patchy=False, posn_cols=np.array([0, 1, 2]), omega_m=0.308, fkp=True, noz=True,
+                 cp=True, systot=True, veto=True):
 
         if not is_box and randoms and catalogue_file == '':
             sys.exit('ERROR: no randoms file provided! Randoms required for survey reconstruction')
