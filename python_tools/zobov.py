@@ -33,6 +33,8 @@ class ZobovVoids:
 
         # output folder
         self.output_folder = output_folder
+        if not os.access(self.output_folder, os.F_OK):
+            os.makedirs(self.output_folder)
 
         # file path for ZOBOV-formatted tracer data
         self.posn_file = output_folder + handle + "_pos.dat"

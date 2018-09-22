@@ -20,6 +20,8 @@ class VoxelVoids:
         self.is_box = is_box
         self.handle = handle
         self.output_folder = output_folder
+        if not os.access(self.output_folder, os.F_OK):
+            os.makedirs(self.output_folder)
         self.min_dens_cut = min_dens_cut
         self.use_barycentres = use_barycentres
         self.void_prefix = void_prefix
