@@ -13,7 +13,6 @@ from cosmology import Cosmology
 from astropy.io import fits
 from scipy.signal import savgol_filter
 from scipy.interpolate import InterpolatedUnivariateSpline
-import time
 
 
 class ZobovVoids:
@@ -654,6 +653,9 @@ class ZobovVoids:
 
         """
 
+        # get the path to where the C executables are stored
+        binpath = os.path.dirname(__file__).replace('python_tools', 'bin/')
+
         # ---run the tessellation--- #
         if not use_mpi:
             print("Calling vozisol to do the tessellation...")
@@ -663,7 +665,7 @@ class ZobovVoids:
                 os.makedirs(logfolder)
             logfile = logfolder + self.handle + '-zobov.out'
             log = open(logfile, "w")
-            cmd = ["./bin/vozisol", self.posn_file, self.handle, str(self.box_length),
+            cmd = [binpath + "vozisol", self.posn_file, self.handle, str(self.box_length),
                    str(self.num_tracers), str(0.9e30)]
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
@@ -681,14 +683,14 @@ class ZobovVoids:
                 os.makedirs(logfolder)
             logfile = logfolder + self.handle + '-mpirun.out'
             log = open(logfile, "w")
-            cmd = ['mpirun', './bin/voz1b1_mpi', self.posn_file, str(zobov_buffer), str(self.box_length),
+            cmd = ['mpirun', binpath + 'voz1b1_mpi', self.posn_file, str(zobov_buffer), str(self.box_length),
                    str(zobov_box_div), self.handle]
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
 
             # ---Step 2: tie the sub-boxes together using voztie--- #
             log = open(logfile, "a")
-            cmd = ["./bin/voztie", str(zobov_box_div), self.handle]
+            cmd = [binpath + "voztie", str(zobov_box_div), self.handle]
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
 
@@ -703,7 +705,7 @@ class ZobovVoids:
             # ---Step 5: if buffer mocks were used, remove them and flag edge galaxies--- #
             # (necessary because voz1b1 and voztie do not do this automatically)
             if self.num_mocks > 0:
-                cmd = ["./bin/checkedges", self.handle, str(self.num_tracers), str(0.9e30)]
+                cmd = [binpath + "checkedges", self.handle, str(self.num_tracers), str(0.9e30)]
                 log = open(logfile, 'a')
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
@@ -779,7 +781,7 @@ class ZobovVoids:
             self.num_non_edge = self.num_tracers - sum(edgemask)
 
         # ---run jozov to perform the void-finding--- #
-        cmd = ["./bin/jozovtrvol", "v", self.handle, str(0), str(0)]
+        cmd = [binpath + "jozovtrvol", "v", self.handle, str(0), str(0)]
         log = open(logfile, 'a')
         subprocess.call(cmd, stdout=log, stderr=log)
         log.close()
@@ -791,7 +793,7 @@ class ZobovVoids:
         if self.find_clusters:
             print(" ==== bonus: overdensity-finding with ZOBOV ==== ")
             sys.stdout.flush()
-            cmd = ["./bin/jozovtrvol", "c", self.handle, str(0), str(0)]
+            cmd = [binpath + "jozovtrvol", "c", self.handle, str(0), str(0)]
             log = open(logfile, 'a')
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()

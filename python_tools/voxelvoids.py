@@ -138,6 +138,9 @@ class VoxelVoids:
         if not os.access(raw_dir, os.F_OK):
             os.makedirs(raw_dir)
 
+        # get the path to where the C executables are stored
+        binpath = os.path.dirname(__file__).replace('python_tools', 'bin/')
+
         # measure the galaxy density field
         if self.verbose:
             print('Allocating galaxies in cells...')
@@ -187,7 +190,7 @@ class VoxelVoids:
             rhogflat.tofile(F, format='%f')
 
         # now call jozov-grid
-        cmd = ["./bin/jozov-grid", "v", raw_dir + "density_n%d.dat" % self.nbins,
+        cmd = [binpath + "jozov-grid", "v", raw_dir + "density_n%d.dat" % self.nbins,
                raw_dir + self.handle, str(self.nbins)]
         subprocess.call(cmd)
 
@@ -202,7 +205,7 @@ class VoxelVoids:
             if not os.access(logfolder, os.F_OK):
                 os.makedirs(logfolder)
             logfile = logfolder + self.handle + '-voxel.out'
-            cmd = ["./bin/jozov-grid", "c", raw_dir + "density_n%d.dat" % self.nbins,
+            cmd = [binpath + "jozov-grid", "c", raw_dir + "density_n%d.dat" % self.nbins,
                    raw_dir + self.handle, str(self.nbins)]
             log = open(logfile, 'w')
             subprocess.call(cmd)
