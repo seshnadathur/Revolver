@@ -20,6 +20,7 @@ class Recon:
 
         # -- parameters of box
         cosmo = Cosmology(omega_m=omega_m)
+        print("\n ==== Starting the reconstruction ==== ")
         print('Using values of growth rate f = %0.3f and bias b = %0.3f' % (f, bias))
         print('Smoothing scale [Mpc/h]:', smooth)
         if self.verbose:

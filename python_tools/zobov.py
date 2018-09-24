@@ -712,7 +712,7 @@ class ZobovVoids:
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
 
-        print("Tessellation done.\n")
+        print("Tessellation done.")
         sys.stdout.flush()
 
         # ---prepare files for running jozov--- #
@@ -819,7 +819,7 @@ class ZobovVoids:
 
         """
 
-        print('Post-processing voids ...\n')
+        print('Post-processing voids ...')
 
         # ------------NOTE----------------- #
         # Actually, the current code is built from previous code that did have merging
@@ -1204,7 +1204,7 @@ class ZobovVoids:
             strip_density_threshold: float, optional (default 1.0, not required unless use_stripping is True)
         """
 
-        print('Now extracting void barycentres ...\n')
+        print('Now extracting void barycentres ...')
         sys.stdout.flush()
 
         # set the filenames
@@ -1369,7 +1369,7 @@ class ZobovVoids:
         to control merging anyway.
         """
 
-        print('Post-processing superclusters ...\n')
+        print('Post-processing superclusters ...')
         sys.stdout.flush()
 
         # ------------NOTE----------------- #
