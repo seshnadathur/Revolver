@@ -698,7 +698,8 @@ class ZobovVoids:
 
             # ---Step 3: check the tessellation was successful--- #
             if not os.access("%s.vol" % self.handle, os.F_OK):
-                sys.exit("Something went wrong with the tessellation. Check log file!\nAborting ...")
+                print("Something went wrong with the tessellation. Check log file!\nAborting ...")
+                return
 
              # ---Step 4: copy the .vol files to .trvol--- #
             cmd = ["cp", "%s.vol" % self.handle, "%s.trvol" % self.handle]
