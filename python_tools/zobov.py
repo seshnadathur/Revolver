@@ -699,7 +699,7 @@ class ZobovVoids:
             # ---Step 3: check the tessellation was successful--- #
             if not os.access("%s.vol" % self.handle, os.F_OK):
                 print("Something went wrong with the tessellation. Check log file!\nAborting ...")
-                return
+                return 0
 
              # ---Step 4: copy the .vol files to .trvol--- #
             cmd = ["cp", "%s.vol" % self.handle, "%s.trvol" % self.handle]
@@ -812,6 +812,8 @@ class ZobovVoids:
         for fileName in glob.glob("./" + self.handle + "*"):
             cmd = ["mv", fileName, "%s." % raw_dir]
             subprocess.call(cmd)
+
+        return 1
 
     def postprocess_voids(self):
         """Method to post-process raw ZOBOV output to obtain discrete set of non-overlapping voids. This method
