@@ -190,16 +190,18 @@ if parms.run_zobov:
         # write a config file
         voidcat.write_config()
         # run ZOBOV
-        voidcat.zobov_wrapper(use_mpi=parms.use_mpi, zobov_box_div=parms.zobov_box_div,
-                              zobov_buffer=parms.zobov_buffer, nthreads=parms.nthreads)
+        success = voidcat.zobov_wrapper(use_mpi=parms.use_mpi, zobov_box_div=parms.zobov_box_div,
+                                        zobov_buffer=parms.zobov_buffer, nthreads=parms.nthreads)
     else:
         # read the config file from a previous run
         voidcat.read_config()
+        success = True
 
-    # post-process the raw ZOBOV output to make catalogues
-    voidcat.postprocess_voids()
-    if voidcat.find_clusters:
-        voidcat.postprocess_clusters()
+    if success:
+        # post-process the raw ZOBOV output to make catalogues
+        voidcat.postprocess_voids()
+        if voidcat.find_clusters:
+            voidcat.postprocess_clusters()
     print(" ==== Finished with ZOBOV-based method ==== ")
     end = time.time()
     print("ZOBOV took %0.3f seconds" % (end - start))
