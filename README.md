@@ -13,7 +13,8 @@ particles from a simulation box.
 Two different void-finding routines are provided. One is based on ZOBOV (Neyrinck 2008, arXiv:0712.3049, 
 http://skysrv.pha.jhu.edu/~neyrinck/zobov/zobovhelp.html) and uses Voronoi tessellation of the tracer field to estimate 
 the local density, followed by a watershed void-finding step. The other is a voxel-based method, which uses a 
-particle-mesh interpolation to estimate the tracer density, and then uses a similar watershed algorithm.
+particle-mesh interpolation to estimate the tracer density, and then uses a similar watershed algorithm. The 
+voxel-based method is under development and has not been fully tested yet.
 
 Input data files can be in FITS format (with data fields as for BOSS/eBOSS), or ASCII- or NPY-formatted data arrays.
 Read the comments in parameters/params.py for more information about the input file formatting. 
