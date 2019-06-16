@@ -119,6 +119,7 @@ class Recon:
         return xmin, ymin, zmin, box, binsize
 
     def iterate(self, iloop, save_wisdom=1, debug=False):
+
         cat = self.cat
         ran = self.ran
         binsize = self.binsize
@@ -309,7 +310,8 @@ class Recon:
             print('Wisdom saved at', wisdom_file)
 
     def apply_shifts_rsd(self):
-        """ Subtract RSD to get the estimated real-space positions of randoms
+        """
+        Subtract RSD to get the estimated real-space positions of randoms
         (no need to do this for galaxies, since it already happens during the iteration loop)
         """
 
@@ -324,8 +326,10 @@ class Recon:
             self.ran.newz = self.ran.z + self.f * psi_dot_rhat * self.ran.z / self.ran.dist
 
     def apply_shifts_full(self):
-        """ Use the estimated displacement field to shift the positions of galaxies (and randoms).
-        This method subtracts full displacement field as in standard BAO reconstruction"""
+        """
+        Uses the estimated displacement field to shift the positions of galaxies (and randoms).
+        This method subtracts full displacement field as in standard BAO reconstruction
+        """
 
         for c in [self.cat, self.ran]:
             shift_x, shift_y, shift_z = \
@@ -420,7 +424,7 @@ class Recon:
             np.save(out_file, output)
 
             if not rsd_only:
-                # recalculate weights, as we don't want the FKP weighting for void-finding
+                # same as above, but for the randoms as well
                 self.ran.weight = self.ran.get_weights(fkp=0, noz=0, cp=0, syst=0)
                 output = np.zeros((self.ran.size, 4))
                 output[:, 0] = self.ran.ra

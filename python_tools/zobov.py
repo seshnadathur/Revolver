@@ -26,7 +26,7 @@ class ZobovVoids:
         print("\n ==== Starting the void-finding with ZOBOV ==== ")
         sys.stdout.flush()
 
-        self.verbose=verbose
+        self.verbose = verbose
 
         # the prefix/handle used for all output file names
         self.handle = handle
