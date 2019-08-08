@@ -29,10 +29,13 @@ class ZobovVoids:
         self.verbose=verbose
 
         # the prefix/handle used for all output file names
-        self.handle = handle
+        if handle in (None,'') or not myString.strip():
+            self.handle = "myhandle" # default handle if empty
+        else:
+            self.handle = handle
 
         # output folder
-        self.output_folder = output_folder
+        self.output_folder = os.path.join(output_folder,'') # add a trailing slash if needed
         if not os.access(self.output_folder, os.F_OK):
             os.makedirs(self.output_folder)
 
