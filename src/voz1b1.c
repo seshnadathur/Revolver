@@ -1,4 +1,5 @@
 #include "voz.h"
+#include <stdbool.h>
 
 int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs);
 int vorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, realT *vol);
@@ -22,7 +23,12 @@ void voz1b1(char *posfile, realT border, realT boxsize,
   PARTADJ *adjs;
   realT *vols;
   realT predict, xmin,xmax,ymin,ymax,zmin,zmax;
-  int *orig; 
+
+  /* "original" particle identifiers in relation to the checking of
+     buffers of adjacent volumes */
+  int *orig;  /* "original" particle ID */
+  bool *orig_exists; /* Has an original particle ID been set? */
+
   int isitinbuf;
   int n_overlap;
   int isitinmain, d, i_x, i_y, i_z;
@@ -141,6 +147,7 @@ void voz1b1(char *posfile, realT border, realT boxsize,
 
   parts = (coordT *)malloc(3*nvpbuf*sizeof(coordT));
   orig = (int *)malloc(nvpbuf*sizeof(int));
+  orig_exists = (bool *)malloc(nvpbuf*sizeof(bool));
 
   if (parts == NULL) {
     printf("Unable to allocate parts\n");
@@ -150,9 +157,18 @@ void voz1b1(char *posfile, realT border, realT boxsize,
     printf("Unable to allocate orig\n");
     fflush(stdout);
   }
+  if (NULL == orig_exists) {
+    printf("Unable to allocate orig_exists\n");
+    fflush(stdout);
+  }
 
   nvp = 0; nvpall = 0; /* nvp = number of particles without buffer */
   xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
+
+  /* initialise non-existence of orig[.] indices */
+  for(i=0; i<nvpbuf; i++){
+    orig_exists[i] = false;
+  };
 
   np_tot = 0;
   while(np_tot < np){
@@ -170,6 +186,7 @@ void voz1b1(char *posfile, realT border, realT boxsize,
 	    parts[3*nvp+1] = rtemp[1];
 	    parts[3*nvp+2] = rtemp[2];
 	    orig[nvp] = np_tot + i;
+            orig_exists[nvp] = true;
 	    nvp++;
 	    if (rtemp[0] < xmin) xmin = rtemp[0];
 	    if (rtemp[0] > xmax) xmax = rtemp[0];
@@ -224,6 +241,7 @@ void voz1b1(char *posfile, realT border, realT boxsize,
 		            parts[3*nvpbuf+1] = rtemp_inner[1];
 		            parts[3*nvpbuf+2] = rtemp_inner[2];
 		            orig[nvpbuf] = np_tot + i;
+                            orig_exists[nvpbuf] = true;
 		            nvpbuf++;
 		            if (rtemp_inner[0] < xmin) xmin = rtemp_inner[0];
 		            if (rtemp_inner[0] > xmax) xmax = rtemp_inner[0];
@@ -345,7 +363,17 @@ void voz1b1(char *posfile, realT border, realT boxsize,
   /* Get the adjacencies back to their original values */
   for (i=0; i<nvp; i++)
     for (j = 0; j < adjs[i].nadj; j++)
+      if(orig_exists[adjs[i].adj[j]]){
       adjs[i].adj[j] = orig[adjs[i].adj[j]];
+      }else{
+        printf("voz1b1: ERROR: original adjacencies are incomplete:");
+        printf(" i=%d  j=%d adjs[i].adj[j]=%d\n",
+               i, j, adjs[i].adj[j]);
+        printf("Possible solutions:\n");
+        printf("  decrease zobov_box_div = number of divisions;\n");
+        printf("  increase zobov_buffer = border size\n");
+        exit(1);
+      };
   
   totalvol = 0.;
   for (i=0;i<nvp; i++) {
