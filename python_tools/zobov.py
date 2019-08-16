@@ -362,7 +362,7 @@ class ZobovVoids:
             mask = hp.ud_grade(mask, nside)
             survey_pix = np.nonzero(mask)[0]
             numpix = len(survey_pix)
-        rand_pix = survey_pix[random.sample(np.arange(numpix), num_high_mocks)]
+        rand_pix = survey_pix[random.sample(range(numpix), num_high_mocks)]
         theta, phi = hp.pix2ang(nside, rand_pix)
 
         # convert to standard format
@@ -411,7 +411,7 @@ class ZobovVoids:
                 mask = hp.ud_grade(mask, nside)
                 survey_pix = np.nonzero(mask)[0]
                 numpix = len(survey_pix)
-            rand_pix = survey_pix[random.sample(np.arange(numpix), num_low_mocks)]
+            rand_pix = survey_pix[random.sample(range(numpix), num_low_mocks)]
             theta, phi = hp.pix2ang(nside, rand_pix)
 
             # convert to standard format
@@ -465,7 +465,7 @@ class ZobovVoids:
                 boundary = hp.ud_grade(boundary, boundary_nside)
                 boundary_pix = np.nonzero(boundary)[0]
                 numpix = len(boundary_pix)
-            rand_pix = boundary_pix[random.sample(np.arange(numpix), num_bound_mocks)]
+            rand_pix = boundary_pix[random.sample(range(numpix), num_bound_mocks)]
             theta, phi = hp.pix2ang(boundary_nside, rand_pix)
 
             # convert to standard format

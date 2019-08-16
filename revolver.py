@@ -12,33 +12,38 @@ from python_tools.fastmodules import survey_cuts_logical
 
 # ==== Read in settings ==== #
 parser = argparse.ArgumentParser(description='options')
-parser.add_argument('--par', dest='par', default="", help='path to parameter file')
+parser.add_argument('-p', '--par', dest='par', default="", help='path to parameter file')
 args = parser.parse_args()
+# read the default parameters
+parms = imp.load_source('parameters/default_params.py')
+globals().update(vars(parms))
+# then override these with the user-provided settings
 filename = args.par
 if os.access(filename, os.F_OK):
     print('Loading parameters from %s' % filename)
     parms = imp.load_source("name", filename)
 else:
     sys.exit('Did not find settings file %s, aborting' % filename)
+globals().update(vars(parms))
 # ========================= #
 
 # === check output path === #
-if not os.access(parms.output_folder, os.F_OK):
-    os.makedirs(parms.output_folder)
+if not os.access(output_folder, os.F_OK):
+    os.makedirs(output_folder)
 # ========================= #
 
 # ==== run reconstruction ==== #
-if parms.do_recon:
+if do_recon:
     print('\n ==== Running reconstruction for real-space positions ==== ')
 
-    cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
-                          boss_like=parms.boss_like, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
-                          fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)
+    cat = GalaxyCatalogue(tracer_file, is_box=is_box, box_length=box_length, randoms=False,
+                          boss_like=boss_like, special_patchy=special_patchy, posn_cols=posn_cols,
+                          fkp=fkp, noz=noz, cp=cp, systot=systot, veto=veto)
 
-    if parms.is_box:
-        recon = Recon(cat, ran=cat, is_box=True, box_length=parms.box_length, omega_m=parms.omega_m, bias=parms.bias,
-                      f=parms.f, smooth=parms.smooth, nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads,
-                      verbose=parms.verbose)
+    if is_box:
+        recon = Recon(cat, ran=cat, is_box=True, box_length=box_length, omega_m=omega_m, bias=bias,
+                      f=f, smooth=smooth, nbins=nbins, padding=padding, nthreads=nthreads,
+                      verbose=verbose)
     else:
         if not os.access(parms.randoms_file, os.F_OK):
             sys.exit('ERROR: randoms data required for reconstruction but randoms file not provided or not found!' +
