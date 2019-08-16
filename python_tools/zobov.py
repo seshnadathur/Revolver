@@ -297,7 +297,7 @@ class ZobovVoids:
 
         # find pixels outside the mask that neighbour pixels within it
         # do this step in a loop, to get a thicker boundary layer
-        for j in range(2 + nside / 128):
+        for j in range(int(2 + nside / 128)):
             if j == 0:
                 filled_inds = np.nonzero(mask > completeness_limit)[0]
             else:
