@@ -45,8 +45,12 @@ PRINTC = enscript -2r
 
 #for Gnu's gcc compiler -O2 for optimization, -g for debugging, -Wall for check
 #   -fno-strict-aliasing not needed for gcc 4.4+ (segfault in qset.c)
-CC  = gcc
-CCOPTS1 = -O2 -ansi -fno-strict-aliasing 
+#CC  = gcc
+#CCOPTS1 = -O2 -ansi -fno-strict-aliasing
+
+#for Intel compiler
+CC  = icpc
+CCOPTS1 = -O2 -ansi -fno-strict-aliasing
 
 # for Sun's cc compiler, -fast or O2 for optimization, -g for debugging, -Xc for ANSI
 #CC = cc

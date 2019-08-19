@@ -1,7 +1,14 @@
 # Compiler choice:
-CC    = gcc
-MPICC = mpicc
-CFLAGS = -O2 -g -ansi -Wno-unused-result
+# GNU's gcc compiler
+#CC    = gcc
+#MPICC = mpicc
+#CFLAGS = -O2 -g -ansi -Wno-unused-result
+#MPICFLAGS = -O2 -g -ansi
+
+# Intel compiler
+CC    = icpc
+MPICC = mpiicpc
+CFLAGS = -O2 -g -ansi
 MPICFLAGS = -O2 -g -ansi
 
 MLIBS	=   -lm

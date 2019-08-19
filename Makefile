@@ -1,7 +1,11 @@
 export C_INCLUDE_PATH=/usr/lib/openmpi/include
 
 # compiler choice
-CC    = gcc
+# GNU compiler
+#CC   = gcc
+
+# Intel compiler
+CC    = icpc
 
 all: qhull voboz fastmodules
 
