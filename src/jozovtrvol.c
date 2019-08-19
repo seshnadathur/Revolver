@@ -399,7 +399,7 @@ int main(int argc,char **argv) {
     }
   }
   free(numinh);
-  close(trvol); /* EDITED BY SHAUN... last edit regarding volume... I don't think the true volumes are needed anywhere else. */
+  fclose(trvol); /* EDITED BY SHAUN... last edit regarding volume... I don't think the true volumes are needed anywhere else. */
 
   zon = fopen(zonefile,"w");
   if (zon == NULL) {
@@ -415,7 +415,7 @@ int main(int argc,char **argv) {
      }
   }
   
-  close(zon);
+  fclose(zon);
   
   inyet = (char *)malloc(nzones*sizeof(char));
   inyet2 = (char *)malloc(nzones*sizeof(char));

@@ -373,7 +373,7 @@ int main(int argc,char **argv) {
     }
   }
   
-  close(zon);
+  fclose(zon);
   
   inyet = (char *)malloc(nzones*sizeof(char));
   inyet2 = (char *)malloc(nzones*sizeof(char));

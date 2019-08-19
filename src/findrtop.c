@@ -11,7 +11,7 @@
 
   Courtesy Andrew Hamilton.
 */
-void findrtop(float *a, int na, int *iord, int nb)
+void findrtop(realT *a, int na, int *iord, int nb)
 {
 #undef	ORDER
 #define	ORDER(ia, ja)	a[ia] > a[ja] || (a[ia] == a[ja] && ia < ja)

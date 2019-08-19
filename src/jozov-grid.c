@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <ctype.h>
 
 #define NLINKS 300000 /* Number of possible links with the same dens_sl */
 #define BF 100000000 /* This is simply a number very much larger than the range in density */
@@ -562,7 +563,7 @@ int main(int argc,char **argv) {
       fprintf(zon, "\n");
     }
   }
-  close(zon);
+  fclose(zon);
 
   return(0);
 }
