@@ -783,6 +783,9 @@ class ZobovVoids:
             # ---Step 7: set the number of non-edge galaxies--- #
             self.num_non_edge = self.num_tracers - sum(edgemask)
 
+        # write a config file
+        self.write_config()
+
         # ---run jozov to perform the void-finding--- #
         cmd = [binpath + "jozovtrvol", "v", self.handle, str(0), str(0)]
         log = open(logfile, 'a')

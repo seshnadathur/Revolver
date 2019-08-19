@@ -192,8 +192,6 @@ if parms.run_zobov:
     if parms.do_tessellation:
         # write the tracer information to ZOBOV-readable format
         voidcat.write_box_zobov()
-        # write a config file
-        voidcat.write_config()
         # run ZOBOV
         success = voidcat.zobov_wrapper(use_mpi=parms.use_mpi, zobov_box_div=parms.zobov_box_div,
                                         zobov_buffer=parms.zobov_buffer, nthreads=parms.nthreads)
