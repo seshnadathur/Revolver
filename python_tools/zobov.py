@@ -659,18 +659,45 @@ class ZobovVoids:
         binpath = os.path.dirname(__file__).replace('python_tools', 'bin/')
 
         # ---run the tessellation--- #
+        # there are 2 options: use MPI or not, chosen by the user
+        # If the data is in a cubic box with PBC, tessellation must be done by voz1b1 and voztie
+        # irrespective of choice of MPI  or not. If the data is from a survey, we use vozisol if no MPI
+        # is available, or voz1b1_mpi and voztie if it is. If using voz1b1_mpi and voztie, we need to
+        # flag edge galaxies separately using checkedges (handled automatically by vozisol).
         if not use_mpi:
-            print("Calling vozisol to do the tessellation...")
-            sys.stdout.flush()
-            logfolder = self.output_folder + 'log/'
-            if not os.access(logfolder, os.F_OK):
-                os.makedirs(logfolder)
-            logfile = logfolder + self.handle + '-zobov.out'
-            log = open(logfile, "w")
-            cmd = [binpath + "vozisol", self.posn_file, self.handle, str(self.box_length),
-                   str(self.num_tracers), str(0.9e30)]
-            subprocess.call(cmd, stdout=log, stderr=log)
-            log.close()
+            if self.is_box:  # cannot use vozisol with PBC
+                print("Calling voz1b1 and voztie to do the tessellation...")
+                sys.stdout.flush()
+
+                # ---Step 1: run voz1b1 on the sub-boxes, in series--- #
+                logfolder = self.output_folder + 'log/'
+                if not os.access(logfolder, os.F_OK):
+                    os.makedirs(logfolder)
+                logfile = logfolder + self.handle + '-voz1b1.out'
+                log = open(logfile, "w")
+                cmd = [binpath + 'voz1b1', self.posn_file, str(zobov_buffer), str(self.box_length),
+                       str(zobov_box_div), self.handle]
+                subprocess.call(cmd, stdout=log, stderr=log)
+                log.close()
+
+                # ---Step 2: tie the sub-boxes together using voztie--- #
+                log = open(logfile, "a")
+                cmd = [binpath + "voztie", str(zobov_box_div), self.handle]
+                subprocess.call(cmd, stdout=log, stderr=log)
+                log.close()
+
+            else:  # no PBC, so use vozisol
+                print("Calling vozisol to do the tessellation...")
+                sys.stdout.flush()
+                logfolder = self.output_folder + 'log/'
+                if not os.access(logfolder, os.F_OK):
+                    os.makedirs(logfolder)
+                logfile = logfolder + self.handle + '-vozisol.out'
+                log = open(logfile, "w")
+                cmd = [binpath + "vozisol", self.posn_file, self.handle, str(self.box_length),
+                       str(self.num_tracers), str(0.9e30)]
+                subprocess.call(cmd, stdout=log, stderr=log)
+                log.close()
 
             # check the tessellation was successful
             if not os.access("%s.vol" % self.handle, os.F_OK):
