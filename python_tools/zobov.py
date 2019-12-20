@@ -1056,7 +1056,7 @@ class ZobovVoids:
 
         # read and assign adjacencies from ZOBOV output
         with open(adjacency_file, 'r') as AdjFile:
-            npfromadj = np.fromfile(AdjFile, dtype=np.int32, count=1)
+            npfromadj = np.fromfile(AdjFile, dtype=np.int32, count=1)[0]
             if not npfromadj == self.num_tracers:
                 sys.exit("npart = %d from adjacency file does not match num_tracers = %d!"
                          % (npfromadj, self.num_tracers))
@@ -1065,7 +1065,7 @@ class ZobovVoids:
             nadj = np.fromfile(AdjFile, dtype=np.int32, count=npfromadj)  # number of adjacencies for each particle
             # load up the adjacencies from ZOBOV output
             for i in range(npfromadj):
-                numtomatch = np.fromfile(AdjFile, dtype=np.int32, count=1)
+                numtomatch = np.fromfile(AdjFile, dtype=np.int32, count=1)[0]
                 if numtomatch > 0:
                     # particle numbers of adjacent particles
                     adjpartnumbers = np.fromfile(AdjFile, dtype=np.int32, count=numtomatch)

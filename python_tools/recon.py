@@ -145,6 +145,9 @@ class Recon:
                 print('Reading wisdom from ', wisdom_file)
                 g = open(wisdom_file, 'r')
                 wisd = json.load(g)
+                for i in range(len(wisd)):
+                    wisd[i] = wisd[i].encode('utf-8')
+                wisd = tuple(wisd)
                 pyfftw.import_wisdom(wisd)
                 g.close()
             print('Creating FFTW objects...')
@@ -304,6 +307,9 @@ class Recon:
         wisdom_file = "wisdom." + str(nbins) + "." + str(self.nthreads)
         if iloop == 0 and save_wisdom and not os.path.isfile(wisdom_file):
             wisd = pyfftw.export_wisdom()
+            wisd = list(wisd)
+            for i in range(len(wisd)):
+                wisd[i] = wisd[i].decode('utf-8')
             f = open(wisdom_file, 'w')
             json.dump(wisd, f)
             f.close()

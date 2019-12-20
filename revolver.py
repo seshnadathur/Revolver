@@ -1,7 +1,6 @@
 import argparse
 import os
 import sys
-import imp
 import time
 import numpy as np
 from python_tools.zobov import ZobovVoids
@@ -14,14 +13,32 @@ from python_tools.fastmodules import survey_cuts_logical
 parser = argparse.ArgumentParser(description='options')
 parser.add_argument('-p', '--par', dest='par', default="", help='path to parameter file')
 args = parser.parse_args()
-# read the default parameters
-parms = imp.load_source('parameters/default_params.py')
+# default parameters
+if sys.version_info.major <= 2:
+    import imp
+    parms = imp.load_source("name", 'parameters/default_params.py')
+elif sys.version_info.major == 3 and sys.version_info.minor <= 4:
+    from importlib.machinery import SourceFileLoader
+    parms = SourceFileLoader("name", 'parameters/default_params.py').load_module()
+else:
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("name",'parameters/default_params.py')
+    parms = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(parms)
 globals().update(vars(parms))
+
 # then override these with the user-provided settings
 filename = args.par
 if os.access(filename, os.F_OK):
     print('Loading parameters from %s' % filename)
-    parms = imp.load_source("name", filename)
+    if sys.version_info.major <= 2:
+        parms = imp.load_source("name", filename)
+    elif sys.version_info.major == 3 and sys.version_info.minor <= 4:
+        parms = SourceFileLoader("name", filename).load_module()
+    else:
+        spec = importlib.util.spec_from_file_location("name", filename)
+        parms = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(parms)
 else:
     sys.exit('Did not find settings file %s, aborting' % filename)
 globals().update(vars(parms))
