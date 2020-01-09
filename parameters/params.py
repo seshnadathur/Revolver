@@ -92,7 +92,7 @@ do_tessellation = True    # if True, does tessellation; if False, only post-proc
 use_mpi = True
 # use MPI if you have several (~10) CPUs available, otherwise it is generally faster to run without
 # if using MPI, the following two options control the division of tasks
-zobov_box_div = 4   # tessellation will be divided into (zobov_box_div)^3 chunks run in parallel
+zobov_box_div = 4   # tessellation will be divided into (zobov_box_div)^3 chunks run separately (in parallel, if using MPI)
 zobov_buffer = 0.05  # fraction of box length overlap between sub-boxes
 # the default options above have been tested to work well for BOSS data with 15-20 CPUs
 # -------------------------- #

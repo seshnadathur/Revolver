@@ -664,15 +664,15 @@ class ZobovVoids:
         # irrespective of choice of MPI  or not. If the data is from a survey, we use vozisol if no MPI
         # is available, or voz1b1_mpi and voztie if it is. If using voz1b1_mpi and voztie, we need to
         # flag edge galaxies separately using checkedges (handled automatically by vozisol).
+        logfolder = self.output_folder + 'log/'
+        if not os.access(logfolder, os.F_OK):
+            os.makedirs(logfolder)
         if not use_mpi:
             if self.is_box:  # cannot use vozisol with PBC
                 print("Calling voz1b1 and voztie to do the tessellation...")
                 sys.stdout.flush()
 
                 # ---Step 1: run voz1b1 on the sub-boxes, in series--- #
-                logfolder = self.output_folder + 'log/'
-                if not os.access(logfolder, os.F_OK):
-                    os.makedirs(logfolder)
                 logfile = logfolder + self.handle + '-voz1b1.out'
                 log = open(logfile, "w")
                 cmd = [binpath + 'voz1b1', self.posn_file, str(zobov_buffer), str(self.box_length),
@@ -689,9 +689,6 @@ class ZobovVoids:
             else:  # no PBC, so use vozisol
                 print("Calling vozisol to do the tessellation...")
                 sys.stdout.flush()
-                logfolder = self.output_folder + 'log/'
-                if not os.access(logfolder, os.F_OK):
-                    os.makedirs(logfolder)
                 logfile = logfolder + self.handle + '-vozisol.out'
                 log = open(logfile, "w")
                 cmd = [binpath + "vozisol", self.posn_file, self.handle, str(self.box_length),
@@ -707,10 +704,7 @@ class ZobovVoids:
             sys.stdout.flush()
 
             # ---Step 1: run voz1b1 on the sub-boxes in parallel using voz1b1_mpi--- #
-            logfolder = self.output_folder + 'log/'
-            if not os.access(logfolder, os.F_OK):
-                os.makedirs(logfolder)
-            logfile = logfolder + self.handle + '-mpirun.out'
+            logfile = logfolder + self.handle + '-voz1b1_mpi.out'
             log = open(logfile, "w")
             cmd = ['mpirun', binpath + 'voz1b1_mpi', self.posn_file, str(zobov_buffer), str(self.box_length),
                    str(zobov_box_div), self.handle]
@@ -736,6 +730,7 @@ class ZobovVoids:
             # (necessary because voz1b1 and voztie do not do this automatically)
             if self.num_mocks > 0:
                 cmd = [binpath + "checkedges", self.handle, str(self.num_tracers), str(0.9e30)]
+                logfile = logfolder + self.handle + '-checkedges.out'
                 log = open(logfile, 'a')
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
@@ -815,7 +810,8 @@ class ZobovVoids:
 
         # ---run jozov to perform the void-finding--- #
         cmd = [binpath + "jozovtrvol", "v", self.handle, str(0), str(0)]
-        log = open(logfile, 'a')
+        logfile = logfolder + self.handle + '-jozov.out'
+        log = open(logfile, 'w')
         subprocess.call(cmd, stdout=log, stderr=log)
         log.close()
         # this call to (modified version of) jozov sets NO density threshold, so ALL voids are merged without limit

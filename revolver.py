@@ -45,22 +45,22 @@ globals().update(vars(parms))
 # ========================= #
 
 # === check output path === #
-if not os.access(output_folder, os.F_OK):
-    os.makedirs(output_folder)
+if not os.access(parms.output_folder, os.F_OK):
+    os.makedirs(parms.output_folder)
 # ========================= #
 
 # ==== run reconstruction ==== #
-if do_recon:
+if parms.do_recon:
     print('\n ==== Running reconstruction for real-space positions ==== ')
 
-    cat = GalaxyCatalogue(tracer_file, is_box=is_box, box_length=box_length, randoms=False,
-                          boss_like=boss_like, special_patchy=special_patchy, posn_cols=posn_cols,
-                          fkp=fkp, noz=noz, cp=cp, systot=systot, veto=veto)
+    cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
+                          boss_like=parms.boss_like, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
+                          fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)
 
-    if is_box:
-        recon = Recon(cat, ran=cat, is_box=True, box_length=box_length, omega_m=omega_m, bias=bias,
-                      f=f, smooth=smooth, nbins=nbins, padding=padding, nthreads=nthreads,
-                      verbose=verbose)
+    if parms.is_box:
+        recon = Recon(cat, ran=cat, is_box=True, box_length=parms.box_length, omega_m=parms.omega_m, bias=parms.bias,
+                      f=parms.f, smooth=parms.smooth, nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads,
+                      verbose=parms.verbose)
     else:
         if not os.access(parms.randoms_file, os.F_OK):
             sys.exit('ERROR: randoms data required for reconstruction but randoms file not provided or not found!' +
@@ -156,12 +156,16 @@ if parms.run_voxelvoids:
         ran = 0.
         pre_calc_ran = False  # irrelevant anyway
 
+    # need to differentiate the output file names
+    void_prefix = parms.void_prefix + '-voxel'
+    cluster_prefix = parms.cluster_prefix + '-voxel'
+
     # initialize ...
     voidcat = VoxelVoids(cat, ran, handle=parms.handle, output_folder=parms.output_folder, is_box=parms.is_box,
                          box_length=parms.box_length, omega_m=parms.omega_m, z_min=parms.z_min, z_max=parms.z_max,
                          min_dens_cut=parms.min_dens_cut, use_barycentres=parms.use_barycentres,
-                         void_prefix=parms.void_prefix, find_clusters=parms.find_clusters,
-                         max_dens_cut=parms.max_dens_cut, cluster_prefix=parms.cluster_prefix, verbose=parms.verbose)
+                         void_prefix=void_prefix, find_clusters=parms.find_clusters,
+                         max_dens_cut=parms.max_dens_cut, cluster_prefix=cluster_prefix, verbose=parms.verbose)
     # ... and run the void-finder
     start = time.time()
     voidcat.run_voidfinder()
@@ -172,10 +176,9 @@ if parms.run_voxelvoids:
 # === run ZOBOV void-finding === #
 if parms.run_zobov:
 
-    if parms.run_voxelvoids:
-        # need to differentiate the output file names
-        parms.void_prefix = parms.void_prefix + '-zobov'
-        parms.cluster_prefix = parms.cluster_prefix + '-zobov'
+    # need to differentiate the output file names
+    void_prefix = parms.void_prefix + '-zobov'
+    cluster_prefix = parms.cluster_prefix + '-zobov'
 
     parms.z_min = max(parms.z_min, parms.z_low_cut)
     parms.z_max = min(parms.z_max, parms.z_high_cut)
@@ -188,9 +191,9 @@ if parms.run_zobov:
                              use_ang_wts=parms.use_ang_wts, z_min=parms.z_min, z_max=parms.z_max,
                              mock_file=parms.mock_file, mock_dens_ratio=parms.mock_dens_ratio,
                              min_dens_cut=parms.min_dens_cut, void_min_num=parms.void_min_num,
-                             use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
+                             use_barycentres=parms.use_barycentres, void_prefix=void_prefix,
                              find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
-                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix,
+                             cluster_min_num=parms.cluster_min_num, cluster_prefix=cluster_prefix,
                              verbose=parms.verbose)
     else:
         voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
@@ -200,9 +203,9 @@ if parms.run_zobov:
                              use_z_wts=parms.use_z_wts, use_ang_wts=parms.use_ang_wts, z_min=parms.z_min,
                              z_max=parms.z_max, mock_file=parms.mock_file, mock_dens_ratio=parms.mock_dens_ratio,
                              min_dens_cut=parms.min_dens_cut, void_min_num=parms.void_min_num,
-                             use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
+                             use_barycentres=parms.use_barycentres, void_prefix=void_prefix,
                              find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
-                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix,
+                             cluster_min_num=parms.cluster_min_num, cluster_prefix=cluster_prefix,
                              verbose=parms.verbose)
 
     start = time.time()
