@@ -15,7 +15,7 @@ voboz:
 
 fastmodules:
 	python python_tools/setup.py build_ext --inplace
-	find . -name "fastmodules*.so" -exec mv -t python_tools {} \+
+	mv fastmodules*.so python_tools/.
 
 clean:
 	make -C src clean
