@@ -21,7 +21,7 @@ fastmodules.so
 python_tools/fastmodules.c
 python_tools/fastmodules*.so
 python_tools/*.pyc
-parameters/*.pyc
+parameters/__pycache__/
 build/
 python_tools/pyCUTE
 example_output/*
