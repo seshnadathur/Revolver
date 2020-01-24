@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser(description='options')
 parser.add_argument('-p', '--par', dest='par', default="", help='path to parameter file')
 args = parser.parse_args()
 # read the default parameters
-parms = imp.load_source('parameters/default_params.py')
+parms = imp.load_source("name", 'parameters/default_params.py')
 globals().update(vars(parms))
 # then override these with the user-provided settings
 filename = args.par
