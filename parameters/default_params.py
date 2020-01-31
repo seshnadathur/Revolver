@@ -42,19 +42,24 @@ box_length = 1500.   # if is_box, the box side length in Mpc/h; else ignored
 # fraction of data extends to very high or very low redshifts (and even redshifts < 0)
 z_low_cut = 0.4      # lower redshift cut (ignored if not survey)
 z_high_cut = 0.73    # higher redshift cut (ignored if not survey)
-# for array data (tracer_file_type = 2 or 3), set the following flags to specify if the input file contains galaxy
-# weights information (FKP, close-pair, missing redshift, total systematics, veto flag, completeness)
-# Weights MUST be given in consecutive columns starting immediately after the column with redshifts, and with column
-# numbers in the order fkp<cp<noz<systot<veto<comp
+# what is the model for applying weights? 1 = like BOSS; 2 = like eBOSS; 3 = like joint BOSS+eBOSS LRG sample
+# (unfortunately things change as surveys progress)
+weights_model = 1
+# 1. For FITS files (tracer_file_type = 1) weights are automatically extracted using field names based on BOSS/eBOSS data
+# model (https://data.sdss.org/datamodel/files/BOSS_LSS_REDUX/galaxy_DRX_SAMPLE_NS.html)
+# 2. for simulation box data (is_box = True) all weights information is ignored as assumed uniform
+# -----------
+# Most users will only use weights with survey data in FITS files
+# If for some reason you have survey(-like) data in array format (tracer_file_type = 2 or 3), specify what info is
+# present in the file using following flags (FKP, close-pair, missing redshift, total systematics, veto flag,
+# completeness). Weights MUST be given in consecutive columns starting immediately after the column with redshifts,
+# and with column numbers in the order fkp<cp<noz<systot<veto<comp
 fkp = False     # FKP weights (used for reconstruction when n(z) is not constant)
 cp = False      # close-pair or fibre collision weights
 noz = False     # missing redshift / redshift failure weights
 systot = False  # total systematic weights
 veto = False    # veto mask (if present, galaxies with veto!=1 are discarded)
 comp = False    # sector completeness
-# NOTES: 1. for FITS files (tracer_file_type = 1) weights are automatically extracted if the field names in the file
-# follow the BOSS/eBOSS data model (https://data.sdss.org/datamodel/files/BOSS_LSS_REDUX/galaxy_DRX_SAMPLE_NS.html)
-# 2. for simulation box data (is_box = True) all weights information is ignored as assumed uniform
 # ============================================= #
 
 # ====== input randoms options ======= #
@@ -99,7 +104,7 @@ use_mpi = False
 # use MPI if you have several (~10) CPUs available, otherwise it is generally faster to run without
 # if using MPI, the following two options control the division of tasks
 zobov_box_div = 4   # tessellation will be divided into (zobov_box_div)^3 chunks run separately (in parallel, if using MPI)
-zobov_buffer = 0.05  # fraction of box length overlap between sub-boxes
+zobov_buffer = 0.1  # fraction of box length overlap between sub-boxes
 # -------------------------- #
 
 # -- survey data handling options -- #

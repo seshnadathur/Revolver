@@ -42,8 +42,12 @@ class Recon:
         if not self.is_box:
 
             # get the weights for data and randoms
-            cat.weight = cat.get_weights(fkp=True, boss_sys=True)
-            ran.weight = ran.get_weights(fkp=True, boss_sys=False)
+            cat.weight = cat.get_weights(fkp=True, syst_wts=True)
+            if cat.weights_model == 2 or cat.weights_model == 3:
+                # for eBOSS or joint BOSS+eBOSS catalogues, systematic weights are included for randoms
+                ran.weight = ran.get_weights(fkp=True, syst_wts=True)
+            # for BOSS catalogues, systematic weights are NOT included for randoms
+            ran.weight = ran.get_weights(fkp=True, syst_wts=False)
 
             sum_wgal = np.sum(cat.weight)
             sum_wran = np.sum(ran.weight)
@@ -418,7 +422,7 @@ class Recon:
             np.save(out_file, output)
         else:
             # recalculate weights, as we don't want the FKP weighting for void-finding
-            self.cat.weight = self.cat.get_weights(fkp=False, boss_sys=True)
+            self.cat.weight = self.cat.get_weights(fkp=False, syst_wts=True)
             output = np.zeros((self.cat.size, 5))
             output[:, 0] = self.cat.ra
             output[:, 1] = self.cat.dec
@@ -434,7 +438,10 @@ class Recon:
                 output[:, 0] = self.ran.ra
                 output[:, 1] = self.ran.dec
                 output[:, 2] = self.ran.redshift
-                output[:, 3] = 1  # we don't include any systematics weights for the random catalogue
+                if self.ran.weights_model == 1:
+                    output[:, 3] = 1  # we don't include any systematics weights for the random catalogue
+                elif self.ran.weights_model == 2 or self.ran.weights_model == 3:
+                    output[:, 3] = self.ran.get_weights(fkp=False, syst_wts=True)
                 out_file = root2 + '_shift.npy'
                 np.save(out_file, output)
 

@@ -83,7 +83,7 @@ class ZobovVoids:
             self.num_tracers = cat.size
 
             # convert input tracer information to standard format
-            syswt = cat.get_weights(fkp=False, boss_sys=True)
+            syswt = cat.get_weights(fkp=False, syst_wts=True)
             comp = cat.comp
             self.coords_radecz2std(cat.ra, cat.dec, cat.redshift, syswt, comp)
             # after this step, self.tracers contains all the reqd tracer information, no longer need cat

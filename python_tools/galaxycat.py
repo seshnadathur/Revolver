@@ -78,6 +78,7 @@ class GalaxyCatalogue:
                 self.veto = np.ones(self.size)  # all vetoes have already been applied!
                 # change the name 'z'-->'redshift' to avoid confusion
                 self.redshift = self.z.astype('float64')  # explicit float64 specification necessary for Cython use
+                self.weights_model = parms.weights_model
                 # check if weights are provided; if not, initialize to defaults
                 if 'weight_cp' not in (name.casefold() for name in self.names):
                     # set close pair weights to 1 by default
@@ -95,9 +96,25 @@ class GalaxyCatalogue:
                     # NOTE: if provided, we take the FKP weights directly from file
                     # If an FKP weighting different to the BOSS/eBOSS standard is desired
                     # (e.g., to work better on smaller scales), this would need to be recalculated
-                if 'comp' not in (name.casefold() for name in self.names):
-                    # assume a uniform completeness over the sky
+                if self.weights_model == 1:
+                    # like BOSS, so completeness is specified as COMP
+                    if 'comp' not in (name.casefold() for name in self.names):
+                        # assume a uniform completeness over the sky
+                        self.comp = np.ones(self.size)
+                elif self.weights_model == 2:
+                    # like eBOSS, so completeness is specified as COMP_BOSS
+                    if 'comp_boss' not in (name.casefold() for name in self.names):
+                        # assume a uniform completeness over the sky
+                        self.comp = np.ones(self.size)
+                    else:
+                        self.comp = self.comp_boss
+                elif self.weights_model == 3:
+                    # for the joint BOSS+eBOSS LRG sample, completeness is not provided at all
                     self.comp = np.ones(self.size)
+                    # and all systematic weights should be amalgamated into one
+                    if 'weight_all_nofkp' not in (name.casefold() for name in self.names):
+                        # set total systematic weights to 1 by default
+                        self.weight_all_nofkp = np.ones(self.size)
 
             elif input_file_type == 2 or input_file_type == 3:
                 # data is provided as an array
@@ -123,6 +140,7 @@ class GalaxyCatalogue:
                 self.veto = np.ones(self.size)
 
                 # if weight information is present, get it from the input
+                self.weights_model = 1  # TODO: currently only allows BOSS weights model for array input; extend?
                 count = 1
                 if parms.fkp:
                     self.weight_fkp = data[:, posn_cols[2] + count]
@@ -210,20 +228,28 @@ class GalaxyCatalogue:
                 self.__dict__[f[0]] = f[1][w]
         self.size = self.x.size
 
-    def get_weights(self, fkp=True, boss_sys=True):
+    def get_weights(self, fkp=True, syst_wts=True):
         """
         Combine different galaxy weights
         :param fkp:      bool, default True
                          whether to include FKP weights
-        :param boss_sys: bool, default True
-                         whether to include observational systematic weights as for BOSS/eBOSS
+        :param syst_wts: bool, default True
+                         whether to include observational systematic weights
         :return: composite weights for each galaxy
         """
 
         weights = np.ones(self.size)
         if fkp:
             weights *= self.weight_fkp
-        if boss_sys:
-            weights *= self.weight_systot * (self.weight_noz + self.weight_cp - 1)
+        if syst_wts:
+            if self.weights_model == 1:
+                # BOSS model for weights; cp + noz - 1
+                weights *= self.weight_systot * (self.weight_noz + self.weight_cp - 1)
+            elif self.weights_model == 2:
+                # eBOSS model for weights; cp * noz
+                weights *= self.weight_systot * self.weight_cp * self.weight_noz
+            elif self.weights_model == 3:
+                # joint BOSS+eBOSS weights model; just use custom field
+                weights *= self.weight_all_nofkp
 
         return weights.astype('float64')  # have to specify this because sometimes it was returning float32!
