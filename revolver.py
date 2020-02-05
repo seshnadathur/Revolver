@@ -62,8 +62,7 @@ if parms.do_recon:
             sys.exit('ERROR: randoms data required for reconstruction but randoms file not provided or not found!' +
                      'Aborting.')
 
-        # initializing randoms: note that in general we assume only FKP weights are provided for randoms
-        # this is overridden for special_patchy input format (where veto flags are provided and need to be used)
+        # initializing randoms
         ran = GalaxyCatalogue(parms, randoms=True)
 
         # perform basic cuts on the data: vetomask and low redshift extent

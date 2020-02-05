@@ -472,7 +472,7 @@ class ZobovVoids:
         # but it doesn't slow the tessellation too much and keeps coding simpler)
 
         # generate guard particle positions
-        x = np.linspace(0.1, self.box_length - 0.1, 20)
+        x = np.linspace(0.1, self.box_length - 0.1, 50)
         guards = np.vstack(np.meshgrid(x, x, x)).reshape(3, -1).T
 
         # make a kdTree instance using all the galaxies and buffer mocks
