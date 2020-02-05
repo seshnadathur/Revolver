@@ -44,6 +44,7 @@ class ZobovVoids:
         self.use_mpi = parms.use_mpi
         self.zobov_box_div = parms.zobov_box_div
         self.zobov_buffer = parms.zobov_buffer
+        self.guard_nums = parms.guard_nums
 
         # data preparation steps
         if self.is_box:
@@ -472,7 +473,7 @@ class ZobovVoids:
         # but it doesn't slow the tessellation too much and keeps coding simpler)
 
         # generate guard particle positions
-        x = np.linspace(0.1, self.box_length - 0.1, 50)
+        x = np.linspace(0.1, self.box_length - 0.1, self.guard_nums)
         guards = np.vstack(np.meshgrid(x, x, x)).reshape(3, -1).T
 
         # make a kdTree instance using all the galaxies and buffer mocks

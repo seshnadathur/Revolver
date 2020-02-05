@@ -100,10 +100,12 @@ max_dens_cut = 1.0  # cluster maximum galaxy density (in units of mean density) 
 
 # -- Tessellation options -- #
 do_tessellation = True    # if True, does tessellation; if False, only post-processes previous run with same handle
+# guards are used to stabilise the tessellation for surveys; increase this number if the survey volume is a
+# small fraction of that of the smallest cube required to fully enclose it
+guard_nums = 30     
 use_mpi = False
 # use MPI if you have several (~10) CPUs available, otherwise it is generally faster to run without
-# if using MPI, the following two options control the division of tasks
-zobov_box_div = 4   # tessellation will be divided into (zobov_box_div)^3 chunks run separately (in parallel, if using MPI)
+zobov_box_div = 2   # partition tessellation job into (zobov_box_div)^3 chunks (run in parallel, if using MPI)
 zobov_buffer = 0.1  # fraction of box length overlap between sub-boxes
 # -------------------------- #
 
