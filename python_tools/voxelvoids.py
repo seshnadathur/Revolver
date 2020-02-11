@@ -3,9 +3,9 @@ import os
 import sys
 import numpy as np
 import subprocess
-import fastmodules
+from python_tools.fastmodules import fastmodules
 from scipy.ndimage.filters import gaussian_filter
-from cosmology import Cosmology
+from python_tools.cosmology import Cosmology
 
 
 class VoxelVoids:

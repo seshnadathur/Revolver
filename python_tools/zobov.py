@@ -8,8 +8,8 @@ import subprocess
 import glob
 from scipy.spatial import cKDTree
 from scipy.integrate import quad
-from cosmology import Cosmology
-from galaxycat import GalaxyCatalogue
+from python_tools.cosmology import Cosmology
+from python_tools.galaxycat import GalaxyCatalogue
 from scipy.signal import savgol_filter
 from scipy.interpolate import InterpolatedUnivariateSpline
 

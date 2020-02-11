@@ -4,9 +4,9 @@ import os
 import json
 import sys
 from scipy.fftpack import fftfreq
-from cosmology import Cosmology
+from python_tools.cosmology import Cosmology
+from python_tools.fastmodules import fastmodules
 import pyfftw
-import fastmodules
 
 
 class Recon:

@@ -3,7 +3,7 @@ import sys
 import healpy as hp
 import os
 from astropy.io import fits
-from cosmology import Cosmology
+from python_tools.cosmology import Cosmology
 
 
 class GalaxyCatalogue:
