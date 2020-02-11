@@ -3,7 +3,7 @@ import os
 import sys
 import numpy as np
 import subprocess
-from python_tools.fastmodules import fastmodules
+import python_tools.fastmodules as fastmodules
 from scipy.ndimage.filters import gaussian_filter
 from python_tools.cosmology import Cosmology
 

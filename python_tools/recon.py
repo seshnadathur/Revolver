@@ -5,7 +5,7 @@ import json
 import sys
 from scipy.fftpack import fftfreq
 from python_tools.cosmology import Cosmology
-from python_tools.fastmodules import fastmodules
+import python_tools.fastmodules as fastmodules
 import pyfftw
 
 
