@@ -21,6 +21,7 @@ fastmodules.so
 python_tools/fastmodules.c
 python_tools/fastmodules*.so
 python_tools/*.pyc
+python_tools/__pycache__/
 parameters/__pycache__/
 build/
 python_tools/pyCUTE
