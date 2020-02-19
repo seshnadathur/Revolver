@@ -106,7 +106,7 @@ guard_nums = 30
 use_mpi = False
 # use MPI if you have several (~10) CPUs available, otherwise it is generally faster to run without
 zobov_box_div = 2   # partition tessellation job into (zobov_box_div)^3 chunks (run in parallel, if using MPI)
-zobov_buffer = 0.1  # fraction of box length overlap between sub-boxes
+zobov_buffer = 0.08  # fraction of box length overlap between sub-boxes
 # -------------------------- #
 
 # -- survey data handling options -- #
