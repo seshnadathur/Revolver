@@ -14,7 +14,7 @@ voboz:
 	make -C src all
 
 fastmodules:
-	python2.7 python_tools/setup.py build_ext --inplace
+	python python_tools/setup.py build_ext --inplace
 	mv fastmodules.so python_tools/.
 
 clean:
