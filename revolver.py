@@ -95,17 +95,10 @@ if parms.do_recon:
     print("Reconstruction took %0.3f seconds" % (end - start))
 
     # galaxy input for void-finding will now be read from new file with shifted data
-    parms.tracer_file = root + '_shift.npy'
-    # the shifted file has different format, so need to adjust parameters for subsequent steps
-    parms.tracer_file_type = 2
-    parms.tracer_posn_cols = [0, 1, 2]
-    parms.fkp = False
-    parms.cp = False
-    parms.noz = False
-    parms.veto = False
-    parms.systot = True  # we now only have a single consolidated weights column
-    parms.comp = True    # completeness values
-    # NOTE: for uniform box data these will be ignored anyway, so no problem setting them as above
+    parms.tracer_file = root + '_shift.fits'
+    # adjust inout parameters for subsequent steps to match shifted tracer file
+    parms.tracer_file_type = 1
+    parms.weights_model = 1
 # ============================ #
 
 # === run voxel void-finding === #

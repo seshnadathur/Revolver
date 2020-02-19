@@ -24,3 +24,4 @@ clean:
 	rm -f python_tools/*.*o
 	rm -f python_tools/fastmodules.c
 	rm -f python_tools/fastmodules*.so
+	rm -f python_tools/*.pyc

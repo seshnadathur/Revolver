@@ -153,20 +153,15 @@ class ZobovVoids:
 
             if parms.do_tessellation:
                 # options for buffer mocks around survey boundaries
-                if parms.mock_file == '':
-                    # no buffer mocks provided, so generate new
+                if not os.access(parms.mock_file, os.F_OK):
+                    if not parms.mock_file == '':
+                        print('Could not find file %s containing buffer mocks!' % parms.mock_file)
                     print('Generating buffer mocks around survey edges ...')
                     print('\tbuffer mocks will have %0.1f x the galaxy number density' % parms.mock_dens_ratio)
                     sys.stdout.flush()
                     self.mock_dens_ratio = parms.mock_dens_ratio
                     self.generate_buffer()
-                elif not os.access(parms.mock_file, os.F_OK):
-                    print('Could not find file %s containing buffer mocks!' % parms.mock_file)
-                    print('Generating buffer mocks around survey edges ...')
-                    print('\tbuffer mocks will have %0.1f x the galaxy number density' % parms.mock_dens_ratio)
-                    sys.stdout.flush()
-                    self.mock_dens_ratio = parms.mock_dens_ratio
-                    self.generate_buffer()
+                    # self.tracers now contains all tracer information (galaxies + buffers + guards)
                 else:
                     print('Loading pre-computed buffer mocks from file %s' % parms.mock_file)
                     sys.stdout.flush()
@@ -175,14 +170,20 @@ class ZobovVoids:
                     else:
                         buffers = np.loadtxt(parms.mock_file)
                     # recalculate the box length
-                    self.box_length = 2.0 * np.max(np.abs(buffers[:, :3])) + 1
+                    select = buffers[:, 3] > -60  # exclude the guard particles
+                    self.box_length, self.middle = self.get_box_length(buffers[select, :3])
+                    if self.verbose:
+                        print("\tUsing box length %0.2f" % self.box_length)
                     self.num_mocks = buffers.shape[0]
                     # join the buffers to the galaxy tracers
                     self.tracers = np.vstack([self.tracers, buffers])
+                    # self.tracers now contains all tracer information (galaxies + buffers + guards)
                     self.num_part_total = self.num_tracers + self.num_mocks
                     self.mock_file = parms.mock_file
-                # shift Cartesian positions from observer to box coordinates
-                self.tracers[:, :3] += 0.5 * self.box_length
+
+            # shift X, Y, Z to the Zobov box coordinate system
+            new_box_posns = self.obs2zobovbox(self.tracers[:, :3])
+            self.tracers[:, :3] = new_box_posns
 
         # for easy debugging: write all tracer positions to file
         # np.save(self.posn_file.replace('pos.dat', 'pos.npy'), self.tracers)
@@ -230,6 +231,51 @@ class ZobovVoids:
         galaxies[:, 7] = comp
 
         self.tracers = galaxies
+
+    def get_box_length(self, positions, pad=200):
+        """Calculate the extent of a cubic box that will comfortably enclose the whole survey
+
+        :param positions: Nx3 array of positions (of galaxies + buffers) to enclose
+        :param pad: additional padding desired for safety
+
+        :returns:
+        ----
+        box_len: box length required
+        middle: coordinates of central point of the survey
+        """
+
+        extents = np.asarray([np.max(positions[:, i]) - np.min(positions[:, i]) for i in range(3)])
+        middle = np.asarray([0.5 * (np.max(positions[:, i]) + np.min(positions[:, i])) for i in range(3)])
+        max_extent = np.max(extents)
+        box_len = max_extent + pad
+
+        return box_len, middle
+
+    def obs2zobovbox(self, positions):
+        """Convert from Cartesian coordinates in observers ref. frame to ZOBOV box coords
+
+        :param positions: Nx3 array of position coordinates to be converted
+
+        :return: array of new coordinates
+        """
+
+        shift = self.middle - self.box_length / 2
+        new_pos = positions - shift
+
+        return new_pos
+
+    def zobovbox2obs(self, positions):
+        """Convert from Cartesian coordinates in ZOBOV box coords to observers ref. frame
+
+        :param positions: Nx3 array of position coordinates to be converted
+
+        :return: array of new coordinates
+        """
+
+        shift = self.middle - self.box_length / 2
+        new_pos = positions + shift
+
+        return new_pos
 
     def generate_mask(self):
         """Generates an approximate survey sky mask if none is provided, and saves to file
@@ -464,7 +510,7 @@ class ZobovVoids:
         # ------------------------------------------------------------- #
 
         # determine the size of the cubic box required
-        self.box_length = 2.0 * np.max(np.abs(buffers[:, :3])) + 1.
+        self.box_length, self.middle = self.get_box_length(buffers[:, :3])
         if self.verbose:
             print("\tUsing box length %0.2f" % self.box_length)
 
@@ -477,9 +523,10 @@ class ZobovVoids:
         guards = np.vstack(np.meshgrid(x, x, x)).reshape(3, -1).T
 
         # make a kdTree instance using all the galaxies and buffer mocks
-        all_positions = np.vstack([self.tracers[:, :3], buffers[:, :3]])
-        all_positions += self.box_length / 2.  # from observer to box coordinates
-        tree = cKDTree(all_positions, boxsize=self.box_length)
+        all_posns_obs = np.vstack([self.tracers[:, :3], buffers[:, :3]])
+        # positions in Zobov box coordinates
+        all_posns_box = self.obs2zobovbox(all_posns_obs)
+        tree = cKDTree(all_posns_box, boxsize=self.box_length)
 
         # find the nearest neighbour distance for each of the guard particles
         nn_dist = np.empty(len(guards))
@@ -487,13 +534,14 @@ class ZobovVoids:
             nn_dist[i], nnind = tree.query(guards[i, :], k=1)
 
         # drop all guards that are too close to existing points
-        guards = guards[nn_dist > (self.box_length - 0.2) / 20.]
-        guards = guards - self.box_length / 2.  # guard positions back in observer coordinates
+        guards = guards[nn_dist > (self.box_length - 0.2) / self.guard_nums]
+        # shift back to observer coordinates
+        guards_obs = self.zobovbox2obs(guards)
 
         # convert to standard format
         num_guard_mocks = len(guards)
         guard_mocks = np.zeros((num_guard_mocks, 8))
-        guard_mocks[:, :3] = guards
+        guard_mocks[:, :3] = guards_obs
         guard_mocks[:, 3:5] = -60.  # guards are given RA and Dec -60 as well to distinguish them from other buffers
         guard_mocks[:, 5] = -1.
         guard_mocks[:, 6] = 0
@@ -594,7 +642,7 @@ class ZobovVoids:
 
     def reread_tracer_info(self):
         """
-        re-reads tracer information from file if required after previous deletion
+        re-reads tracer information from Zobov-formatted file if required after previous deletion
         """
 
         self.tracers = np.empty((self.num_part_total, 8))
@@ -619,6 +667,7 @@ class ZobovVoids:
         info = 'handle = \'%s\'\nis_box = %s\nnum_tracers = %d\n' % (self.handle, self.is_box, self.num_tracers)
         info += 'num_mocks = %d\nnum_non_edge = %d\nbox_length = %f\n' % (self.num_mocks, self.num_non_edge,
                                                                           self.box_length)
+        info += 'middle = np.array([%0.6e, %0.6e, %0.6e])\n' % (self.middle[0], self.middle[1], self.middle[2])
         info += 'tracer_dens = %e' % self.tracer_dens
         info_file = self.output_folder + 'sample_info.py'
         with open(info_file, 'w') as F:
@@ -1190,7 +1239,7 @@ class ZobovVoids:
         if self.is_box:
             info_output[:, 1:4] = circumcentres[:, :3]
         else:
-            centre_obs = circumcentres - self.box_length / 2.0
+            centre_obs = self.zobovbox2obs(circumcentres)  # circumcentres - self.box_length / 2.0
             rdist = np.linalg.norm(centre_obs, axis=1)
             eff_angrad = np.degrees(eff_rad / rdist)
             centre_redshifts = self.cosmo.get_redshift(rdist)
@@ -1363,7 +1412,7 @@ class ZobovVoids:
             if self.is_box:
                 info_output[:, 1:4] = centres[:, :3]
             else:
-                centre_obs = centres - self.box_length / 2.0
+                centre_obs = self.zobovbox2obs(centres) # centres - self.box_length / 2.0
                 rdist = np.linalg.norm(centre_obs, axis=1)
                 eff_angrad = np.degrees(eff_rad / rdist)
                 centre_redshifts = self.cosmo.get_redshift(rdist)
@@ -1649,7 +1698,7 @@ class ZobovVoids:
             if self.is_box:
                 info_output[:, 1:4] = centres[:, :3]
             else:
-                centre_obs = centres - self.box_length / 2.0
+                centre_obs = self.zobovbox2obs(centres)  # centres - self.box_length / 2.0
                 rdist = np.linalg.norm(centre_obs, axis=1)
                 eff_angrad = np.degrees(eff_rad / rdist)
                 centre_redshifts = self.cosmo.get_redshift(rdist)

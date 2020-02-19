@@ -7,6 +7,7 @@ from scipy.fftpack import fftfreq
 from python_tools.cosmology import Cosmology
 import python_tools.fastmodules as fastmodules
 import pyfftw
+from astropy.table import Table
 
 
 class Recon:
@@ -418,8 +419,10 @@ class Recon:
             output[:, 0] = self.cat.newx
             output[:, 1] = self.cat.newy
             output[:, 2] = self.cat.newz
-            out_file = root1 + '_shift.npy'
-            np.save(out_file, output)
+            out_file = root1 + '_shift.fits'
+            t = Table(output, names=('X', 'Y', 'Z'))
+            t.write(out_file, format='fits')
+            #np.save(out_file, output)
         else:
             # recalculate weights, as we don't want the FKP weighting for void-finding
             self.cat.weight = self.cat.get_weights(fkp=False, syst_wts=True)
@@ -429,8 +432,10 @@ class Recon:
             output[:, 2] = self.cat.redshift
             output[:, 3] = self.cat.weight
             output[:, 4] = self.cat.comp
-            out_file = root1 + '_shift.npy'
-            np.save(out_file, output)
+            out_file = root1 + '_shift.fits'
+            t = Table(output, names=('RA', 'DEC', 'Z', 'WEIGHT_SYSTOT', 'COMP'))
+            t.write(out_file, format='fits')
+            #np.save(out_file, output)
 
             if not rsd_only:
                 # same as above, but for the randoms as well
@@ -442,8 +447,10 @@ class Recon:
                     output[:, 3] = 1  # we don't include any systematics weights for the random catalogue
                 elif self.ran.weights_model == 2 or self.ran.weights_model == 3:
                     output[:, 3] = self.ran.get_weights(fkp=False, syst_wts=True)
-                out_file = root2 + '_shift.npy'
-                np.save(out_file, output)
+                out_file = root2 + '_shift.fits'
+                t = Table(output, names=('RA', 'DEC', 'Z', 'WEIGHT_SYSTOT'))
+                t.write(out_file, format='fits')
+                #np.save(out_file, output)
 
     def cart_to_radecz(self, x, y, z):
 
