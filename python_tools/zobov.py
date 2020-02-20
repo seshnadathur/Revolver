@@ -695,6 +695,7 @@ class ZobovVoids:
         self.tracer_dens = config.tracer_dens
         self.num_part_total = config.num_mocks + config.num_tracers
         self.num_tracers = config.num_tracers
+        self.middle = config.middle
 
     def zobov_wrapper(self):
         """
