@@ -32,7 +32,7 @@ class GalaxyCatalogue:
 
             self.box_length = parms.box_length
 
-            if parms.input_file_type == 1:
+            if input_file_type == 1:
                 # FITS file format: assumes position fields are called X,Y,Z
                 with fits.open(input_file) as hdul:
                     a = hdul[1].data
@@ -46,7 +46,7 @@ class GalaxyCatalogue:
                 self.weight = np.ones(self.x.size)  # uniform box so all weights are 1
 
             else:
-                if parms.input_file_type == 2:
+                if input_file_type == 2:
                     # Numpy pickle format ('.npy' files)
                     data = np.load(input_file)
                 else:
