@@ -667,16 +667,17 @@ class ZobovVoids:
         info = 'handle = \'%s\'\nis_box = %s\nnum_tracers = %d\n' % (self.handle, self.is_box, self.num_tracers)
         info += 'num_mocks = %d\nnum_non_edge = %d\nbox_length = %f\n' % (self.num_mocks, self.num_non_edge,
                                                                           self.box_length)
-        info += 'middle = np.array([%0.6e, %0.6e, %0.6e])\n' % (self.middle[0], self.middle[1], self.middle[2])
+        if not self.is_box:
+            info += 'middle = np.array([%0.6e, %0.6e, %0.6e])\n' % (self.middle[0], self.middle[1], self.middle[2])
         info += 'tracer_dens = %e' % self.tracer_dens
-        info_file = self.output_folder + 'sample_info.py'
+        info_file = self.output_folder + self.handle + '_sample_info.py'
         with open(info_file, 'w') as F:
             F.write(info)
 
     def read_config(self):
         """method to read configuration file for information about previous ZOBOV run"""
 
-        info_file = self.output_folder + 'sample_info.py'
+        info_file = self.output_folder + self.handle + '_sample_info.py'
         if sys.version_info.major <= 2:
             import imp
             config = imp.load_source("name", info_file)
@@ -695,7 +696,10 @@ class ZobovVoids:
         self.tracer_dens = config.tracer_dens
         self.num_part_total = config.num_mocks + config.num_tracers
         self.num_tracers = config.num_tracers
-        self.middle = config.middle
+        if not self.is_box:
+            self.middle = config.middle
+        if not self.handle == config.handle:
+            print('Warning: handle in config file does not match input! Check?')
 
     def zobov_wrapper(self):
         """
