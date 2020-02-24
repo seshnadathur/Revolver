@@ -1,80 +1,91 @@
-# all of the following quantities must be assigned a value in this file otherwise an error will result
-# however, depending on options chosen, not all quantities may be used in the code
-# distance units in this code are calculated in Mpc/h by default
+# This file explains the input parameters for the code and assigns reasonable default values to each of them.
+# Don't alter this file – instead use a separate parameters file to overwrite any input values you wish to change
+# Note: distance units in this code are calculated in Mpc/h by default
 
 # ======= runtime options ======== #
 verbose = False  # True for more informative output statements
 debug = False    # True for output checks during reconstruction
-nthreads = 1    # set to the number of CPUs you have
+nthreads = 4     # set to the number of CPUs available, more is better
 # ================================ #
 
 # ========= file handling options ========= #
-handle = ''         # string; used to identify the sample and set filenames
-output_folder = ''  # /path/to/folder/ where output should be placed
+handle = 'default'  # string to identify the run; used to set filenames
+output_folder = ''   # /path/to/folder/ where output should be placed
 # ========================================= #
 
 # ========== cosmology ============ #
-omega_m = 0.308  # used for reconstruction and to convert redshifts to distances (assumes flat Universe!)
+omega_m = 0.31  # used for reconstruction and to convert redshifts to distances (assumes flat Universe!)
 # ================================= #
 
 # ======= reconstruction options ========== #
 do_recon = True     # if False, no reconstruction is performed and other recon options are ignored
-nbins = 256     # the number of grid cells per side of the box
+nbins = 512     # the number of grid cells per side of the box
 padding = 200.  # for survey data, the extra 'padding' for the cubic box, in Mpc/h
 smooth = 10.    # smoothing scale in Mpc/h
-bias = 2.0      # the linear galaxy/tracer bias value
-f = 0.8         # the linear growth rate at the mean redshift
+bias = 2        # the linear galaxy/tracer bias value
+f = 0.78        # the linear growth rate at the mean redshift
 niter = 3       # number of iterations in the FFT reconstruction method, 3 is sufficient
+# NOTE: for box data, reconstruction assumes plane-parallel approximation with single l-o-s along the box z-axis!!
 # ========================================= #
 
-# ======= input tracer data options =========== #
-tracer_file = ''    # /path/to/file with input data
-is_box = False      # True if tracers cover a cubic simulation box with periodic boundaries; False for survey data
-box_length = 1500.  # if is_box, the box side length in Mpc/h; else ignored
-boss_like = True    # True if the input data file is in FITS format with same data fields as BOSS data
-special_patchy = False  # set True if input array is in the special PATCHY format provided by Hector
-# if not boss_like or special_patchy, data file must contain array data in ASCII or NPY format
-posn_cols = [0, 1, 2]  # columns of tracer input array containing 3D position information
-# if is_box == True, these columns should contain x,y,z Cartesian coordinates; otherwise RA, Dec, redshift
-# NOTE: for box data, reconstruction assumes plane-parallel approximation with single l-o-s along the box z-axis!!
+# ======= input galaxy/tracer data options =========== #
+tracer_file = ''     # /path/to/file with input data
+tracer_file_type = 1  # 1 for FITS file, 2 for array in numpy pickle format (.npy), 3 for array in ASCII format
+# NOTE: for FITS files, the tracer coordinates should be specified using appropriate field names
+# current options are 'RA', 'DEC' and 'Z' for survey-like data on the sky, or 'X', 'Y', 'Z' for simulation boxes
+# For array data (tracer_file_type = 2 or 3), specify which columns of the array contain the tracer coordinates
+tracer_posn_cols = [0, 1, 2]  # columns of tracer input array containing 3D position information
+# specify data type:
+is_box = False       # True for cubic simulation box with periodic boundaries; False for survey-like data on the sky
+box_length = 1500.   # if is_box, the box side length in Mpc/h; else ignored
+# the following cuts useful for more efficient reconstruction and voxel void-finding for BOSS CMASS data, where a tiny
+# fraction of data extends to very high or very low redshifts (and even redshifts < 0)
 z_low_cut = 0.4      # lower redshift cut (ignored if not survey)
-z_high_cut = 0.8     # higher redshift cut (ignored if not survey)
-# minimum cuts required for efficient functioning of reconstruction and voxel void-finding in cases where a tiny
-# fraction of data extends to very high or very low redshifts (or even redshifts < 0), as for BOSS data
+z_high_cut = 0.73    # higher redshift cut (ignored if not survey)
+# what is the model for applying weights? 1 = like BOSS; 2 = like eBOSS; 3 = like joint BOSS+eBOSS LRG sample
+# (unfortunately things change as surveys progress)
+weights_model = 1
+# 1. For FITS files (tracer_file_type = 1) weights are automatically extracted using field names based on BOSS/eBOSS data
+# model (https://data.sdss.org/datamodel/files/BOSS_LSS_REDUX/galaxy_DRX_SAMPLE_NS.html)
+# 2. for simulation box data (is_box = True) all weights information is ignored as assumed uniform
+# -----------
+# Most users will only use weights with survey data in FITS files
+# If for some reason you have survey(-like) data in array format (tracer_file_type = 2 or 3), specify what info is
+# present in the file using following flags (FKP, close-pair, missing redshift, total systematics, veto flag,
+# completeness). Weights MUST be given in consecutive columns starting immediately after the column with redshifts,
+# and with column numbers in the order fkp<cp<noz<systot<veto<comp
+fkp = False     # FKP weights (used for reconstruction when n(z) is not constant)
+cp = False      # close-pair or fibre collision weights
+noz = False     # missing redshift / redshift failure weights
+systot = False  # total systematic weights
+veto = False    # veto mask (if present, galaxies with veto!=1 are discarded)
+comp = False    # sector completeness
 # ============================================= #
 
-# ======= weights options ========= #
-# the following options are used to identify the correct galaxy weights information in ASCII/NPY formatted input arrays
-# FKP weights are only used for reconstruction; Voronoi tessellation does not use weights
-# if is_box is True, all weights are ignored even if provided
-# a special case is hard-coded for use if special_patchy == True, in which case these options are ignored
-fkp = True  # are FKP weights (WEIGHT_FKP) provided?
-cp = True   # are fibre collision weights (WEIGHT_CP) provided?
-noz = False  # are noz weights (WEIGHT_NOZ) provided?
-systot = False  # are total systematic weights (WEIGHT_SYSTOT) provided?
-veto = True  # is a vetomask column provided? (data is dropped if veto != 1)
-# if any of the above weights are provided, they must start from the column immediately after redshift data
-# any weights provided MUST be in consecutive columns and with column numbers in the order fkp<cp<noz<systot<veto
-# ================================= #
-
-# ====== randoms file ======= #
-# for survey data (i.e. when is_box == False) randoms MUST be provided if either do_recon or run_pmvoids are True
-randoms_file = ''   # /path/to/file containing randoms data: must be formatted similarly to input data
-# NOTE: for randoms, only FKP weights are used, other weights and vetos are ignored (except in the
-# special case where special_patchy == True)
+# ====== input randoms options ======= #
+# for survey-like data, randoms characterize the window function and MUST be provided for reconstruction and
+# voxel void-finding (not necessary for ZOBOV alone)
+random_file = ''   # /path/to/file containing randoms data
+random_file_type = 1  # 1 for FITS file, 2 for array in numpy pickle format (.npy), 3 for array in ASCII format
+# if random_file_type = 2 or 3, specify which columns of the array contain the (RA, Dec, redshift) coordinates
+random_posn_cols = [0, 1, 2]
+# if galaxy data has FKP weights, randoms are assumed to have FKP weights too
+# all other galaxy weights are ignored for randoms
 # =========================== #
 
 # ========== void-finding choices ============= #
 run_voxelvoids = True  # watershed void-finding based on particle-mesh density field interpolation in voxels
 run_zobov = True   # watershed void-finding (using ZOBOV) based on Voronoi tessellation
-# note that these two options are not mutually exclusive - 2 sets of voids can be produced if desired
+# these two options are not mutually exclusive - 2 sets of voids can be produced if desired
 
-z_min = 0.43        # minimum redshift extent
-z_max = 0.70        # maximum redshift extent
-# voids/cluster catalogues will be cut to have z_min < z < z_max (if survey data): these cuts should be as tight as
-# or tighter than the z_low_cut and z_high_cut values specified above
+# for survey-like data only: set redshift limits
+z_min = 0.43        # minimum redshift extent of the data
+z_max = 0.70        # maximum redshift extent of the data
+# these limits are used to prune output void catalogues and to terminate the tessellation in ZOBOV
+# NOTES: 1. always set z_min >= z_low_cut and z_max <= z_high_cut
+# 2. do not set z_min < minimum redshift of the data or z_max > max redshift – will cause tessellation leakage!
 
-void_prefix = 'Voids'   # prefix used for naming void catalogue files
+void_prefix = 'Voids'   # string used in naming void output files
 min_dens_cut = 1.0  # void minimum galaxy number density (in units of mean density) reqd to qualify
 use_barycentres = True  # if True, additionally calculate void barycentre positions
 
@@ -84,31 +95,33 @@ cluster_prefix = 'Clusters'  # prefix used for naming supercluster catalogue fil
 max_dens_cut = 1.0  # cluster maximum galaxy density (in units of mean density) reqd to qualify
 # ============================================= #
 
-# ========== ZOBOV options ============ #
+# ========== ZOBOV-specific options ============ #
 # all ignored if run_zobov = False
 
 # -- Tessellation options -- #
-do_tessellation = True    # if True, does tessellation; if False, only post-processes a previous run
-use_mpi = True
+do_tessellation = True    # if True, does tessellation; if False, only post-processes previous run with same handle
+# guards are used to stabilise the tessellation for surveys; increase this number if the survey volume is a
+# small fraction of that of the smallest cube required to fully enclose it
+guard_nums = 30     
+use_mpi = False
 # use MPI if you have several (~10) CPUs available, otherwise it is generally faster to run without
-# if using MPI, the following two options control the division of tasks
-zobov_box_div = 4   # tessellation will be divided into (zobov_box_div)^3 chunks run in parallel
-zobov_buffer = 0.05  # fraction of box length overlap between sub-boxes
-# the default options above have been tested to work well for BOSS data with 15-20 CPUs
+zobov_box_div = 2   # partition tessellation job into (zobov_box_div)^3 chunks (run in parallel, if using MPI)
+zobov_buffer = 0.08  # fraction of box length overlap between sub-boxes
 # -------------------------- #
 
 # -- survey data handling options -- #
 # (if is_box==True, these options are ignored)
-mask_file = ''      # path to Healpix FITS file containing the survey mask (geometry, completeness, missing pixels etc.)
-use_z_wts = True    # if True, densities are weighted by survey n(z) selection function
-use_ang_wts = True  # if True, densities are weighted by survey angular completeness function
-mock_file = ''      # path to file containing pre-computed buffer mocks (saves time)
+mask_file = ''       # path to Healpix FITS file containing the survey mask
+use_z_wts = True     # set True if survey n(z) is not uniform
+use_syst_wts = True  # set True to use galaxy systematic weights
+use_completeness_wts = True  # set True to account for angular variations in survey completeness
+mock_file = ''       # path to file containing pre-computed buffer mocks (saves time)
 # if mock_file is not specified, new buffer mock positions are computed
 mock_dens_ratio = 10.   # if computing buffer mocks, ratio of buffer mock densities to mean galaxy number density
 # ---------------------------------- #
 
 # --- void options ---- #
-void_min_num = 1    # minimum number of void member galaxies reqd to qualify (for surveys, set = 5 to be safe)
+void_min_num = 5    # minimum number of void member galaxies reqd to qualify (for surveys, set = 5 to be conservative)
 # --------------------- #
 
 # -- bonus 'supercluster' options -- #

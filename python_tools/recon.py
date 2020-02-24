@@ -4,38 +4,38 @@ import os
 import json
 import sys
 from scipy.fftpack import fftfreq
-from cosmology import Cosmology
+from python_tools.cosmology import Cosmology
+import python_tools.fastmodules as fastmodules
 import pyfftw
-import fastmodules
+from astropy.table import Table
 
 
 class Recon:
 
-    def __init__(self, cat, ran, is_box=False, box_length=1000., omega_m=0.308, bias=2.3, f=0.817, smooth=10.,
-                 nbins=256, padding=200., opt_box=1, nthreads=1, verbose=False):
+    def __init__(self, cat, ran, parms):
 
-        beta = f / bias
-        self.is_box = is_box
-        self.verbose = verbose
+        beta = parms.f / parms.bias
+        self.is_box = parms.is_box
+        self.verbose = parms.verbose
 
         # -- parameters of box
-        cosmo = Cosmology(omega_m=omega_m)
+        cosmo = Cosmology(omega_m=parms.omega_m)
         print("\n ==== Starting the reconstruction ==== ")
-        print('Using values of growth rate f = %0.3f and bias b = %0.3f' % (f, bias))
-        print('Smoothing scale [Mpc/h]:', smooth)
+        print('Using values of growth rate f = %0.3f and bias b = %0.3f' % (parms.f, parms.bias))
+        print('Smoothing scale [Mpc/h]:', parms.smooth)
         if self.verbose:
-            print('Number of bins:', nbins)
+            print('Number of bins:', parms.nbins)
         sys.stdout.flush()
 
         # initialize the basics common to all analyses
-        self.nbins = nbins
-        self.bias = bias
-        self.f = f
+        self.nbins = parms.nbins
+        self.bias = parms.bias
+        self.f = parms.f
         self.beta = beta
-        self.smooth = smooth
+        self.smooth = parms.smooth
         self.cosmo = cosmo
-        self.nthreads = nthreads
-        self.is_box = is_box
+        self.nthreads = parms.nthreads
+        self.is_box = parms.is_box
 
         # if dealing with data in a simulation box with PBC and uniform selection
         # the random data is not used and many of the processing steps are not required,
@@ -43,8 +43,12 @@ class Recon:
         if not self.is_box:
 
             # get the weights for data and randoms
-            cat.weight = cat.get_weights(fkp=1, noz=1, cp=1, syst=1)
-            ran.weight = ran.get_weights(fkp=1, noz=0, cp=0, syst=0)
+            cat.weight = cat.get_weights(fkp=True, syst_wts=True)
+            if cat.weights_model == 2 or cat.weights_model == 3:
+                # for eBOSS or joint BOSS+eBOSS catalogues, systematic weights are included for randoms
+                ran.weight = ran.get_weights(fkp=True, syst_wts=True)
+            # for BOSS catalogues, systematic weights are NOT included for randoms
+            ran.weight = ran.get_weights(fkp=True, syst_wts=False)
 
             sum_wgal = np.sum(cat.weight)
             sum_wran = np.sum(ran.weight)
@@ -56,15 +60,14 @@ class Recon:
             self.ran_min = ran_min
             self.alpha = alpha
             self.deltar = 0
-            self.xmin, self.ymin, self.zmin, self.box, self.binsize = \
-                self.compute_box(padding=padding, optimize_box=opt_box)
+            self.xmin, self.ymin, self.zmin, self.box, self.binsize = self.compute_box(padding=parms.padding)
 
         else:
-            self.ran = cat  # we will not use this!
+            self.ran = None  # uniform box, so randoms are not required
             self.xmin = 0
             self.ymin = 0
             self.zmin = 0
-            self.box = box_length
+            self.box = parms.box_length
             self.binsize = self.box / self.nbins
             if self.verbose:
                 print('Box size [Mpc/h]: %0.2f' % self.box)
@@ -82,7 +85,7 @@ class Recon:
         self.fft_obj = 0
         self.ifft_obj = 0
 
-    def compute_box(self, padding=200., optimize_box=1):
+    def compute_box(self, padding=200., optimize_box=True):
 
         if optimize_box:
             maxx = np.max(self.ran.x)
@@ -145,6 +148,9 @@ class Recon:
                 print('Reading wisdom from ', wisdom_file)
                 g = open(wisdom_file, 'r')
                 wisd = json.load(g)
+                for i in range(len(wisd)):
+                    wisd[i] = wisd[i].encode('utf-8')
+                wisd = tuple(wisd)
                 pyfftw.import_wisdom(wisd)
                 g.close()
             print('Creating FFTW objects...')
@@ -196,7 +202,7 @@ class Recon:
         sys.stdout.flush()
         deltag = np.zeros((nbins, nbins, nbins), dtype='float64')
         fastmodules.allocate_gal_cic(deltag, cat.newx, cat.newy, cat.newz, cat.weight, cat.size, self.xmin, self.ymin,
-                                  self.zmin, self.box, nbins, 1.)
+                                     self.zmin, self.box, nbins, 1.)
         if self.verbose:
             print('Smoothing galaxy density field ...')
         sys.stdout.flush()
@@ -304,6 +310,9 @@ class Recon:
         wisdom_file = "wisdom." + str(nbins) + "." + str(self.nthreads)
         if iloop == 0 and save_wisdom and not os.path.isfile(wisdom_file):
             wisd = pyfftw.export_wisdom()
+            wisd = list(wisd)
+            for i in range(len(wisd)):
+                wisd[i] = wisd[i].decode('utf-8')
             f = open(wisdom_file, 'w')
             json.dump(wisd, f)
             f.close()
@@ -410,29 +419,38 @@ class Recon:
             output[:, 0] = self.cat.newx
             output[:, 1] = self.cat.newy
             output[:, 2] = self.cat.newz
-            out_file = root1 + '_shift.npy'
-            np.save(out_file, output)
+            out_file = root1 + '_shift.fits'
+            t = Table(output, names=('X', 'Y', 'Z'))
+            t.write(out_file, format='fits')
+            #np.save(out_file, output)
         else:
             # recalculate weights, as we don't want the FKP weighting for void-finding
-            self.cat.weight = self.cat.get_weights(fkp=0, noz=1, cp=1, syst=1)
-            output = np.zeros((self.cat.size, 4))
+            self.cat.weight = self.cat.get_weights(fkp=False, syst_wts=True)
+            output = np.zeros((self.cat.size, 5))
             output[:, 0] = self.cat.ra
             output[:, 1] = self.cat.dec
             output[:, 2] = self.cat.redshift
             output[:, 3] = self.cat.weight
-            out_file = root1 + '_shift.npy'
-            np.save(out_file, output)
+            output[:, 4] = self.cat.comp
+            out_file = root1 + '_shift.fits'
+            t = Table(output, names=('RA', 'DEC', 'Z', 'WEIGHT_SYSTOT', 'COMP'))
+            t.write(out_file, format='fits')
+            #np.save(out_file, output)
 
             if not rsd_only:
                 # same as above, but for the randoms as well
-                self.ran.weight = self.ran.get_weights(fkp=0, noz=0, cp=0, syst=0)
                 output = np.zeros((self.ran.size, 4))
                 output[:, 0] = self.ran.ra
                 output[:, 1] = self.ran.dec
                 output[:, 2] = self.ran.redshift
-                output[:, 3] = self.ran.weight
-                out_file = root2 + '_shift.npy'
-                np.save(out_file, output)
+                if self.ran.weights_model == 1:
+                    output[:, 3] = 1  # we don't include any systematics weights for the random catalogue
+                elif self.ran.weights_model == 2 or self.ran.weights_model == 3:
+                    output[:, 3] = self.ran.get_weights(fkp=False, syst_wts=True)
+                out_file = root2 + '_shift.fits'
+                t = Table(output, names=('RA', 'DEC', 'Z', 'WEIGHT_SYSTOT'))
+                t.write(out_file, format='fits')
+                #np.save(out_file, output)
 
     def cart_to_radecz(self, x, y, z):
 

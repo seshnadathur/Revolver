@@ -1,7 +1,6 @@
 import argparse
 import os
 import sys
-import imp
 import time
 import numpy as np
 from python_tools.zobov import ZobovVoids
@@ -14,46 +13,57 @@ from python_tools.fastmodules import survey_cuts_logical
 parser = argparse.ArgumentParser(description='options')
 parser.add_argument('-p', '--par', dest='par', default="", help='path to parameter file')
 args = parser.parse_args()
-# read the default parameters
-parms = imp.load_source("name", 'parameters/default_params.py')
-globals().update(vars(parms))
+# read in default parameter values
+if sys.version_info.major <= 2:
+    import imp
+    parms = imp.load_source("name", 'parameters/default_params.py')
+elif sys.version_info.major == 3 and sys.version_info.minor <= 4:
+    from importlib.machinery import SourceFileLoader
+    parms = SourceFileLoader("name", 'parameters/default_params.py').load_module()
+else:
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("name",'parameters/default_params.py')
+    parms = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(parms)
+
 # then override these with the user-provided settings
 filename = args.par
 if os.access(filename, os.F_OK):
     print('Loading parameters from %s' % filename)
-    parms = imp.load_source("name", filename)
+    if sys.version_info.major <= 2:
+        user_parms = imp.load_source("name", filename)
+    elif sys.version_info.major == 3 and sys.version_info.minor <= 4:
+        user_parms = SourceFileLoader("name", filename).load_module()
+    else:
+        spec = importlib.util.spec_from_file_location("name", filename)
+        user_parms = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(user_parms)
 else:
     sys.exit('Did not find settings file %s, aborting' % filename)
-globals().update(vars(parms))
+for name in vars(user_parms):
+    parms.__dict__[name] = user_parms.__dict__[name]
 # ========================= #
 
 # === check output path === #
-if not os.access(output_folder, os.F_OK):
-    os.makedirs(output_folder)
+if not os.access(parms.output_folder, os.F_OK):
+    os.makedirs(parms.output_folder)
 # ========================= #
 
 # ==== run reconstruction ==== #
-if do_recon:
+if parms.do_recon:
     print('\n ==== Running reconstruction for real-space positions ==== ')
 
-    cat = GalaxyCatalogue(tracer_file, is_box=is_box, box_length=box_length, randoms=False,
-                          boss_like=boss_like, special_patchy=special_patchy, posn_cols=posn_cols,
-                          fkp=fkp, noz=noz, cp=cp, systot=systot, veto=veto)
+    cat = GalaxyCatalogue(parms, randoms=False)
 
-    if is_box:
-        recon = Recon(cat, ran=cat, is_box=True, box_length=box_length, omega_m=omega_m, bias=bias,
-                      f=f, smooth=smooth, nbins=nbins, padding=padding, nthreads=nthreads,
-                      verbose=verbose)
+    if parms.is_box:
+        recon = Recon(cat, ran=None, parms=parms)
     else:
-        if not os.access(parms.randoms_file, os.F_OK):
+        if not os.access(parms.random_file, os.F_OK):
             sys.exit('ERROR: randoms data required for reconstruction but randoms file not provided or not found!' +
                      'Aborting.')
 
-        # initializing randoms: note that in general we assume only FKP weights are provided for randoms
-        # this is overridden for special_patchy input format (where veto flags are provided and need to be used)
-        ran = GalaxyCatalogue(parms.randoms_file, is_box=False, box_length=parms.box_length, boss_like=parms.boss_like,
-                              randoms=True, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
-                              fkp=parms.fkp, noz=False, cp=False, systot=False, veto=False)
+        # initializing randoms
+        ran = GalaxyCatalogue(parms, randoms=True)
 
         # perform basic cuts on the data: vetomask and low redshift extent
         wgal = np.empty(cat.size, dtype=int)
@@ -65,8 +75,7 @@ if do_recon:
         cat.cut(wgal)
         ran.cut(wran)
 
-        recon = Recon(cat, ran, is_box=False, omega_m=parms.omega_m, bias=parms.bias, f=parms.f, smooth=parms.smooth,
-                      nbins=parms.nbins, padding=parms.padding, nthreads=parms.nthreads, verbose=parms.verbose)
+        recon = Recon(cat, ran, parms)
 
     start = time.time()
     # now run the iteration loop to solve for displacement field
@@ -86,22 +95,17 @@ if do_recon:
     print("Reconstruction took %0.3f seconds" % (end - start))
 
     # galaxy input for void-finding will now be read from new file with shifted data
-    parms.tracer_file = root + '_shift.npy'
+    parms.tracer_file = root + '_shift.fits'
+    # adjust inout parameters for subsequent steps to match shifted tracer file
+    parms.tracer_file_type = 1
+    parms.weights_model = 1
 # ============================ #
 
 # === run voxel void-finding === #
 if parms.run_voxelvoids:
 
-    if parms.do_recon:
-        # new tracer file after reconstruction only contains single consolidated weights column
-        cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
-                              boss_like=False, special_patchy=False, posn_cols=[0, 1, 2], fkp=0, noz=0, cp=0,
-                              systot=1, veto=0)
-    else:
-        # no reconstruction was performed: use original catalogue file with original weights specification
-        cat = GalaxyCatalogue(parms.tracer_file, is_box=parms.is_box, box_length=parms.box_length, randoms=False,
-                              boss_like=parms.boss_like, special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
-                              fkp=parms.fkp, noz=parms.noz, cp=parms.cp, systot=parms.systot, veto=parms.veto)
+    # read in input catalogue again in case it was changed by reconstruction
+    cat = GalaxyCatalogue(parms, randoms=False)
 
     if not parms.is_box:
         # perform basic cuts on the data: vetomask and low redshift extent
@@ -113,16 +117,13 @@ if parms.run_voxelvoids:
         # randoms are required
         if not parms.do_recon:
             # randoms were not previously loaded
-            if not os.access(parms.randoms_file, os.F_OK):
+            if not os.access(parms.random_file, os.F_OK):
                 sys.exit('ERROR: randoms data required for voxel voids but randoms file not provided or not found!' +
                          'Aborting.')
 
             # initializing randoms: note that in general we assume only FKP weights are provided for randoms
             # this is overridden for special_patchy input format (where veto flags are provided and need to be used)
-            ran = GalaxyCatalogue(parms.randoms_file, is_box=False, box_length=parms.box_length,
-                                  boss_like=parms.boss_like, randoms=True, special_patchy=parms.special_patchy,
-                                  posn_cols=parms.posn_cols, fkp=parms.fkp, noz=False, cp=False, systot=False,
-                                  veto=False)
+            ran = GalaxyCatalogue(parms, randoms=True)
 
             # perform basic cuts on the randoms: vetomask and low redshift extent
             wran = np.empty(ran.size, dtype=int)
@@ -136,15 +137,11 @@ if parms.run_voxelvoids:
             pre_calc_ran = True
     else:
         # no randoms are required, so set to zero
-        ran = 0.
+        ran = None
         pre_calc_ran = False  # irrelevant anyway
 
     # initialize ...
-    voidcat = VoxelVoids(cat, ran, handle=parms.handle, output_folder=parms.output_folder, is_box=parms.is_box,
-                         box_length=parms.box_length, omega_m=parms.omega_m, z_min=parms.z_min, z_max=parms.z_max,
-                         min_dens_cut=parms.min_dens_cut, use_barycentres=parms.use_barycentres,
-                         void_prefix=parms.void_prefix, find_clusters=parms.find_clusters,
-                         max_dens_cut=parms.max_dens_cut, cluster_prefix=parms.cluster_prefix, verbose=parms.verbose)
+    voidcat = VoxelVoids(cat, ran, parms)
     # ... and run the void-finder
     start = time.time()
     voidcat.run_voidfinder()
@@ -155,46 +152,20 @@ if parms.run_voxelvoids:
 # === run ZOBOV void-finding === #
 if parms.run_zobov:
 
-    if parms.run_voxelvoids:
-        # need to differentiate the output file names
-        parms.void_prefix = parms.void_prefix + '-zobov'
-        parms.cluster_prefix = parms.cluster_prefix + '-zobov'
-
     parms.z_min = max(parms.z_min, parms.z_low_cut)
     parms.z_max = min(parms.z_max, parms.z_high_cut)
 
     if parms.do_recon:
-        voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
-                             output_folder=parms.output_folder, is_box=parms.is_box, boss_like=False,
-                             special_patchy=False, posn_cols=[0, 1, 2], box_length=parms.box_length,
-                             omega_m=parms.omega_m, mask_file=parms.mask_file, use_z_wts=parms.use_z_wts,
-                             use_ang_wts=parms.use_ang_wts, z_min=parms.z_min, z_max=parms.z_max,
-                             mock_file=parms.mock_file, mock_dens_ratio=parms.mock_dens_ratio,
-                             min_dens_cut=parms.min_dens_cut, void_min_num=parms.void_min_num,
-                             use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
-                             find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
-                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix,
-                             verbose=parms.verbose)
+        voidcat = ZobovVoids(parms)
     else:
-        voidcat = ZobovVoids(do_tessellation=parms.do_tessellation, tracer_file=parms.tracer_file, handle=parms.handle,
-                             output_folder=parms.output_folder, is_box=parms.is_box, boss_like=parms.boss_like,
-                             special_patchy=parms.special_patchy, posn_cols=parms.posn_cols,
-                             box_length=parms.box_length, omega_m=parms.omega_m, mask_file=parms.mask_file,
-                             use_z_wts=parms.use_z_wts, use_ang_wts=parms.use_ang_wts, z_min=parms.z_min,
-                             z_max=parms.z_max, mock_file=parms.mock_file, mock_dens_ratio=parms.mock_dens_ratio,
-                             min_dens_cut=parms.min_dens_cut, void_min_num=parms.void_min_num,
-                             use_barycentres=parms.use_barycentres, void_prefix=parms.void_prefix,
-                             find_clusters=parms.find_clusters, max_dens_cut=parms.max_dens_cut,
-                             cluster_min_num=parms.cluster_min_num, cluster_prefix=parms.cluster_prefix,
-                             verbose=parms.verbose)
+        voidcat = ZobovVoids(parms)
 
     start = time.time()
     if parms.do_tessellation:
         # write the tracer information to ZOBOV-readable format
         voidcat.write_box_zobov()
         # run ZOBOV
-        success = voidcat.zobov_wrapper(use_mpi=parms.use_mpi, zobov_box_div=parms.zobov_box_div,
-                                        zobov_buffer=parms.zobov_buffer, nthreads=parms.nthreads)
+        success = voidcat.zobov_wrapper()
     else:
         # read the config file from a previous run
         voidcat.read_config()

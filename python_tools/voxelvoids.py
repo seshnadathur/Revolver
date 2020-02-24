@@ -3,47 +3,45 @@ import os
 import sys
 import numpy as np
 import subprocess
-import fastmodules
+import python_tools.fastmodules as fastmodules
 from scipy.ndimage.filters import gaussian_filter
-from cosmology import Cosmology
+from python_tools.cosmology import Cosmology
 
 
 class VoxelVoids:
 
-    def __init__(self, cat, ran, handle="", output_folder="", is_box=True, box_length=2500.0, omega_m=0.308, z_min=0,
-                 z_max = 1, min_dens_cut=1.0, use_barycentres=True, void_prefix="", find_clusters=False,
-                 max_dens_cut=1.0, cluster_prefix="", verbose=False):
+    def __init__(self, cat, ran, parms):
 
         print("\n ==== Starting the void-finding with voxel-based method ==== ")
         sys.stdout.flush()
 
-        self.is_box = is_box
-        self.handle = handle
-        self.output_folder = output_folder
+        self.is_box = parms.is_box
+        self.handle = parms.handle
+        self.output_folder = parms.output_folder
         if not os.access(self.output_folder, os.F_OK):
             os.makedirs(self.output_folder)
-        self.min_dens_cut = min_dens_cut
-        self.use_barycentres = use_barycentres
-        self.void_prefix = void_prefix
-        self.find_clusters = find_clusters
-        self.max_dens_cut = max_dens_cut
-        self.cluster_prefix = cluster_prefix
+        self.min_dens_cut = parms.min_dens_cut
+        self.use_barycentres = parms.use_barycentres
+        self.void_prefix = 'voxel-' + parms.void_prefix
+        self.find_clusters = parms.find_clusters
+        self.max_dens_cut = parms.max_dens_cut
+        self.cluster_prefix = 'voxel-' + parms.cluster_prefix
         self.rhog = np.array(0.)  # this gets changed later
         self.mask_cut = []
-        self.z_min = z_min
-        self.z_max = z_max
-        self.verbose = verbose
+        self.z_min = parms.z_min
+        self.z_max = parms.z_max
+        self.verbose = parms.verbose
 
         print("%d tracers found" % cat.size)
 
         if self.is_box:
-            self.box_length = box_length
+            self.box_length = parms.box_length
             self.cat = cat
 
             # determine an appropriate bin size
-            mean_dens = cat.size / box_length ** 3.
-            self.nbins = int(np.floor(box_length / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
-            self.binsize = box_length / self.nbins
+            mean_dens = cat.size / parms.box_length ** 3.
+            self.nbins = int(np.floor(parms.box_length / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
+            self.binsize = parms.box_length / self.nbins
             print('Bin size [Mpc/h]: %0.2f, nbins = %d' % (self.binsize, self.nbins))
 
             # choose an appropriate smoothing scale
@@ -56,10 +54,14 @@ class VoxelVoids:
             self.zmin = 0
 
         else:
-            cosmo = Cosmology(omega_m=omega_m)
+            cosmo = Cosmology(omega_m=parms.omega_m)
             # get the weights for data and randoms
-            cat.weight = cat.get_weights(fkp=0, noz=1, cp=1, syst=1)
-            ran.weight = ran.get_weights(fkp=0, noz=0, cp=0, syst=0)
+            cat.weight = cat.get_weights(fkp=False, syst_wts=True)
+            if cat.weights_model == 2 or cat.weights_model == 3:
+                # for eBOSS or joint BOSS+eBOSS catalogues, systematic weights are included for randoms
+                ran.weight = ran.get_weights(fkp=True, syst_wts=True)
+                # for BOSS catalogues, systematic weights are NOT included for randoms
+            ran.weight = ran.get_weights(fkp=True, syst_wts=False)
 
             # relative weighting of galaxies and randoms
             sum_wgal = np.sum(cat.weight)
@@ -192,6 +194,9 @@ class VoxelVoids:
             rhogflat.tofile(F, format='%f')
 
         # now call jozov-grid
+        logfolder = self.output_folder + 'log/'
+        if not os.access(logfolder, os.F_OK):
+            os.makedirs(logfolder)
         cmd = [binpath + "jozov-grid", "v", raw_dir + "density_n%d.dat" % self.nbins,
                raw_dir + self.handle, str(self.nbins)]
         subprocess.call(cmd)
@@ -203,9 +208,6 @@ class VoxelVoids:
         if self.find_clusters:
             print("\n ==== bonus: overdensity-finding with voxel-based method ==== ")
             sys.stdout.flush()
-            logfolder = self.output_folder + 'log/'
-            if not os.access(logfolder, os.F_OK):
-                os.makedirs(logfolder)
             logfile = logfolder + self.handle + '-voxel.out'
             cmd = [binpath + "jozov-grid", "c", raw_dir + "density_n%d.dat" % self.nbins,
                    raw_dir + self.handle, str(self.nbins)]

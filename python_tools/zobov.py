@@ -4,154 +4,126 @@ import os
 import numpy as np
 import healpy as hp
 import random
-import imp
 import subprocess
 import glob
 from scipy.spatial import cKDTree
 from scipy.integrate import quad
-from cosmology import Cosmology
-from astropy.io import fits
+from python_tools.cosmology import Cosmology
+from python_tools.galaxycat import GalaxyCatalogue
 from scipy.signal import savgol_filter
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 
 class ZobovVoids:
 
-    def __init__(self, do_tessellation=True, tracer_file="", handle="", output_folder="", is_box=True, boss_like=False,
-                 special_patchy=False, posn_cols=np.array([0, 1, 2]), box_length=2500.0, omega_m=0.308, mask_file="",
-                 use_z_wts=True, use_ang_wts=True, z_min=0.43, z_max=0.7, mock_file="", mock_dens_ratio=10,
-                 min_dens_cut=1.0, void_min_num=1, use_barycentres=True, void_prefix="", find_clusters=False,
-                 max_dens_cut=1.0, cluster_min_num=1, cluster_prefix="", verbose=False):
+    def __init__(self, parms):
 
         print("\n ==== Starting the void-finding with ZOBOV ==== ")
         sys.stdout.flush()
 
-        self.verbose = verbose
+        self.verbose = parms.verbose
 
         # the prefix/handle used for all output file names
-        self.handle = handle
+        self.handle = parms.handle
 
         # output folder
-        self.output_folder = output_folder
+        self.output_folder = parms.output_folder
         if not os.access(self.output_folder, os.F_OK):
             os.makedirs(self.output_folder)
 
         # file path for ZOBOV-formatted tracer data
-        self.posn_file = output_folder + handle + "_pos.dat"
+        self.posn_file = self.output_folder + parms.handle + "_pos.dat"
 
-        # input file
-        self.tracer_file = tracer_file
-        # check input file exists ...
-        if not os.access(tracer_file, os.F_OK):
-            sys.exit("Can't find tracer file %s, aborting" % tracer_file)
+        # load up the tracer catalogue information
+        cat = GalaxyCatalogue(parms, randoms=False)
 
         # (Boolean) choice between cubic simulation box and sky survey
-        self.is_box = is_box
+        self.is_box = parms.is_box
 
-        # load tracer information
-        print("Loading tracer positions from file %s" % tracer_file)
-        sys.stdout.flush()
-        if boss_like:  # FITS format input file
-            if self.is_box:
-                print('Both boss_like and is_box cannot be simultaneously True! Setting is_box = False')
-                self.is_box = False
-            input_data = fits.open(self.tracer_file)[1].data
-            ra = input_data.RA
-            dec = input_data.DEC
-            redshift = input_data.Z
-            self.num_tracers = len(ra)
-            tracers = np.empty((self.num_tracers, 3))
-            tracers[:, 0] = ra
-            tracers[:, 1] = dec
-            tracers[:, 2] = redshift
-        else:
-            if '.npy' in tracer_file:
-                tracers = np.load(tracer_file)
-            else:
-                tracers = np.loadtxt(tracer_file)
-            # test that tracer information is valid
-            if not tracers.shape[1] >= 3:
-                sys.exit("Not enough columns, need 3D position information. Aborting")
-            if not len(posn_cols) == 3:
-                sys.exit("You must specify 3 columns containing tracer position information. Aborting")
+        # ZOBOV run-time options
+        self.use_mpi = parms.use_mpi
+        self.zobov_box_div = parms.zobov_box_div
+        self.zobov_buffer = parms.zobov_buffer
+        self.guard_nums = parms.guard_nums
 
-            if special_patchy:
-                # if the special PATCHY mock format is used and the vetomask has not already been applied
-                # during reconstruction, apply it now
-                veto_cut = tracers[:, 6] == 1
-                tracers = tracers[veto_cut, :]
-            self.num_tracers = tracers.shape[0]
-            print("%d tracers found" % self.num_tracers)
-            sys.stdout.flush()
-
-            # keep only the tracer position information
-            tracers = tracers[:, posn_cols]
-
-        # now complete the rest of the data preparation
-        if self.is_box:  # dealing with cubic simulation box
-            if box_length <= 0:
+        # data preparation steps
+        if self.is_box:
+            if parms.box_length <= 0:
                 sys.exit("Zero or negative box length, aborting")
-            self.box_length = box_length
+            self.box_length = parms.box_length
 
+            # assign the tracer positions within the box
+            self.num_tracers = cat.size
+            tracers = np.empty((self.num_tracers, 3))
+            tracers[:, 0] = cat.x
+            tracers[:, 1] = cat.y
+            tracers[:, 2] = cat.z
             # check that tracer positions lie within the box, wrap using PBC if not
-            tracers[tracers[:, 0] > box_length, 0] -= box_length
-            tracers[tracers[:, 1] > box_length, 1] -= box_length
-            tracers[tracers[:, 2] > box_length, 2] -= box_length
-            tracers[tracers[:, 0] < 0, 0] += box_length
-            tracers[tracers[:, 1] < 0, 1] += box_length
-            tracers[tracers[:, 2] < 0, 2] += box_length
+            tracers[tracers[:, 0] > self.box_length, 0] -= self.box_length
+            tracers[tracers[:, 1] > self.box_length, 1] -= self.box_length
+            tracers[tracers[:, 2] > self.box_length, 2] -= self.box_length
+            tracers[tracers[:, 0] < 0, 0] += self.box_length
+            tracers[tracers[:, 1] < 0, 1] += self.box_length
+            tracers[tracers[:, 2] < 0, 2] += self.box_length
 
             # determine mean tracer number density
-            self.tracer_dens = 1.0 * self.num_tracers / (box_length ** 3.)
+            self.tracer_dens = 1.0 * self.num_tracers / (self.box_length ** 3.)
 
             self.num_mocks = 0
             self.num_part_total = self.num_tracers
             self.tracers = tracers
         else:
             # set cosmology
-            self.omega_m = omega_m
-            cosmo = Cosmology(omega_m=omega_m)
+            self.omega_m = parms.omega_m
+            cosmo = Cosmology(omega_m=self.omega_m)
             self.cosmo = cosmo
 
+            # apply veto if any is required (only in unusual cases)
+            veto = np.asarray(cat.veto, dtype=bool)
+            cat.cut(veto)
+            self.num_tracers = cat.size
+
             # convert input tracer information to standard format
-            self.coords_radecz2std(tracers[:, 0], tracers[:, 1], tracers[:, 2])
+            syswt = cat.get_weights(fkp=False, syst_wts=True)
+            comp = cat.comp
+            self.coords_radecz2std(cat.ra, cat.dec, cat.redshift, syswt, comp)
+            # after this step, self.tracers contains all the reqd tracer information, no longer need cat
 
-            self.z_min = z_min
-            self.z_max = z_max
-
+            self.z_min = parms.z_min
+            self.z_max = parms.z_max
             # check and cut on the provided redshift limits
             if np.min(self.tracers[:, 5]) < self.z_min or np.max(self.tracers[:, 5]) > self.z_max:
-                print('Cutting galaxies outside the redshift limits')
+                print('Cutting galaxies outside the redshift limits provided')
                 zselect = (self.z_min < self.tracers[:, 5]) & (self.tracers[:, 5] < self.z_max)
                 self.tracers = self.tracers[zselect, :]
 
             # sky mask file (should be in Healpy FITS format)
-            if not os.access(mask_file, os.F_OK):
+            if not os.access(parms.mask_file, os.F_OK):
                 print("Sky mask not provided or not found, generating approximate one")
                 sys.stdout.flush()
                 self.mask_file = self.output_folder + self.handle + '_mask.fits'
                 self.f_sky = self.generate_mask()
             else:
-                mask = hp.read_map(mask_file, verbose=False)
-                self.mask_file = mask_file
+                mask = hp.read_map(parms.mask_file, verbose=False)
+                self.mask_file = parms.mask_file
                 # check whether the mask is correct
                 ra = self.tracers[:, 3]
                 dec = self.tracers[:, 4]
                 nside = hp.get_nside(mask)
                 pixels = hp.ang2pix(nside, np.deg2rad(90 - dec), np.deg2rad(ra))
                 if np.any(mask[pixels] == 0):
-                    print('Galaxies exist where mask=0. Removing these to avoid errors later.')
+                    print('Galaxies exist where mask=0. Maybe check the input?')
                     sys.stdout.flush()
-                    all_indices = np.arange(len(self.tracers))
-                    bad_inds = np.where(mask[pixels] == 0)[0]
-                    good_inds = all_indices[np.logical_not(np.in1d(all_indices, bad_inds))]
-                    self.tracers = self.tracers[good_inds, :]
+                    # all_indices = np.arange(len(self.tracers))
+                    # bad_inds = np.where(mask[pixels] == 0)[0]
+                    # good_inds = all_indices[np.logical_not(np.in1d(all_indices, bad_inds))]
+                    # self.tracers = self.tracers[good_inds, :]
 
                 # effective sky fraction
                 self.f_sky = 1.0 * np.sum(mask) / len(mask)
 
             # finally, remove any instances of two galaxies at the same location, otherwise tessellation will fail
-            # (this is a problem with PATCHY mocks, not seen any such instances in real survey data ...)
+            # (this is a problem with DR12 Patchy mocks, I've not seen any such instances in real survey data ...)
             # NOTE: the following line will not work with older versions of numpy!!
             unique_tracers = np.unique(self.tracers, axis=0)
             if unique_tracers.shape[0] < self.tracers.shape[0]:
@@ -172,44 +144,46 @@ class ZobovVoids:
             self.tracer_dens = self.num_tracers / survey_volume
 
             # weights options: correct for z-dependent selection and angular completeness
-            self.use_z_wts = use_z_wts
-            if use_z_wts:
+            self.use_z_wts = parms.use_z_wts
+            if parms.use_z_wts:
                 self.selection_fn_file = self.output_folder + self.handle + '_selFn.txt'
                 self.generate_selfn(nbins=15)
-            self.use_ang_wts = use_ang_wts
+            self.use_syst_wts = parms.use_syst_wts
+            self.use_completeness_wts = parms.use_completeness_wts
 
-            if do_tessellation:
+            if parms.do_tessellation:
                 # options for buffer mocks around survey boundaries
-                if mock_file == '':
-                    # no buffer mocks provided, so generate new
+                if not os.access(parms.mock_file, os.F_OK):
+                    if not parms.mock_file == '':
+                        print('Could not find file %s containing buffer mocks!' % parms.mock_file)
                     print('Generating buffer mocks around survey edges ...')
-                    print('\tbuffer mocks will have %0.1f x the galaxy number density' % mock_dens_ratio)
+                    print('\tbuffer mocks will have %0.1f x the galaxy number density' % parms.mock_dens_ratio)
                     sys.stdout.flush()
-                    self.mock_dens_ratio = mock_dens_ratio
+                    self.mock_dens_ratio = parms.mock_dens_ratio
                     self.generate_buffer()
-                elif not os.access(mock_file, os.F_OK):
-                    print('Could not find file %s containing buffer mocks!' % mock_file)
-                    print('Generating buffer mocks around survey edges ...')
-                    print('\tbuffer mocks will have %0.1f x the galaxy number density' % mock_dens_ratio)
-                    sys.stdout.flush()
-                    self.mock_dens_ratio = mock_dens_ratio
-                    self.generate_buffer()
+                    # self.tracers now contains all tracer information (galaxies + buffers + guards)
                 else:
-                    print('Loading pre-computed buffer mocks from file %s' % mock_file)
+                    print('Loading pre-computed buffer mocks from file %s' % parms.mock_file)
                     sys.stdout.flush()
-                    if '.npy' in mock_file:
-                        buffers = np.load(mock_file)
+                    if '.npy' in parms.mock_file:
+                        buffers = np.load(parms.mock_file)
                     else:
-                        buffers = np.loadtxt(mock_file)
+                        buffers = np.loadtxt(parms.mock_file)
                     # recalculate the box length
-                    self.box_length = 2.0 * np.max(np.abs(buffers[:, :3])) + 1
+                    select = buffers[:, 3] > -60  # exclude the guard particles
+                    self.box_length, self.middle = self.get_box_length(buffers[select, :3])
+                    if self.verbose:
+                        print("\tUsing box length %0.2f" % self.box_length)
                     self.num_mocks = buffers.shape[0]
                     # join the buffers to the galaxy tracers
                     self.tracers = np.vstack([self.tracers, buffers])
+                    # self.tracers now contains all tracer information (galaxies + buffers + guards)
                     self.num_part_total = self.num_tracers + self.num_mocks
-                    self.mock_file = mock_file
-                # shift Cartesian positions from observer to box coordinates
-                self.tracers[:, :3] += 0.5 * self.box_length
+                    self.mock_file = parms.mock_file
+
+            # shift X, Y, Z to the Zobov box coordinate system
+            new_box_posns = self.obs2zobovbox(self.tracers[:, :3])
+            self.tracers[:, :3] = new_box_posns
 
         # for easy debugging: write all tracer positions to file
         # np.save(self.posn_file.replace('pos.dat', 'pos.npy'), self.tracers)
@@ -217,21 +191,21 @@ class ZobovVoids:
         self.num_non_edge = self.num_tracers
 
         # options for void-finding
-        self.min_dens_cut = min_dens_cut
-        self.void_min_num = void_min_num
-        self.use_barycentres = use_barycentres
+        self.min_dens_cut = parms.min_dens_cut
+        self.void_min_num = parms.void_min_num
+        self.use_barycentres = parms.use_barycentres
 
         # prefix for naming void files
-        self.void_prefix = void_prefix
+        self.void_prefix = 'zobov-' + parms.void_prefix
 
         # options for finding 'superclusters'
-        self.find_clusters = find_clusters
-        if find_clusters:
-            self.cluster_min_num = cluster_min_num
-            self.max_dens_cut = max_dens_cut
-            self.cluster_prefix = cluster_prefix
+        self.find_clusters = parms.find_clusters
+        if parms.find_clusters:
+            self.cluster_min_num = parms.cluster_min_num
+            self.max_dens_cut = parms.max_dens_cut
+            self.cluster_prefix = 'zobov-' + parms.cluster_prefix
 
-    def coords_radecz2std(self, ra, dec, redshift):
+    def coords_radecz2std(self, ra, dec, redshift, syswt=1, comp=1):
         """Converts sky coordinates in (RA,Dec,redshift) to standard form, including comoving
         Cartesian coordinate information
         """
@@ -244,7 +218,7 @@ class ZobovVoids:
         theta = np.pi / 2. - dec * np.pi / 180.
 
         # obtain Cartesian coordinates
-        galaxies = np.zeros((self.num_tracers, 6))
+        galaxies = np.zeros((self.num_tracers, 8))
         galaxies[:, 0] = rdist * np.sin(theta) * np.cos(phi)  # r*cos(ra)*cos(dec)
         galaxies[:, 1] = rdist * np.sin(theta) * np.sin(phi)  # r*sin(ra)*cos(dec)
         galaxies[:, 2] = rdist * np.cos(theta)  # r*sin(dec)
@@ -252,16 +226,64 @@ class ZobovVoids:
         galaxies[:, 3] = ra
         galaxies[:, 4] = dec
         galaxies[:, 5] = redshift
+        # add weights and completeness information
+        galaxies[:, 6] = syswt
+        galaxies[:, 7] = comp
 
         self.tracers = galaxies
+
+    def get_box_length(self, positions, pad=200):
+        """Calculate the extent of a cubic box that will comfortably enclose the whole survey
+
+        :param positions: Nx3 array of positions (of galaxies + buffers) to enclose
+        :param pad: additional padding desired for safety
+
+        :returns:
+        ----
+        box_len: box length required
+        middle: coordinates of central point of the survey
+        """
+
+        extents = np.asarray([np.max(positions[:, i]) - np.min(positions[:, i]) for i in range(3)])
+        middle = np.asarray([0.5 * (np.max(positions[:, i]) + np.min(positions[:, i])) for i in range(3)])
+        max_extent = np.max(extents)
+        box_len = max_extent + pad
+
+        return box_len, middle
+
+    def obs2zobovbox(self, positions):
+        """Convert from Cartesian coordinates in observers ref. frame to ZOBOV box coords
+
+        :param positions: Nx3 array of position coordinates to be converted
+
+        :return: array of new coordinates
+        """
+
+        shift = self.middle - self.box_length / 2
+        new_pos = positions - shift
+
+        return new_pos
+
+    def zobovbox2obs(self, positions):
+        """Convert from Cartesian coordinates in ZOBOV box coords to observers ref. frame
+
+        :param positions: Nx3 array of position coordinates to be converted
+
+        :return: array of new coordinates
+        """
+
+        shift = self.middle - self.box_length / 2
+        new_pos = positions + shift
+
+        return new_pos
 
     def generate_mask(self):
         """Generates an approximate survey sky mask if none is provided, and saves to file
 
-        Returns: f_sky
+        :return: sky fraction covered by survey mask
         """
 
-        nside = 64
+        nside = 128  # seems ok for BOSS data, but for very sparse surveys nside=64 might be required
         npix = hp.nside2npix(nside)
 
         # use tracer RA,Dec info to see which sky pixels are occupied
@@ -269,7 +291,7 @@ class ZobovVoids:
         theta = np.pi / 2. - self.tracers[:, 4] * np.pi / 180.
         pixels = hp.ang2pix(nside, theta, phi)
 
-        # very crude binary mask
+        # crude binary mask
         mask = np.zeros(npix)
         mask[pixels] = 1.
 
@@ -280,43 +302,37 @@ class ZobovVoids:
         f_sky = 1.0 * sum(mask) / len(mask)
         return f_sky
 
-    def find_mask_boundary(self, completeness_limit=0.):
-        """Finds pixels adjacent to but outside the survey mask
+    def find_mask_boundary(self):
+        """
+        Finds pixels adjacent to but outside the survey mask
 
-        Arguments:
-            completeness_limit: value in range (0,1), sets completeness lower limit for boundary determination
-
-        Returns:
-            boundary: a binary Healpix map with the survey mask boundary"""
+        :return: a healpy map instance with pixels set =1 if they are on the survey boundary, =0 if not
+        """
 
         mask = hp.read_map(self.mask_file, verbose=False)
-        mask = hp.ud_grade(mask, 512)
-        nside = hp.get_nside(mask)
+        nside = 512
+        mask = hp.ud_grade(mask, nside)
         npix = hp.nside2npix(nside)
         boundary = np.zeros(npix)
 
         # find pixels outside the mask that neighbour pixels within it
         # do this step in a loop, to get a thicker boundary layer
-        for j in range(int(2 + nside / 128)):
+        for j in range(int(3 + nside / 64)):
             if j == 0:
-                filled_inds = np.nonzero(mask > completeness_limit)[0]
+                filled_inds = np.nonzero(mask)[0]
             else:
                 filled_inds = np.nonzero(boundary)[0]
             theta, phi = hp.pix2ang(nside, filled_inds)
             neigh_pix = hp.get_all_neighbours(nside, theta, phi)
             for i in range(neigh_pix.shape[1]):
-                outsiders = neigh_pix[(mask[neigh_pix[:, i]] <= completeness_limit) & (neigh_pix[:, i] > -1)
+                outsiders = neigh_pix[(mask[neigh_pix[:, i]] == 0) & (neigh_pix[:, i] > -1)
                                       & (boundary[neigh_pix[:, i]] == 0), i]
                 # >-1 condition takes care of special case where neighbour wasn't found
                 if j == 0:
                     boundary[outsiders] = 2
                 else:
                     boundary[outsiders] = 1
-        boundary[boundary == 2] = 0
-
-        if nside <= 128:
-            # upgrade the boundary to aid placement of buffer mocks
-            boundary = hp.ud_grade(boundary, 128)
+        boundary[boundary == 2] = 0  # this sets a 1-pixel gap between boundary and survey so buffers are not too close
 
         return boundary
 
@@ -342,13 +358,13 @@ class ZobovVoids:
 
         # define the radial extents of the layer in which we will place the buffer particles
         # these choices are somewhat arbitrary, and could be optimized
-        r_low = self.cosmo.get_comoving_distance(z_high) + mean_nn_distance * self.mock_dens_ratio ** (-1. / 3)
-        r_high = r_low + mean_nn_distance
+        r_low = self.cosmo.get_comoving_distance(z_high) + mean_nn_distance * 0.5 #self.mock_dens_ratio ** (-1. / 3)
+        r_high = r_low + mean_nn_distance * 1.5
         cap_volume = self.f_sky * 4. * np.pi * (r_high ** 3. - r_low ** 3.) / 3.
 
         # how many buffer particles fit in this cap
         num_high_mocks = int(np.ceil(buffer_dens * cap_volume))
-        high_mocks = np.zeros((num_high_mocks, 6))
+        high_mocks = np.zeros((num_high_mocks, 8))
 
         # generate random radial positions within the cap
         rdist = (r_low ** 3. + (r_high ** 3. - r_low ** 3.) * np.random.rand(num_high_mocks)) ** (1. / 3)
@@ -372,6 +388,8 @@ class ZobovVoids:
         high_mocks[:, 3] = phi * 180. / np.pi
         high_mocks[:, 4] = 90 - theta * 180. / np.pi
         high_mocks[:, 5] = -1  # all buffer particles are given redshift -1 to aid identification
+        high_mocks[:, 6] = 0   # all buffer particles are given weight 0 to aid identification
+        high_mocks[:, 7] = 0   # all buffer particles are given weight 0 to aid identification
 
         # farthest buffer particle
         self.r_far = np.max(rdist)
@@ -388,8 +406,8 @@ class ZobovVoids:
         if z_low > 0:
             # define the radial extents of the layer in which we will place the buffer particles
             # these choices are somewhat arbitrary, and could be optimized
-            r_high = self.cosmo.get_comoving_distance(z_low) - mean_nn_distance * self.mock_dens_ratio ** (-1. / 3)
-            r_low = r_high - mean_nn_distance
+            r_high = self.cosmo.get_comoving_distance(z_low) - mean_nn_distance * 0.5 #self.mock_dens_ratio ** (-1. / 3)
+            r_low = r_high - mean_nn_distance * 1.5
             if r_high < 0:
                 r_high = self.cosmo.get_comoving_distance(z_low)
             if r_low < 0:
@@ -398,7 +416,7 @@ class ZobovVoids:
 
             # how many buffer particles fit in this cap
             num_low_mocks = int(np.ceil(buffer_dens * cap_volume))
-            low_mocks = np.zeros((num_low_mocks, 6))
+            low_mocks = np.zeros((num_low_mocks, 8))
 
             # generate random radial positions within the cap
             rdist = (r_low ** 3. + (r_high ** 3. - r_low ** 3.) * np.random.rand(num_low_mocks)) ** (1. / 3)
@@ -421,6 +439,8 @@ class ZobovVoids:
             low_mocks[:, 3] = phi * 180. / np.pi
             low_mocks[:, 4] = 90 - theta * 180. / np.pi
             low_mocks[:, 5] = -1.  # all buffer particles are given redshift -1 to aid later identification
+            low_mocks[:, 6] = 0    # all buffer particles are given weight 0 to aid identification
+            low_mocks[:, 7] = 0    # all buffer particles are given weight 0 to aid identification
 
             # closest buffer particle
             self.r_near = np.min(rdist)
@@ -439,7 +459,7 @@ class ZobovVoids:
         # ------ Step 3: buffer particles along the survey edges-------- #
         if self.f_sky < 1.0:
             # get the survey boundary
-            boundary = self.find_mask_boundary(completeness_limit=0.0)
+            boundary = self.find_mask_boundary()
 
             # where we will place the buffer mocks
             boundary_pix = np.nonzero(boundary)[0]
@@ -451,7 +471,7 @@ class ZobovVoids:
             # boundary_volume = boundary_f_sky * 4. * np.pi * (self.r_far ** 3. - self.r_near ** 3.) / 3.
             boundary_volume = boundary_f_sky * 4. * np.pi * quad(lambda y: y ** 2, self.r_near, self.r_far)[0]
             num_bound_mocks = int(np.ceil(buffer_dens * boundary_volume))
-            bound_mocks = np.zeros((num_bound_mocks, 6))
+            bound_mocks = np.zeros((num_bound_mocks, 8))
 
             # generate random radial positions within the boundary layer
             rdist = (self.r_near ** 3. + (self.r_far ** 3. - self.r_near ** 3.) *
@@ -475,6 +495,8 @@ class ZobovVoids:
             bound_mocks[:, 3] = phi * 180. / np.pi
             bound_mocks[:, 4] = 90 - theta * 180. / np.pi
             bound_mocks[:, 5] = -1.  # all buffer particles are given redshift -1 to aid identification
+            bound_mocks[:, 6] = 0    # all buffer particles are given weight 0 to aid identification
+            bound_mocks[:, 7] = 0    # all buffer particles are given weight 0 to aid identification
 
             if self.verbose:
                 print("\tplaced %d buffer mocks along the survey boundary edges" % num_bound_mocks)
@@ -488,7 +510,7 @@ class ZobovVoids:
         # ------------------------------------------------------------- #
 
         # determine the size of the cubic box required
-        self.box_length = 2.0 * np.max(np.abs(buffers[:, :3])) + 1.
+        self.box_length, self.middle = self.get_box_length(buffers[:, :3])
         if self.verbose:
             print("\tUsing box length %0.2f" % self.box_length)
 
@@ -497,13 +519,14 @@ class ZobovVoids:
         # but it doesn't slow the tessellation too much and keeps coding simpler)
 
         # generate guard particle positions
-        x = np.linspace(0.1, self.box_length - 0.1, 20)
+        x = np.linspace(0.1, self.box_length - 0.1, self.guard_nums)
         guards = np.vstack(np.meshgrid(x, x, x)).reshape(3, -1).T
 
         # make a kdTree instance using all the galaxies and buffer mocks
-        all_positions = np.vstack([self.tracers[:, :3], buffers[:, :3]])
-        all_positions += self.box_length / 2.  # from observer to box coordinates
-        tree = cKDTree(all_positions, boxsize=self.box_length)
+        all_posns_obs = np.vstack([self.tracers[:, :3], buffers[:, :3]])
+        # positions in Zobov box coordinates
+        all_posns_box = self.obs2zobovbox(all_posns_obs)
+        tree = cKDTree(all_posns_box, boxsize=self.box_length)
 
         # find the nearest neighbour distance for each of the guard particles
         nn_dist = np.empty(len(guards))
@@ -511,15 +534,18 @@ class ZobovVoids:
             nn_dist[i], nnind = tree.query(guards[i, :], k=1)
 
         # drop all guards that are too close to existing points
-        guards = guards[nn_dist > (self.box_length - 0.2) / 20.]
-        guards = guards - self.box_length / 2.  # guard positions back in observer coordinates
+        guards = guards[nn_dist > (self.box_length - 0.2) / self.guard_nums]
+        # shift back to observer coordinates
+        guards_obs = self.zobovbox2obs(guards)
 
         # convert to standard format
         num_guard_mocks = len(guards)
-        guard_mocks = np.zeros((num_guard_mocks, 6))
-        guard_mocks[:, :3] = guards
+        guard_mocks = np.zeros((num_guard_mocks, 8))
+        guard_mocks[:, :3] = guards_obs
         guard_mocks[:, 3:5] = -60.  # guards are given RA and Dec -60 as well to distinguish them from other buffers
         guard_mocks[:, 5] = -1.
+        guard_mocks[:, 6] = 0
+        guard_mocks[:, 7] = 0
 
         if self.verbose:
             print("\tadded %d guards to stabilize the tessellation" % num_guard_mocks)
@@ -542,11 +568,11 @@ class ZobovVoids:
         self.num_part_total = self.num_tracers + self.num_mocks
 
     def generate_selfn(self, nbins=20):
-        """Measures the redshift-dependence of the galaxy number density in equal-volume redshift bins,
-         and writes the selection function to file.
+        """
+        Measures the redshift-dependence of the galaxy number density in equal-volume redshift bins, and writes to file
 
-        Arguments:
-          nbins: number of bins to use
+        :param nbins: number of bins to use
+        :return:
         """
 
         if self.verbose:
@@ -576,12 +602,15 @@ class ZobovVoids:
         output[:, 0] = zmeans
         output[:, 1] = nofz
         output[:, 2] = nofz / self.tracer_dens
-
         # write to file
-        np.savetxt(self.selection_fn_file, output, fmt='%0.3f %0.4e %0.4f', header='z n(z) f(z)')
+        np.savetxt(self.selection_fn_file, output, fmt='%0.3f %0.4e %0.4f',
+                   header='z n(z)[h^3/Mpc^3] f(z)[normed in units of overall mean]')
 
     def write_box_zobov(self):
-        """Writes the tracer and mock position information to file in a ZOBOV-readable format"""
+        """
+        Writes the tracer and mock position information to file in a ZOBOV-readable format
+        :return:
+        """
 
         with open(self.posn_file, 'w') as F:
             npart = np.array(self.num_part_total, dtype=np.int32)
@@ -592,23 +621,31 @@ class ZobovVoids:
             data.tofile(F, format='%f')
             data = self.tracers[:, 2]
             data.tofile(F, format='%f')
-            if not self.is_box:  # write RA, Dec and redshift too
+            if not self.is_box:  # write RA, Dec, redshift, weights and completeness info too
                 data = self.tracers[:, 3]
                 data.tofile(F, format='%f')
                 data = self.tracers[:, 4]
                 data.tofile(F, format='%f')
                 data = self.tracers[:, 5]
                 data.tofile(F, format='%f')
+                data = self.tracers[:, 6]
+                data.tofile(F, format='%f')
+                data = self.tracers[:, 7]
+                data.tofile(F, format='%f')
 
     def delete_tracer_info(self):
-        """removes the tracer information if no longer required, to save memory"""
+        """
+        removes the tracer information if no longer required, to save memory
+        """
 
         self.tracers = 0
 
     def reread_tracer_info(self):
-        """re-reads tracer information from file if required after previous deletion"""
+        """
+        re-reads tracer information from Zobov-formatted file if required after previous deletion
+        """
 
-        self.tracers = np.empty((self.num_part_total, 6))
+        self.tracers = np.empty((self.num_part_total, 8))
         with open(self.posn_file, 'r') as F:
             nparts = np.fromfile(F, dtype=np.int32, count=1)[0]
             if not nparts == self.num_part_total:  # sanity check
@@ -621,6 +658,8 @@ class ZobovVoids:
                 self.tracers[:, 3] = np.fromfile(F, dtype=np.float64, count=nparts)
                 self.tracers[:, 4] = np.fromfile(F, dtype=np.float64, count=nparts)
                 self.tracers[:, 5] = np.fromfile(F, dtype=np.float64, count=nparts)
+                self.tracers[:, 6] = np.fromfile(F, dtype=np.float64, count=nparts)
+                self.tracers[:, 7] = np.fromfile(F, dtype=np.float64, count=nparts)
 
     def write_config(self):
         """method to write configuration information for the ZOBOV run to file for later lookup"""
@@ -628,49 +667,86 @@ class ZobovVoids:
         info = 'handle = \'%s\'\nis_box = %s\nnum_tracers = %d\n' % (self.handle, self.is_box, self.num_tracers)
         info += 'num_mocks = %d\nnum_non_edge = %d\nbox_length = %f\n' % (self.num_mocks, self.num_non_edge,
                                                                           self.box_length)
+        if not self.is_box:
+            info += 'middle = np.array([%0.6e, %0.6e, %0.6e])\n' % (self.middle[0], self.middle[1], self.middle[2])
         info += 'tracer_dens = %e' % self.tracer_dens
-        info_file = self.output_folder + 'sample_info.txt'
+        info_file = self.output_folder + self.handle + '_sample_info.py'
         with open(info_file, 'w') as F:
             F.write(info)
 
     def read_config(self):
         """method to read configuration file for information about previous ZOBOV run"""
 
-        info_file = self.output_folder + 'sample_info.txt'
-        parms = imp.load_source('name', info_file)
-        self.num_mocks = parms.num_mocks
-        self.num_non_edge = parms.num_non_edge
-        self.box_length = parms.box_length
-        self.tracer_dens = parms.tracer_dens
-        self.num_part_total = parms.num_mocks + parms.num_tracers
-        self.num_tracers = parms.num_tracers
+        info_file = self.output_folder + self.handle + '_sample_info.py'
+        if sys.version_info.major <= 2:
+            import imp
+            config = imp.load_source("name", info_file)
+        elif sys.version_info.major == 3 and sys.version_info.minor <= 4:
+            from importlib.machinery import SourceFileLoader
+            config = SourceFileLoader("name", info_file).load_module()
+        else:
+            import importlib.util
+            spec = importlib.util.spec_from_file_location("name", info_file)
+            config = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(config)
 
-    def zobov_wrapper(self, use_mpi=False, zobov_box_div=2, zobov_buffer=0.1, nthreads=2):
-        """Wrapper function to call C-based ZOBOV codes
+        self.num_mocks = config.num_mocks
+        self.num_non_edge = config.num_non_edge
+        self.box_length = config.box_length
+        self.tracer_dens = config.tracer_dens
+        self.num_part_total = config.num_mocks + config.num_tracers
+        self.num_tracers = config.num_tracers
+        if not self.is_box:
+            self.middle = config.middle
+        if not self.handle == config.handle:
+            print('Warning: handle in config file does not match input! Check?')
 
-        Arguments:
-            use_vozisol: flag to use vozisol.c to do tessellation (good for surveys)
-            zobov_box_div: integer number of divisions of box, ignored if use_vozisol is True
-            zobov_buffer: fraction of box length used as buffer region, ignored is use_vozisol is True
-
+    def zobov_wrapper(self):
+        """
+        Wrapper function to call C-based ZOBOV codes
+        :return: 1 if tessellation successfully completed
         """
 
         # get the path to where the C executables are stored
         binpath = os.path.dirname(__file__).replace('python_tools', 'bin/')
 
         # ---run the tessellation--- #
-        if not use_mpi:
-            print("Calling vozisol to do the tessellation...")
-            sys.stdout.flush()
-            logfolder = self.output_folder + 'log/'
-            if not os.access(logfolder, os.F_OK):
-                os.makedirs(logfolder)
-            logfile = logfolder + self.handle + '-zobov.out'
-            log = open(logfile, "w")
-            cmd = [binpath + "vozisol", self.posn_file, self.handle, str(self.box_length),
-                   str(self.num_tracers), str(0.9e30)]
-            subprocess.call(cmd, stdout=log, stderr=log)
-            log.close()
+        # there are 2 options: use MPI or not, chosen by the user
+        # If the data is in a cubic box with PBC, tessellation must be done by voz1b1 and voztie
+        # irrespective of choice of MPI  or not. If the data is from a survey, we use vozisol if no MPI
+        # is available, or voz1b1_mpi and voztie if it is. If using voz1b1_mpi and voztie, we need to
+        # flag edge galaxies separately using checkedges (handled automatically by vozisol).
+        logfolder = self.output_folder + 'log/'
+        if not os.access(logfolder, os.F_OK):
+            os.makedirs(logfolder)
+        if not self.use_mpi:
+            if self.is_box:  # cannot use vozisol with PBC
+                print("Calling voz1b1 and voztie to do the tessellation...")
+                sys.stdout.flush()
+
+                # ---Step 1: run voz1b1 on the sub-boxes, in series--- #
+                logfile = logfolder + self.handle + '-voz1b1.out'
+                log = open(logfile, "w")
+                cmd = [binpath + 'voz1b1', self.posn_file, str(self.zobov_buffer), str(self.box_length),
+                       str(self.zobov_box_div), self.handle]
+                subprocess.call(cmd, stdout=log, stderr=log)
+                log.close()
+
+                # ---Step 2: tie the sub-boxes together using voztie--- #
+                log = open(logfile, "a")
+                cmd = [binpath + "voztie", str(self.zobov_box_div), self.handle]
+                subprocess.call(cmd, stdout=log, stderr=log)
+                log.close()
+
+            else:  # no PBC, so use vozisol
+                print("Calling vozisol to do the tessellation...")
+                sys.stdout.flush()
+                logfile = logfolder + self.handle + '-vozisol.out'
+                log = open(logfile, "w")
+                cmd = [binpath + "vozisol", self.posn_file, self.handle, str(self.box_length),
+                       str(self.num_tracers), str(0.9e30)]
+                subprocess.call(cmd, stdout=log, stderr=log)
+                log.close()
 
             # check the tessellation was successful
             if not os.access("%s.vol" % self.handle, os.F_OK):
@@ -680,19 +756,16 @@ class ZobovVoids:
             sys.stdout.flush()
 
             # ---Step 1: run voz1b1 on the sub-boxes in parallel using voz1b1_mpi--- #
-            logfolder = self.output_folder + 'log/'
-            if not os.access(logfolder, os.F_OK):
-                os.makedirs(logfolder)
-            logfile = logfolder + self.handle + '-mpirun.out'
+            logfile = logfolder + self.handle + '-voz1b1_mpi.out'
             log = open(logfile, "w")
-            cmd = ['mpirun', binpath + 'voz1b1_mpi', self.posn_file, str(zobov_buffer), str(self.box_length),
-                   str(zobov_box_div), self.handle]
+            cmd = ['mpirun', binpath + 'voz1b1_mpi', self.posn_file, str(self.zobov_buffer), str(self.box_length),
+                   str(self.zobov_box_div), self.handle]
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
 
             # ---Step 2: tie the sub-boxes together using voztie--- #
             log = open(logfile, "a")
-            cmd = [binpath + "voztie", str(zobov_box_div), self.handle]
+            cmd = [binpath + "voztie", str(self.zobov_box_div), self.handle]
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
 
@@ -701,7 +774,7 @@ class ZobovVoids:
                 print("Something went wrong with the tessellation. Check log file!\nAborting ...")
                 return 0
 
-             # ---Step 4: copy the .vol files to .trvol--- #
+            # ---Step 4: copy the .vol files to .trvol--- #
             cmd = ["cp", "%s.vol" % self.handle, "%s.trvol" % self.handle]
             subprocess.call(cmd)
 
@@ -709,6 +782,7 @@ class ZobovVoids:
             # (necessary because voz1b1 and voztie do not do this automatically)
             if self.num_mocks > 0:
                 cmd = [binpath + "checkedges", self.handle, str(self.num_tracers), str(0.9e30)]
+                logfile = logfolder + self.handle + '-checkedges.out'
                 log = open(logfile, 'a')
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
@@ -718,23 +792,34 @@ class ZobovVoids:
 
         # ---prepare files for running jozov--- #
         if self.is_box:
-            # no preparation is required for void-finding (no buffer mocks, no z-weights, no angular weights)
+            # no preparation is required for void-finding
             if self.find_clusters:
                 cmd = ["cp", "%s.vol" % self.handle, "%sc.vol" % self.handle]
                 subprocess.call(cmd)
         else:
+            # we need to account for buffer mocks, selection effects and systematics on relative densities
+            # Voronoi volumes were calculated in units of the mean of all particles; we first change this to units of
+            # the mean of galaxies only (no buffer mocks), then scale volumes up or down to account for variations in
+            # the local means density (selection function and completeness, if desired) and galaxy systematics weights
+            # (if desired). Original Voronoi volumes are also kept to calculate void volumes in correct units
+
             # ---Step 1: read the edge-modified Voronoi volumes--- #
             with open('./%s.vol' % self.handle, 'r') as F:
                 npreal = np.fromfile(F, dtype=np.int32, count=1)[0]
                 modvols = np.fromfile(F, dtype=np.float64, count=npreal)
 
             # ---Step 2: renormalize volumes in units of mean volume per galaxy--- #
-            # (this step is necessary because otherwise the buffer mocks affect the calculation)
-            edgemask = modvols == 1.0 / 0.9e30
+            # (this step is necessary because otherwise the buffer mocks and bounding box affect the calculation)
+            edgemask = modvols == 1.0 / 0.9e30  # effectively zero volume / infinite density
             modvols[np.logical_not(edgemask)] *= (self.tracer_dens * self.box_length ** 3.) / self.num_part_total
             # check for failures!
             if np.any(modvols[np.logical_not(edgemask)] == 0):
                 sys.exit('Tessellation gave some zero-volume Voronoi cells - check log file!!\nAborting...')
+
+            # Basic principle in next few steps is that the cell density relative to local mean is the inverse of the
+            # cell volume relative to the local mean volume. Where the local mean density is higher, we increase the
+            # relative volume to compensate and vice versa. Cell volumes are also adjusted by the inverse of systematic
+            # weights.
 
             # ---Step 3: scale volumes accounting for z-dependent selection--- #
             if self.use_z_wts:
@@ -746,33 +831,36 @@ class ZobovVoids:
                 y = savgol_filter(selfn(x), 101, 3)
                 # then linearly interpolate the filtered interpolation
                 selfn = InterpolatedUnivariateSpline(x, y, k=1)
-                # scale the densities according to this
+                # scale the cell volumes
                 modfactors = selfn(redshifts[np.logical_not(edgemask)])
                 modvols[np.logical_not(edgemask)] *= modfactors
                 # check for failures!
                 if np.any(modvols[np.logical_not(edgemask)] == 0):
                     sys.exit('Use of z-weights caused some zero-volume Voronoi cells - check input!!\nAborting...')
 
-            # ---Step 4: scale volumes accounting for angular completeness--- #
-            if self.use_ang_wts:
-                ra = self.tracers[:self.num_tracers, 3]
-                dec = self.tracers[:self.num_tracers, 4]
-                # fetch the survey mask
-                mask = hp.read_map(self.mask_file, verbose=False)
-                nside = hp.get_nside(mask)
-                # weight the densities by completeness
-                pixels = hp.ang2pix(nside, np.deg2rad(90 - dec), np.deg2rad(ra))
-                modfactors = mask[pixels]
+            # ---Step 4: scale volumes to account for systematics weights--- #
+            if self.use_syst_wts:
+                modfactors = self.tracers[:self.num_tracers, 6]
+                # note division in next step
+                modvols[np.logical_not(edgemask)] /= modfactors[np.logical_not(edgemask)]
+                if np.any(modvols[np.logical_not(edgemask)] == 0):
+                    sys.exit('Use of systematics weights caused some zero-volume Voronoi cells - check input!!' +
+                             '\nAborting...')
+
+            # ---Step 5: scale volumes accounting for angular completeness--- #
+            if self.use_completeness_wts:
+                modfactors = self.tracers[:self.num_tracers, 7]
                 modvols[np.logical_not(edgemask)] *= modfactors[np.logical_not(edgemask)]
                 if np.any(modvols[np.logical_not(edgemask)] == 0):
-                    sys.exit('Use of angular weights caused some zero-volume Voronoi cells - check input!!\nAborting...')
+                    sys.exit('Use of completeness weights caused some zero-volume Voronoi cells - check input!!' +
+                             '\nAborting...')
 
-            # ---Step 5: write the scaled volumes to file--- #
+            # ---Step 6: write the scaled volumes to file--- #
             with open("./%s.vol" % self.handle, 'w') as F:
                 npreal.tofile(F, format="%d")
                 modvols.tofile(F, format="%f")
 
-            # ---Step 6: if finding clusters, create the files required--- #
+            # ---Step 7: if finding clusters, create the files required--- #
             if self.find_clusters:
                 modvols[edgemask] = 0.9e30
                 # and write to c.vol file
@@ -780,7 +868,7 @@ class ZobovVoids:
                     npreal.tofile(F, format="%d")
                     modvols.tofile(F, format="%f")
 
-            # ---Step 7: set the number of non-edge galaxies--- #
+            # ---Step 8: set the number of non-edge galaxies--- #
             self.num_non_edge = self.num_tracers - sum(edgemask)
 
         # write a config file
@@ -788,7 +876,8 @@ class ZobovVoids:
 
         # ---run jozov to perform the void-finding--- #
         cmd = [binpath + "jozovtrvol", "v", self.handle, str(0), str(0)]
-        log = open(logfile, 'a')
+        logfile = logfolder + self.handle + '-jozov.out'
+        log = open(logfile, 'w')
         subprocess.call(cmd, stdout=log, stderr=log)
         log.close()
         # this call to (modified version of) jozov sets NO density threshold, so ALL voids are merged without limit
@@ -819,10 +908,10 @@ class ZobovVoids:
         return 1
 
     def postprocess_voids(self):
-        """Method to post-process raw ZOBOV output to obtain discrete set of non-overlapping voids. This method
+        """
+        Method to post-process raw ZOBOV output to obtain discrete set of non-overlapping voids. This method
         is hard-coded to NOT allow any void merging, since no objective (non-arbitrary) criteria can be defined
         to control merging, if allowed.
-
         """
 
         print('Post-processing voids ...')
@@ -1155,7 +1244,7 @@ class ZobovVoids:
         if self.is_box:
             info_output[:, 1:4] = circumcentres[:, :3]
         else:
-            centre_obs = circumcentres - self.box_length / 2.0
+            centre_obs = self.zobovbox2obs(circumcentres)  # circumcentres - self.box_length / 2.0
             rdist = np.linalg.norm(centre_obs, axis=1)
             eff_angrad = np.degrees(eff_rad / rdist)
             centre_redshifts = self.cosmo.get_redshift(rdist)
@@ -1184,7 +1273,7 @@ class ZobovVoids:
             info_output[:, 10] = edge_flag
 
             info_output = info_output[edge_flag < 2]  # remove all the tessellation failures
-            print('Removed %d edge failures' % (num_struct - len(info_output)))
+            print('Removed %d edge-contaminated voids' % (num_struct - len(info_output)))
 
         # save output data to file
         header = "%d voids from %s\n" % (len(info_output), self.handle)
@@ -1328,7 +1417,7 @@ class ZobovVoids:
             if self.is_box:
                 info_output[:, 1:4] = centres[:, :3]
             else:
-                centre_obs = centres - self.box_length / 2.0
+                centre_obs = self.zobovbox2obs(centres) # centres - self.box_length / 2.0
                 rdist = np.linalg.norm(centre_obs, axis=1)
                 eff_angrad = np.degrees(eff_rad / rdist)
                 centre_redshifts = self.cosmo.get_redshift(rdist)
@@ -1614,7 +1703,7 @@ class ZobovVoids:
             if self.is_box:
                 info_output[:, 1:4] = centres[:, :3]
             else:
-                centre_obs = centres - self.box_length / 2.0
+                centre_obs = self.zobovbox2obs(centres)  # centres - self.box_length / 2.0
                 rdist = np.linalg.norm(centre_obs, axis=1)
                 eff_angrad = np.degrees(eff_rad / rdist)
                 centre_redshifts = self.cosmo.get_redshift(rdist)
