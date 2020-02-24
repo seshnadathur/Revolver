@@ -72,7 +72,7 @@ no reconstruction and no ```voxel``` void-finding), then no randoms catalogue is
 ##### MPI and parallel processing:
 For ```ZOBOV```-based void-finding, there is an option to perform the slow tessellation step in
 separate chunks run in parallel, achieved using MPI (set ```use_mpi = True``` in
-the [params.py](parameters/params.py) file). If you have several (i.e. ~10) CPUs available, this will
+the [params.py](parameters/params.py) file). If you have many (i.e. >~10) CPUs available, this can
 be faster than doing it in one shot. If not, single-shot tessellation is usually faster.
 
 If your data are in a simulation box with periodic boundary conditions, the code will always break the tessellation
