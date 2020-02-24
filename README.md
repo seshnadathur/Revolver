@@ -6,7 +6,7 @@ Repository containing code to:
 
    - reconstruct real space positions from redshift-space tracer data, by subtracting RSD through FFT-based
    reconstruction (optional)
-   - apply void-finding algorithm to create catalogue of voids in these tracers
+   - apply a void-finding algorithm to create catalogue of voids in these tracers
 
 The tracers used will normally be galaxies from a redshift survey, but could also be halos or dark matter
 particles from a simulation box.
