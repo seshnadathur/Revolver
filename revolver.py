@@ -99,6 +99,7 @@ if parms.do_recon:
     # adjust input parameters for subsequent steps to match shifted tracer file
     parms.tracer_file_type = 2
     # following lines set to match recon output; ignored for box data anyway
+    parms.posn_cols = [0, 1, 2]
     parms.weights_model = 1
     parms.fkp = False; parms.cp = False; parms.noz = False; parms.veto = False
     parms.systot = True
