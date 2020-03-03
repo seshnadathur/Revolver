@@ -69,7 +69,7 @@ def divide_k2(np.ndarray [np.complex128_t, ndim=3] deltaout, np.ndarray [np.comp
 def allocate_gal_cic(
     np.ndarray [np.float64_t, ndim=3] delta,
     np.ndarray [np.float64_t, ndim=1] x,
-    np.ndarray [np.float64_t, ndim=1] y, 
+    np.ndarray [np.float64_t, ndim=1] y,
     np.ndarray [np.float64_t, ndim=1] z,
     np.ndarray [np.float64_t, ndim=1] w,
     int npart,
@@ -93,7 +93,7 @@ def allocate_gal_cic(
   binsize = boxsize / nbins
   oneoverbinsize = 1.0 / binsize
   weight = 1.0
-  
+
   for i in range(nbins):
     for j in range(nbins):
       for k in range(nbins):
@@ -112,11 +112,11 @@ def allocate_gal_cic(
     ix = int(xpos)
     iy = int(ypos)
     iz = int(zpos)
-    
+
     ddx = xpos-ix
     ddy = ypos-iy
     ddz = zpos-iz
-    
+
     mdx = (1.0 - ddx)
     mdy = (1.0 - ddy)
     mdz = (1.0 - ddz)
@@ -236,7 +236,8 @@ def voxelvoid_cuts(np.ndarray [np.int_t, ndim=1] select, np.ndarray [np.int_t, n
   cdef int i, vox
   for i in range(N):
     vox = int(rawvoids[i, 2])
-    if (mask[vox] == 0) and (rawvoids[i, 1] == 0) and (rawvoids[i, 3] < min_dens_cut):
+    # if (mask[vox] == 0) and (rawvoids[i, 1] == 0) and (rawvoids[i, 3] < min_dens_cut):
+    if (mask[vox] == 0) and (rawvoids[i, 3] < min_dens_cut):
       select[i] = 1
     else:
       select[i] = 0
@@ -266,4 +267,3 @@ def get_member_densities(np.ndarray [np.float64_t, ndim=1] member_dens, np.ndarr
     member_dens[i] = rho[voxels[i]]
 
   return member_dens
-
