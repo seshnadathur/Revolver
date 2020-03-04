@@ -59,9 +59,9 @@ class VoxelVoids:
             cat.weight = cat.get_weights(fkp=False, syst_wts=True)
             if cat.weights_model == 2 or cat.weights_model == 3:
                 # for eBOSS or joint BOSS+eBOSS catalogues, systematic weights are included for randoms
-                ran.weight = ran.get_weights(fkp=True, syst_wts=True)
-                # for BOSS catalogues, systematic weights are NOT included for randoms
-            ran.weight = ran.get_weights(fkp=True, syst_wts=False)
+                ran.weight = ran.get_weights(fkp=False, syst_wts=True)
+            # for BOSS catalogues, systematic weights are NOT included for randoms
+            ran.weight = ran.get_weights(fkp=False, syst_wts=False)
 
             # relative weighting of galaxies and randoms
             sum_wgal = np.sum(cat.weight)
