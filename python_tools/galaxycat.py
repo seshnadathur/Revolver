@@ -91,7 +91,8 @@ class GalaxyCatalogue:
                     self.weight_systot = np.ones(self.size)
                 if 'weight_fkp' not in (name.casefold() for name in self.names):
                     # set FKP weights to 1 by default
-                    print('No FKP weights found for survey data. Proceeding without, but are you sure?')
+                    if parms.do_recon:
+                        print('No FKP weights found for survey data. Proceeding without, but are you sure you want to do reconstruction without?')
                     self.weight_fkp = np.ones(self.size)
                     # NOTE: if provided, we take the FKP weights directly from file
                     # If an FKP weighting different to the BOSS/eBOSS standard is desired
