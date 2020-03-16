@@ -77,8 +77,8 @@ class VoxelVoids:
             # put the data into a box
             mean_dens = self.make_sky_box()
 
-            # set a cutoff threshold for empty cells
-            ran_min = (0.01 * mean_dens * self.binsize**3.) / self.alpha
+            # set a conservative cutoff threshold for empty cells
+            ran_min = (0.05 * mean_dens * self.binsize**3.) / self.alpha
             self.ran_min = ran_min
 
     def make_sky_box(self, padding=10.):
