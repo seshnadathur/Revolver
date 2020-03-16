@@ -236,8 +236,8 @@ def voxelvoid_cuts(np.ndarray [np.int_t, ndim=1] select, np.ndarray [np.int_t, n
   cdef int i, vox
   for i in range(N):
     vox = int(rawvoids[i, 2])
-    # if (mask[vox] == 0) and (rawvoids[i, 1] == 0) and (rawvoids[i, 3] < min_dens_cut):
-    if (mask[vox] == 0) and (rawvoids[i, 3] < min_dens_cut):
+    if (mask[vox] == 0) and (rawvoids[i, 1] == 0) and (rawvoids[i, 3] < min_dens_cut):
+    # if (mask[vox] == 0) and (rawvoids[i, 3] < min_dens_cut):
       select[i] = 1
     else:
       select[i] = 0
