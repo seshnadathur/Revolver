@@ -81,14 +81,14 @@ class VoxelVoids:
             ran_min = (0.05 * mean_dens * self.binsize**3.) / self.alpha
             self.ran_min = ran_min
 
-    def make_sky_box(self, padding=25.):
+    def make_sky_box(self, padding=5.):
 
-        maxx = np.max(self.ran.x)
-        minx = np.min(self.ran.x)
-        maxy = np.max(self.ran.y)
-        miny = np.min(self.ran.y)
-        maxz = np.max(self.ran.z)
-        minz = np.min(self.ran.z)
+        maxx = max(np.max(self.ran.x), np.max(self.cat.x))
+        minx = min(np.min(self.ran.x), np.min(self.cat.x))
+        maxy = max(np.max(self.ran.y), np.max(self.cat.y))
+        miny = min(np.min(self.ran.y), np.min(self.cat.y))
+        maxz = max(np.max(self.ran.z), np.max(self.cat.z))
+        minz = min(np.min(self.ran.z), np.min(self.cat.z))
         dx = maxx - minx
         dy = maxy - miny
         dz = maxz - minz
