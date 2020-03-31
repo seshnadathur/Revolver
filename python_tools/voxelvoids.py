@@ -208,7 +208,6 @@ class VoxelVoids:
             cmd = [binpath + "jozov-grid", "c", raw_dir + "density_n%d.dat" % self.nbins,
                    raw_dir + self.handle, str(self.nbins)]
             subprocess.call(cmd)
-            
             self.postprocess_clusters()
 
         print(" ==== Finished with voxel-based method ==== ")
