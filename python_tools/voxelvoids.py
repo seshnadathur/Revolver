@@ -194,9 +194,6 @@ class VoxelVoids:
             rhogflat.tofile(F, format='%f')
 
         # now call jozov-grid
-        logfolder = self.output_folder + 'log/'
-        if not os.access(logfolder, os.F_OK):
-            os.makedirs(logfolder)
         cmd = [binpath + "jozov-grid", "v", raw_dir + "density_n%d.dat" % self.nbins,
                raw_dir + self.handle, str(self.nbins)]
         subprocess.call(cmd)
@@ -208,13 +205,10 @@ class VoxelVoids:
         if self.find_clusters:
             print("\n ==== bonus: overdensity-finding with voxel-based method ==== ")
             sys.stdout.flush()
-            logfile = logfolder + self.handle + '-voxel.out'
             cmd = [binpath + "jozov-grid", "c", raw_dir + "density_n%d.dat" % self.nbins,
                    raw_dir + self.handle, str(self.nbins)]
-            log = open(logfile, 'w')
             subprocess.call(cmd)
-            log.close()
-
+            
             self.postprocess_clusters()
 
         print(" ==== Finished with voxel-based method ==== ")
