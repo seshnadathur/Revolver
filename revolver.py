@@ -160,11 +160,8 @@ if parms.run_zobov:
     parms.z_min = max(parms.z_min, parms.z_low_cut)
     parms.z_max = min(parms.z_max, parms.z_high_cut)
 
-    if parms.do_recon:
-        voidcat = ZobovVoids(parms)
-    else:
-        voidcat = ZobovVoids(parms)
-
+    voidcat = ZobovVoids(parms)
+    
     start = time.time()
     if parms.do_tessellation:
         # write the tracer information to ZOBOV-readable format
