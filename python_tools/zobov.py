@@ -230,6 +230,9 @@ class ZobovVoids:
         galaxies[:, 6] = syswt
         galaxies[:, 7] = comp
 
+        # remove any galaxies for which the syswt value is 0 (occasionally true in some mocks)
+        galaxies = galaxies[galaxies[:, 6] > 0]
+        
         self.tracers = galaxies
 
     def get_box_length(self, positions, pad=200):
