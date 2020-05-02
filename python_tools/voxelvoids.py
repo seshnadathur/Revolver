@@ -77,8 +77,8 @@ class VoxelVoids:
             # put the data into a box
             mean_dens = self.make_sky_box()
 
-            # set a conservative cutoff threshold for empty cells
-            ran_min = (0.05 * mean_dens * self.binsize**3.) / self.alpha
+            # set a cutoff for defining cells as empty if they have < 10% the mean number of randoms
+            ran_min = (0.1 * mean_dens * self.binsize**3.) / self.alpha
             self.ran_min = ran_min
 
     def make_sky_box(self, padding=5.):
@@ -107,6 +107,7 @@ class VoxelVoids:
         self.box_length = box
         print('Box size [Mpc/h]: %0.3f' % self.box_length)
 
+        # this is clearly a major underestimate
         mean_dens = np.sum(self.cat.weight) / box**3.
 
         # starting estimate for bin size
@@ -115,21 +116,21 @@ class VoxelVoids:
         if self.verbose:
             print('Initial bin size [Mpc/h]: %0.2f, nbins = %d' % (self.binsize, self.nbins))
 
-        # now approximately check true survey volume and recalculate mean density
+        # now approximately check true survey volume
         ran = self.ran
         rhor = np.zeros((self.nbins, self.nbins, self.nbins), dtype='float64')
         fastmodules.allocate_gal_cic(rhor, ran.x, ran.y, ran.z, ran.weight, ran.size, self.xmin, self.ymin,
                                      self.zmin, self.box_length, self.nbins, 1.)
+        # re-estimate the mean density: this will still be a slight underestimate
         filled_cells = np.sum(rhor.flatten() > 0)
         mean_dens = np.sum(self.cat.weight) / (filled_cells * self.binsize**3.)
-        # thus get better choice of bin size
+        # thus get better choice of bin size (this is sufficient for current purposes)
         self.nbins = int(np.floor(box / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
         self.binsize = self.box_length / self.nbins
         print('Final bin size [Mpc/h]: %0.2f, nbins = %d' % (self.binsize, self.nbins))
 
         # choose an appropriate smoothing scale
-        smooth = mean_dens ** (-1./3)
-        self.smooth = smooth
+        self.smooth = mean_dens ** (-1./3)
         print('Smoothing scale [Mpc/h]: %0.2f' % self.smooth)
         sys.stdout.flush()
 
@@ -163,7 +164,7 @@ class VoxelVoids:
             # then normalize number counts to get density in units of mean (i.e. 1 + delta)
             fastmodules.normalize_rho_box(rhog, self.cat.size)
             self.rhoflat = rhog.flatten()
-            self.mask_cut = np.zeros(self.nbins**3, dtype='int')
+            self.mask_cut = np.zeros(self.nbins**3, dtype='int')  # we don't mask any voxels in a box
         else:
             if self.verbose:
                 print('Allocating randoms in cells...')
