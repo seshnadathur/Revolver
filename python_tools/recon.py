@@ -343,7 +343,6 @@ class Recon:
         for c in [self.cat, self.ran]:
             shift_x, shift_y, shift_z = \
                 self.get_shift(c, self.psi_x.real, self.psi_y.real, self.psi_z.real, use_newpos=True)
-            # note that Julian's eBOSS pipeline code has use_newpos=False at this point, which is not correct
             c.newx += shift_x
             c.newy += shift_y
             c.newz += shift_z
