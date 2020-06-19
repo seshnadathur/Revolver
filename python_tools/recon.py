@@ -47,8 +47,9 @@ class Recon:
             if cat.weights_model == 2 or cat.weights_model == 3:
                 # for eBOSS or joint BOSS+eBOSS catalogues, systematic weights are included for randoms
                 ran.weight = ran.get_weights(fkp=True, syst_wts=True)
-            # for BOSS catalogues, systematic weights are NOT included for randoms
-            ran.weight = ran.get_weights(fkp=True, syst_wts=False)
+            else:  # weights_model == 1
+                # for BOSS catalogues, systematic weights are NOT included for randoms
+                ran.weight = ran.get_weights(fkp=True, syst_wts=False)
 
             sum_wgal = np.sum(cat.weight)
             sum_wran = np.sum(ran.weight)
