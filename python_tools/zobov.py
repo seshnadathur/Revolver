@@ -232,7 +232,7 @@ class ZobovVoids:
 
         # remove any galaxies for which the syswt value is 0 (occasionally true in some mocks)
         galaxies = galaxies[galaxies[:, 6] > 0]
-        
+
         self.tracers = galaxies
 
     def get_box_length(self, positions, pad=200):
@@ -597,9 +597,10 @@ class ZobovVoids:
         # histogram and calculate number density
         hist, zsteps = np.histogram(redshifts, bins=zsteps)
         nofz = hist / volumes
-        zmeans = np.zeros(len(hist))
-        for i in range(len(hist)):
-            zmeans[i] = np.mean(redshifts[np.logical_and(redshifts >= zsteps[i], redshifts < zsteps[i + 1])])
+        # previously this was set to be the mean redshift of all galaxies in the bin
+        # but that sometimes caused nans to appear if the bin were empty, leading to crashes later
+        # so now it stores the central value of the bin instead
+        zmeans = 0.5 * (zsteps[1:] + zsteps[:-1])
 
         output = np.zeros((len(zmeans), 3))
         output[:, 0] = zmeans
