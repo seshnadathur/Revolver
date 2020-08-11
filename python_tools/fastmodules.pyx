@@ -80,7 +80,7 @@ def allocate_gal_cic(
     int nbins,
     int wrap):
 
-  cdef double xpos,ypos,zpoz
+  cdef double xpos,ypos,zpos
   cdef int i,j,k
   cdef int ix,iy,iz
   cdef int ixp,iyp,izp
