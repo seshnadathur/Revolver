@@ -153,7 +153,6 @@ class VoxelVoids:
         rhog = np.zeros((self.nbins, self.nbins, self.nbins), dtype='float64')
         fastmodules.allocate_gal_cic(rhog, self.cat.x, self.cat.y, self.cat.z, self.cat.weight, self.cat.size,
                                      self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 1.)
-        # rhog = self.allocate_gal_cic_fast(self.cat)
         if self.is_box:
             # smooth with pre-determined smoothing scale
             if self.verbose:
