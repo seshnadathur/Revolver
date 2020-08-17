@@ -431,8 +431,8 @@ class VoxelVoids:
         xind = np.array(voxel / (self.nbins ** 2), dtype=int)
         yind = np.array((voxel - xind * self.nbins ** 2) / self.nbins, dtype=int)
         zind = np.array(voxel % self.nbins, dtype=int)
-        xpos = (xind + 0.5) * self.box_length / self.nbins
-        ypos = (yind + 0.5) * self.box_length / self.nbins
-        zpos = (zind + 0.5) * self.box_length / self.nbins
+        xpos = xind * self.box_length / self.nbins
+        ypos = yind * self.box_length / self.nbins
+        zpos = zind * self.box_length / self.nbins
 
         return xpos, ypos, zpos
