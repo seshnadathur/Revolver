@@ -84,6 +84,7 @@ class Recon:
         self.psi_y = 0
         self.psi_z = 0
         self.fft_obj = 0
+        self.fft_obj_inplace = 0
         self.ifft_obj = 0
 
     def compute_box(self, padding=200., optimize_box=True):
@@ -156,13 +157,11 @@ class Recon:
                 g.close()
             print('Creating FFTW objects...')
             sys.stdout.flush()
-            fft_obj = pyfftw.FFTW(delta, delta, axes=[0, 1, 2], threads=self.nthreads)
-            ifft_obj = pyfftw.FFTW(deltak, psi_x, axes=[0, 1, 2],
-                                   threads=self.nthreads,
-                                   direction='FFTW_BACKWARD')
+            fft_obj = pyfftw.FFTW(delta, deltak, axes=[0, 1, 2], threads=self.nthreads)
+            fft_obj_inplace = pyfftw.FFTW(delta, delta, axes=[0, 1, 2], threads=self.nthreads)
+            ifft_obj = pyfftw.FFTW(deltak, psi_x, axes=[0, 1, 2],threads=self.nthreads,direction='FFTW_BACKWARD')
             kr = fftfreq(nbins, d=binsize) * 2 * np.pi * self.smooth
             norm = np.exp(-0.5 * (kr[:, None, None] ** 2 + kr[None, :, None] ** 2 + kr[None, None, :] ** 2))
-
             if self.is_box:
                 deltar = 0
             else:
@@ -178,7 +177,7 @@ class Recon:
                 # NOTE - we do the smoothing via FFTs rather than scipy's gaussian_filter because if using several
                 # threads for pyfftw it is much faster this way (if only using 1 thread gains are negligible)
                 rho = deltar + 0.0j
-                fft_obj(input_array=rho, output_array=rhok)
+                fft_obj(input_array=rho, output_array=rhok) 
                 fastmodules.mult_norm(rhok, rhok, norm)
                 ifft_obj(input_array=rhok, output_array=rho)
                 deltar = rho.real
@@ -192,6 +191,7 @@ class Recon:
             psi_x = self.psi_x
             psi_y = self.psi_y
             psi_z = self.psi_z
+            fft_obj_inplace = self.fft_obj_inplace
             fft_obj = self.fft_obj
             ifft_obj = self.ifft_obj
             norm = self.norm
@@ -213,7 +213,6 @@ class Recon:
         fastmodules.mult_norm(rhok, rhok, norm)
         ifft_obj(input_array=rhok, output_array=rho)
         deltag = rho.real
-
         if self.verbose:
             print('Computing density fluctuations, delta...')
         sys.stdout.flush()
@@ -245,12 +244,13 @@ class Recon:
         fastmodules.mult_kz(deltak, delta, k, bias)
         ifft_obj(input_array=deltak, output_array=psi_z)
 
+
         # from grid values of Psi_est = IFFT[-i k delta(k)/(b k^2)], compute the values at the galaxy positions
         if self.verbose:
             print('Calculating shifts...')
         sys.stdout.flush()
         shift_x, shift_y, shift_z = self.get_shift(cat, psi_x.real, psi_y.real, psi_z.real, use_newpos=True)
-
+        
         # now we update estimates of the Psi field in the following way:
         if iloop == 0:
             # starting estimate chosen according to Eq. 12 of Burden et al 2015, in order to improve convergence
@@ -303,6 +303,7 @@ class Recon:
         self.psi_x = psi_x
         self.psi_y = psi_y
         self.psi_z = psi_z
+        self.fft_obj_inplace = fft_obj_inplace
         self.fft_obj = fft_obj
         self.ifft_obj = ifft_obj
         self.norm = norm
