@@ -227,7 +227,7 @@ class Recon:
         if self.verbose:
             print('Fourier transforming delta field...')
         sys.stdout.flush()
-        fft_obj(input_array=delta, output_array=delta)
+        fft_obj_inplace(input_array=delta, output_array=delta)
 
         # -- delta/k**2
         k = fftfreq(self.nbins, d=binsize) * 2 * np.pi
