@@ -181,14 +181,14 @@ class VoxelVoids:
             sys.stdout.flush()
             rhog = np.zeros((self.nbins, self.nbins, self.nbins), dtype='float64')
             fastmodules.allocate_gal_cic(rhog, self.cat.x, self.cat.y, self.cat.z, self.cat.weight, self.cat.size,
-                                         self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 0)
+                                         self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 1)
 
             if self.verbose:
                 print('Allocating randoms in cells...')
             sys.stdout.flush()
             rhor = np.zeros((self.nbins, self.nbins, self.nbins), dtype='float64')
             fastmodules.allocate_gal_cic(rhor, self.ran.x, self.ran.y, self.ran.z, self.ran.weight, self.ran.size,
-                                         self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 0)
+                                         self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 1)
 
             # identify "empty" cells for later cuts on void catalogue
             mask_cut = np.zeros(self.nbins**3, dtype='int')
