@@ -132,13 +132,13 @@ def allocate_gal_cic(
     else:
       if(ixp >= nbins):
         ixp = 0
-        mdx = 0.0
+        ddx = 0.0
       if(iyp >= nbins):
         iyp = 0
-        mdy = 0.0
+        ddy = 0.0
       if(izp >= nbins):
         izp = 0
-        mdz = 0.0
+        ddz = 0.0
 
     delta[ix,  iy,  iz]  += mdx * mdy * mdz * weight
     delta[ixp, iy,  iz]  += ddx * mdy * mdz * weight

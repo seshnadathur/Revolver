@@ -96,23 +96,32 @@ class VoxelVoids:
         y0 = 0.5 * (maxy + miny)
         z0 = 0.5 * (maxz + minz)
 
-        box = max([dx, dy, dz]) + 2 * padding  # a bit bigger than strictly necessary
-        xmin = x0 - box / 2
-        ymin = y0 - box / 2
-        zmin = z0 - box / 2
+        redo_padding = True
+        while redo_padding:
+            box = max([dx, dy, dz]) + 2 * padding  # a bit bigger than strictly necessary
+            xmin = x0 - box / 2
+            ymin = y0 - box / 2
+            zmin = z0 - box / 2
 
-        self.xmin = xmin
-        self.ymin = ymin
-        self.zmin = zmin
-        self.box_length = box
+            self.xmin = xmin
+            self.ymin = ymin
+            self.zmin = zmin
+            self.box_length = box
+
+            # this is clearly a major underestimate
+            mean_dens = np.sum(self.cat.weight) / self.box_length**3.
+
+            # starting estimate for bin size
+            self.nbins = int(np.floor(box / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
+            self.binsize = self.box_length / self.nbins
+
+            # check that the zero-padding is greater than 1 bin size
+            if padding < self.binsize:
+                padding *= 2
+            else:
+                redo_padding = False
+
         print('Box size [Mpc/h]: %0.3f' % self.box_length)
-
-        # this is clearly a major underestimate
-        mean_dens = np.sum(self.cat.weight) / box**3.
-
-        # starting estimate for bin size
-        self.nbins = int(np.floor(box / (0.5 * (4 * np.pi * mean_dens / 3.) ** (-1. / 3))))
-        self.binsize = self.box_length / self.nbins
         if self.verbose:
             print('Initial bin size [Mpc/h]: %0.2f, nbins = %d' % (self.binsize, self.nbins))
 
@@ -172,14 +181,14 @@ class VoxelVoids:
             sys.stdout.flush()
             rhog = np.zeros((self.nbins, self.nbins, self.nbins), dtype='float64')
             fastmodules.allocate_gal_cic(rhog, self.cat.x, self.cat.y, self.cat.z, self.cat.weight, self.cat.size,
-                                         self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 0)
+                                         self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 1)
 
             if self.verbose:
                 print('Allocating randoms in cells...')
             sys.stdout.flush()
             rhor = np.zeros((self.nbins, self.nbins, self.nbins), dtype='float64')
             fastmodules.allocate_gal_cic(rhor, self.ran.x, self.ran.y, self.ran.z, self.ran.weight, self.ran.size,
-                                         self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 0)
+                                         self.xmin, self.ymin, self.zmin, self.box_length, self.nbins, 1)
 
             # identify "empty" cells for later cuts on void catalogue
             mask_cut = np.zeros(self.nbins**3, dtype='int')
