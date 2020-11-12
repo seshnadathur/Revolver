@@ -731,15 +731,20 @@ class ZobovVoids:
                 # ---Step 1: run voz1b1 on the sub-boxes, in series--- #
                 logfile = logfolder + self.handle + '-voz1b1.out'
                 log = open(logfile, "w")
-                cmd = [binpath + 'voz1b1', self.posn_file, str(self.zobov_buffer), str(self.box_length),
-                       str(self.zobov_box_div), self.handle]
-                subprocess.call(cmd, stdout=log, stderr=log)
+                for b1 in range(self.zobov_box_div):
+                    for b2 in range(self.zobov_box_div):
+                        for b3 in range(self.zobov_box_div):
+
+                            cmd = [binpath + 'voz1b1', self.posn_file, str(self.zobov_buffer), str(self.box_length),
+                                self.handle,str(self.zobov_box_div),str(b1),str(b2),str(b3)]
+                            subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
 
                 # ---Step 2: tie the sub-boxes together using voztie--- #
                 log = open(logfile, "a")
                 cmd = [binpath + "voztie", str(self.zobov_box_div), self.handle]
                 subprocess.call(cmd, stdout=log, stderr=log)
+
                 log.close()
 
             else:  # no PBC, so use vozisol
@@ -755,6 +760,10 @@ class ZobovVoids:
             # check the tessellation was successful
             if not os.access("%s.vol" % self.handle, os.F_OK):
                 sys.exit("Something went wrong with the tessellation. Aborting ...")
+            
+            #copy the .vol files to .trvol
+            cmd = ["cp", "%s.vol" % self.handle, "%s.trvol" % self.handle]
+            subprocess.call(cmd)
         else:
             print("MPI run: calling voz1b1 and voztie to do the tessellation...")
             sys.stdout.flush()
