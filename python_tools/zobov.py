@@ -736,7 +736,7 @@ class ZobovVoids:
                         for b3 in range(self.zobov_box_div):
 
                             cmd = [binpath + 'voz1b1', self.posn_file, str(self.zobov_buffer), str(self.box_length),
-                                self.handle,str(self.zobov_box_div),str(b1),str(b2),str(b3)]
+                                    self.handle,str(self.zobov_box_div),str(b1),str(b2),str(b3)]
                             subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
 
@@ -744,7 +744,6 @@ class ZobovVoids:
                 log = open(logfile, "a")
                 cmd = [binpath + "voztie", str(self.zobov_box_div), self.handle]
                 subprocess.call(cmd, stdout=log, stderr=log)
-
                 log.close()
 
             else:  # no PBC, so use vozisol
@@ -761,7 +760,7 @@ class ZobovVoids:
             if not os.access("%s.vol" % self.handle, os.F_OK):
                 sys.exit("Something went wrong with the tessellation. Aborting ...")
             
-            #copy the .vol files to .trvol
+            # copy the .vol files to .trvol
             cmd = ["cp", "%s.vol" % self.handle, "%s.trvol" % self.handle]
             subprocess.call(cmd)
         else:
