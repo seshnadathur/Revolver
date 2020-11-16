@@ -716,31 +716,39 @@ class ZobovVoids:
 
         # ---run the tessellation--- #
         # there are 2 options: use MPI or not, chosen by the user
-        # If the data is in a cubic box with PBC, tessellation must be done by voz1b1 and voztie
-        # irrespective of choice of MPI  or not. If the data is from a survey, we use vozisol if no MPI
-        # is available, or voz1b1_mpi and voztie if it is. If using voz1b1_mpi and voztie, we need to
-        # flag edge galaxies separately using checkedges (handled automatically by vozisol).
+        # when not using MPI: if the data are in a cubic box with PBC, tessellation is done by voz1b1 and voztie; if
+        # survey data, tessellation is done by vozisol
+        # when using MPI: the tessellation is done using voz1b1_mpi and voztie
+        # If voz1b1/voz1b1_mpi and voztie are used, we need to flag edge galaxies separately using checkedges
+        # (vozisol handles this automatically).
+
         logfolder = self.output_folder + 'log/'
         if not os.access(logfolder, os.F_OK):
             os.makedirs(logfolder)
         if not self.use_mpi:
             if self.is_box:  # cannot use vozisol with PBC
-                print("Calling voz1b1 and voztie to do the tessellation...")
+                print("Calling vozinit, voz1b1 and voztie to do the tessellation...")
                 sys.stdout.flush()
 
-                # ---Step 1: run voz1b1 on the sub-boxes, in series--- #
-                logfile = logfolder + self.handle + '-voz1b1.out'
+                # ---Step 1: call vozinit to write the script used to call voz1b1 and voztie--- #
+                logfile = logfolder + self.handle + '-vozinit.out'
                 log = open(logfile, "w")
-                cmd = [binpath + 'voz1b1', self.posn_file, str(self.zobov_buffer), str(self.box_length),
+                cmd = ["./bin/vozinit", self.posn_file, str(self.zobov_buffer), str(self.box_length),
                        str(self.zobov_box_div), self.handle]
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
 
-                # ---Step 2: tie the sub-boxes together using voztie--- #
-                log = open(logfile, "a")
-                cmd = [binpath + "voztie", str(self.zobov_box_div), self.handle]
+                # ---Step 2: call this script to do the tessellation--- #
+                voz_script = "scr" + self.handle
+                cmd = ["./%s" % voz_script]
+                logfile = logfolder + self.handle + '-voz1b1.out'
+                log = open(logfile, 'a')
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
+
+                # ---Step 3: remove the script file--- #
+                if os.access(voz_script, os.F_OK):
+                    os.unlink(voz_script)
 
             else:  # no PBC, so use vozisol
                 print("Calling vozisol to do the tessellation...")
