@@ -750,6 +750,14 @@ class ZobovVoids:
                 if os.access(voz_script, os.F_OK):
                     os.unlink(voz_script)
 
+                # ---Step 4: check the tessellation was successful
+                if not os.access("%s.vol" % self.handle, os.F_OK):
+                    sys.exit("Something went wrong with the tessellation. Aborting ...")
+
+                # ---Step 5: copy the .vol files to .trvol--- #
+                cmd = ["cp", "%s.vol" % self.handle, "%s.trvol" % self.handle]
+                subprocess.call(cmd)
+
             else:  # no PBC, so use vozisol
                 print("Calling vozisol to do the tessellation...")
                 sys.stdout.flush()
@@ -760,9 +768,9 @@ class ZobovVoids:
                 subprocess.call(cmd, stdout=log, stderr=log)
                 log.close()
 
-            # check the tessellation was successful
-            if not os.access("%s.vol" % self.handle, os.F_OK):
-                sys.exit("Something went wrong with the tessellation. Aborting ...")
+                # check the tessellation was successful
+                if not os.access("%s.vol" % self.handle, os.F_OK):
+                    sys.exit("Something went wrong with the tessellation. Aborting ...")
         else:
             print("MPI run: calling voz1b1 and voztie to do the tessellation...")
             sys.stdout.flush()
