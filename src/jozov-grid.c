@@ -16,7 +16,7 @@
 #define NLINKS 300000 /* Number of possible links with the same dens_sl */
 #define BF 100000000 /* This is simply a number very much larger than the range in density */
 #define FF fflush(stdout)
-#define FNL 256 /* Max length of filenames */
+#define FNL 1024 /* Max length of filenames */
 
 typedef struct Voxel {
   float dens;

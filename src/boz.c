@@ -9,6 +9,7 @@
 #define NPTOTOL 3000
 #define NGRID 10
 #define PI 3.14159265359
+#define FNL 1024 /* Max length of filenames */
 /* #define NSIM 512. */
 
 typedef struct Zone {
@@ -73,7 +74,7 @@ int main(int argc,char **argv) {
   realT dist, distp,v2;
   int numunbound, oldnumunbound, unbindthis;
   char *posfile, *velfile, *inzfile, *outzfile, *outlistfile;
-  char systemstr[80];
+  char systemstr[FNL];
   realT boxsize, boxsize2;
   
   int p1,p2;

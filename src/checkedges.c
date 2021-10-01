@@ -7,7 +7,7 @@
 #include "voz.h"
 
 #define FF fflush(stdout)
-#define FNL 256 /* Max length of filenames */
+#define FNL 1024 /* Max length of filenames */
 
 typedef struct Particle {
   int nadj;
@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
   int i, j, k, nin, np, npreal;
   FILE *pos, *adj, *vol;
   PARTICLE *p;
-  char adjfile[256], trvolfile[256], volfile[256], *prefix;
+  char adjfile[FNL], trvolfile[FNL], volfile[FNL], *prefix;
   PARTADJ *adjs;
   double *vols, *dens;
   realT volley;

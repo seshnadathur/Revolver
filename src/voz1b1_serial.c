@@ -1,4 +1,5 @@
 #include "voz.h"
+#define FNL 1024 /* Max length of filenames */
 
 int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs);
 int vorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, realT *vol);
@@ -18,7 +19,7 @@ int main(int argc, char *argv[]) {
   coordT deladjs[3*MAXVERVER], points[3*MAXVERVER];
   pointT intpoints[3*MAXVERVER];
   FILE *pos, *out;
-  char *posfile, outfile[80], *suffix;
+  char *posfile, outfile[FNL], *suffix;
   PARTADJ *adjs;
   realT *vols;
   realT predict, xmin,xmax,ymin,ymax,zmin,zmax;

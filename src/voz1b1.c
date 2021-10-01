@@ -8,6 +8,7 @@ int openfile(char *filename, FILE **f);
 int posread(char *posfile, realT ***p, realT fact);
 int posread_chunk(FILE *f, realT **p, realT fact, int np, int nread);
 
+#define FNL 1024 /* Max length of filenames */
 
 void voz1b1(char *posfile, realT border, realT boxsize,
 	    int numdiv, int b[], char *suffix){
@@ -19,7 +20,7 @@ void voz1b1(char *posfile, realT border, realT boxsize,
   coordT deladjs[3*MAXVERVER], points[3*MAXVERVER];
   pointT intpoints[3*MAXVERVER];
   FILE *pos, *out;
-  char outfile[80];
+  char outfile[FNL];
   PARTADJ *adjs;
   realT *vols;
   realT predict, xmin,xmax,ymin,ymax,zmin,zmax;

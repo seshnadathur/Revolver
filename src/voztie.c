@@ -3,11 +3,12 @@
 #include "voz.h"
 
 #define EQUALTHRESHOLD 1.52587890625e-5 /* 2^-16 */
+#define FNL 1024 /* Max length of filenames */
 
 int main(int argc, char *argv[]) {
 
   FILE *part, *adj, *vol;
-  char partfile[80], *suffix, adjfile[80], volfile[80];
+  char partfile[FNL], *suffix, adjfile[FNL], volfile[FNL];
   realT *vols, volstemp;
   
   PARTADJ *adjs;

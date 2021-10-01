@@ -2,6 +2,7 @@
 
 #define DL for (d=0;d<3;d++)
 #define BF REALmax
+#define FNL 1024 /* Max length of filenames */
 
 int openfile(char *filename, FILE **f);
 int posread(char *posfile, realT ***p, realT fact);
@@ -11,7 +12,7 @@ int main(int argc, char *argv[]) {
   int i, np, np_current, np_tot = 0;
   realT **rfloat = NULL, rtemp[3];
   FILE *pos, *scr;
-  char *posfile, scrfile[80], systemstr[90], *suffix;
+  char *posfile, scrfile[FNL], systemstr[FNL], *suffix;
   realT xmin,xmax,ymin,ymax,zmin,zmax;
   
   int isitinbuf;
