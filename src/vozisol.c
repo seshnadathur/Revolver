@@ -8,6 +8,7 @@
 
 #define DL for (d=0;d<3;d++)
 #define PRINTFREQ 10000
+#define FNL 1024 /* Max length of filenames */
 /* print out particle volume every PRINTFREQ particles */
 
 int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs);
@@ -22,8 +23,8 @@ int main(int argc, char *argv[]) {
   coordT deladjs[3*MAXVERVER], points[3*MAXVERVER];
   pointT intpoints[3*MAXVERVER];
   FILE *pos, *adj, *vol;
-  char adjfile[256], trvolfile[256], volfile[256], *prefix, *posfile;
-  char asciiadjfile[261], asciitrvolfile[261], asciivolfile[261];
+  char adjfile[FNL], trvolfile[FNL], volfile[FNL], *prefix, *posfile;
+  char asciiadjfile[FNL], asciitrvolfile[FNL], asciivolfile[FNL];
   PARTADJ *adjs;
   double *vols, *dens;
   realT volley;

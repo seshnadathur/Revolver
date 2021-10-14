@@ -18,7 +18,7 @@
 
 #define NLINKS 300000 /* Number of possible links with the same rho_sl */
 #define FF fflush(stdout)
-#define FNL 256 /* Max length of filenames */
+#define FNL 1024 /* Max length of filenames */
 
 typedef struct Particle {
   realT dens;
