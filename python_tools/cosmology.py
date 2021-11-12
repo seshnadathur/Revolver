@@ -7,9 +7,13 @@ class Cosmology:
     Calculate background cosmological quantities for 0<z<4
     """
 
-    def __init__(self, omega_m=0.31, omega_l=0.69, h=0.676):
+    def __init__(self, omega_m=0.31, flat=True, omega_l=0.69, h=0.676):
         c = constants.c / 1000
-        omega_k = 1. - omega_m - omega_l
+        if flat:
+            omega_k = 0
+            omega_l = 1 - omega_m
+        else:
+            omega_k = 1. - omega_m - omega_l
         ztab = np.linspace(0, 4, 1000)
         rtab = np.zeros_like(ztab)
         for i in range(len(ztab)):
