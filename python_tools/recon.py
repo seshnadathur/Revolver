@@ -177,7 +177,7 @@ class Recon:
                 # NOTE - we do the smoothing via FFTs rather than scipy's gaussian_filter because if using several
                 # threads for pyfftw it is much faster this way (if only using 1 thread gains are negligible)
                 rho = deltar + 0.0j
-                fft_obj(input_array=rho, output_array=rhok) 
+                fft_obj(input_array=rho, output_array=rhok)
                 fastmodules.mult_norm(rhok, rhok, norm)
                 ifft_obj(input_array=rhok, output_array=rho)
                 deltar = rho.real
@@ -250,7 +250,7 @@ class Recon:
             print('Calculating shifts...')
         sys.stdout.flush()
         shift_x, shift_y, shift_z = self.get_shift(cat, psi_x.real, psi_y.real, psi_z.real, use_newpos=True)
-        
+
         # now we update estimates of the Psi field in the following way:
         if iloop == 0:
             # starting estimate chosen according to Eq. 12 of Burden et al 2015, in order to improve convergence
@@ -342,19 +342,22 @@ class Recon:
         This method subtracts full displacement field as in standard BAO reconstruction
         """
 
-        for c in [self.cat, self.ran]:
+        if self.is_box:
             shift_x, shift_y, shift_z = \
-                self.get_shift(c, self.psi_x.real, self.psi_y.real, self.psi_z.real, use_newpos=True)
-            c.newx += shift_x
-            c.newy += shift_y
-            c.newz += shift_z
-            if self.is_box:  # account for PBC
-                c.newx[c.newx >= c.box_length] -= c.box_length
-                c.newx[c.newx < 0] += c.box_length
-                c.newy[c.newy >= c.box_length] -= c.box_length
-                c.newy[c.newy < 0] += c.box_length
-                c.newz[c.newz >= c.box_length] -= c.box_length
-                c.newz[c.newz < 0] += c.box_length
+                self.get_shift(self.cat, self.psi_x.real, self.psi_y.real, self.psi_z.real, use_newpos=True)
+            self.cat.newx += shift_x
+            self.cat.newy += shift_y
+            self.cat.newz += shift_z
+            self.cat.newx %= self.cat.box_length
+            self.cat.newy %= self.cat.box_length
+            self.cat.newz %= self.cat.box_length
+        else:
+            for c in [self.cat, self.ran]:
+                shift_x, shift_y, shift_z = \
+                    self.get_shift(c, self.psi_x.real, self.psi_y.real, self.psi_z.real, use_newpos=True)
+                c.newx += shift_x
+                c.newy += shift_y
+                c.newz += shift_z
 
     def summary(self):
 
