@@ -36,11 +36,11 @@ int main(int argc, char *argv[]) {
   suffix = argv[2];
   
   np = -1; nvpmax = -1; nvpsum = 0;
-
+  char parts_path[] = "/pscratch/sd/h/hrincon/revolver/revolver_parts";
   for (i = 0; i < numdiv; i++) {
    for (j = 0; j < numdiv; j++) {
     for (k = 0; k < numdiv; k++) {
-      sprintf(partfile,"part.%s.%02d.%02d.%02d",suffix,i,j,k);
+      sprintf(partfile,"%s/part.%s.%02d.%02d.%02d",parts_path,suffix,i,j,k);
       part = fopen(partfile,"r");
       if (part == NULL) {
 	printf("Unable to open file %s.\n\n",partfile);
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
   for (i = 0; i < numdiv; i++) {
    for (j = 0; j < numdiv; j++) {
     for (k = 0; k < numdiv; k++) {
-      sprintf(partfile,"part.%s.%02d.%02d.%02d",suffix,i,j,k);
+      sprintf(partfile,"%s/part.%s.%02d.%02d.%02d",parts_path,suffix,i,j,k);
       part = fopen(partfile,"r");
       if (part == NULL) {
 	printf("Unable to open file %s.\n\n",partfile);

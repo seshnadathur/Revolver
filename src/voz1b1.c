@@ -384,7 +384,8 @@ void voz1b1(char *posfile, realT border, realT boxsize,
   
   /* Now the output!
      First number of particles */
-  sprintf(outfile,"part.%s.%02d.%02d.%02d",suffix,b[0],b[1],b[2]);
+  char parts_path[] = "/pscratch/sd/h/hrincon/revolver/revolver_parts";
+  sprintf(outfile,"%s/part.%s.%02d.%02d.%02d",parts_path,suffix,b[0],b[1],b[2]);
 
   printf("Output to %s\n\n",outfile);
   out = fopen(outfile,"w");

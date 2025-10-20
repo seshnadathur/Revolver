@@ -13,7 +13,7 @@ from python_tools.galaxycat import GalaxyCatalogue
 from scipy.signal import savgol_filter
 from scipy.interpolate import InterpolatedUnivariateSpline
 
-
+parts_path ='/pscratch/sd/h/hrincon/revolver/revolver_parts'
 class ZobovVoids:
 
     def __init__(self, parms):
@@ -43,6 +43,7 @@ class ZobovVoids:
         # ZOBOV run-time options
         self.use_mpi = parms.use_mpi
         self.zobov_box_div = parms.zobov_box_div
+        self.nthreads = parms.nthreads
         self.zobov_buffer = parms.zobov_buffer
         self.guard_nums = parms.guard_nums
 
@@ -777,8 +778,10 @@ class ZobovVoids:
 
             # ---Step 1: run voz1b1 on the sub-boxes in parallel using voz1b1_mpi--- #
             logfile = logfolder + self.handle + '-voz1b1_mpi.out'
+            
+            print('')
             log = open(logfile, "w")
-            cmd = ['mpirun', binpath + 'voz1b1_mpi', self.posn_file, str(self.zobov_buffer), str(self.box_length),
+            cmd = ['mpirun','-npernode', str(self.nthreads), binpath + 'voz1b1_mpi', self.posn_file, str(self.zobov_buffer), str(self.box_length),
                    str(self.zobov_box_div), self.handle]
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
@@ -914,7 +917,7 @@ class ZobovVoids:
             log.close()
 
         # ---clean up: remove unnecessary files--- #
-        for fileName in glob.glob("./part." + self.handle + ".*"):
+        for fileName in glob.glob(parts_path+"/part." + self.handle + ".*"):
             os.unlink(fileName)
 
         # ---clean up: move all other files to appropriate directory--- #

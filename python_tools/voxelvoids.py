@@ -6,7 +6,7 @@ import subprocess
 import python_tools.fastmodules as fastmodules
 from scipy.ndimage.filters import gaussian_filter
 from python_tools.cosmology import Cosmology
-
+from itertools import compress
 
 class VoxelVoids:
 
@@ -253,7 +253,7 @@ class VoxelVoids:
         zonefile = raw_dir + self.handle + ".zone"
         with open(zonefile, 'r') as F:
             hierarchy = F.readlines()
-        hierarchy = np.asarray(hierarchy, dtype=str)
+        #hierarchy = np.asarray(hierarchy, dtype=str) #replace array masking wiht itertools compression
 
         # remove voids that: a) don't meet minimum density cut, b) are edge voids, or c) lie in a masked voxel
         select = np.zeros(rawdata.shape[0], dtype='int')
@@ -261,7 +261,8 @@ class VoxelVoids:
         select = np.asarray(select, dtype=bool)
         rawdata = rawdata[select]
         densratio = densratio[select]
-        hierarchy = hierarchy[select]
+        #hierarchy = hierarchy[select]
+        hierarchy = list(compress(hierarchy, select))
 
         # void minimum density centre locations
         xpos, ypos, zpos = self.voxel_position(rawdata[:, 2])
@@ -282,7 +283,8 @@ class VoxelVoids:
             select_z = np.logical_and(zpos > self.z_min, zpos < self.z_max)
             rawdata = rawdata[select_z]
             densratio = densratio[select_z]
-            hierarchy = hierarchy[select_z]
+            #hierarchy = hierarchy[select_z]
+            hierarchy = list(compress(hierarchy, select_z))
             xpos = xpos[select_z]
             ypos = ypos[select_z]
             zpos = zpos[select_z]
