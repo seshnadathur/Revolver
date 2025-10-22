@@ -122,7 +122,7 @@ class ZobovVoids:
 
                 # effective sky fraction
                 self.f_sky = 1.0 * np.sum(mask) / len(mask)
-
+            
             # finally, remove any instances of two galaxies at the same location, otherwise tessellation will fail
             # (this is a problem with DR12 Patchy mocks, I've not seen any such instances in real survey data ...)
             # NOTE: the following line will not work with older versions of numpy!!
@@ -781,7 +781,10 @@ class ZobovVoids:
             
             print('')
             log = open(logfile, "w")
-            cmd = ['mpirun','-npernode', str(self.nthreads), binpath + 'voz1b1_mpi', self.posn_file, str(self.zobov_buffer), str(self.box_length),
+            # bug in mpirun version of this branch: launches duplicate code in parallel. Use srun instead
+            #cmd = ['mpirun','-npernode', str(self.nthreads), binpath + 'voz1b1_mpi', self.posn_file, str(self.zobov_buffer), str(self.box_length),
+            #       str(self.zobov_box_div), self.handle]
+            cmd = ['srun', '--mpi=pmix', binpath + 'voz1b1_mpi', self.posn_file, str(self.zobov_buffer), str(self.box_length),
                    str(self.zobov_box_div), self.handle]
             subprocess.call(cmd, stdout=log, stderr=log)
             log.close()
