@@ -368,7 +368,7 @@ class VoxelVoids:
 
         # load the void hierarchy data to record void leak density ratio, even though this is
         # possibly not useful for anything at all
-        voidfile = raw_dir + self.handle + ".void"
+        voidfile = raw_dir + self.handle + "c.void"
         with open(voidfile, 'r') as F:
             hierarchy = F.readlines()
         densratio = np.zeros(len(rawdata))
@@ -376,15 +376,17 @@ class VoxelVoids:
             densratio[i] = np.fromstring(hierarchy[i + 1], dtype=float, sep=' ')[2]
 
         # load zone membership data
-        zonefile = raw_dir + self.handle + ".zone"
+        zonefile = raw_dir + self.handle + "c.zone"
         with open(zonefile, 'r') as F:
             hierarchy = F.readlines()
+        hierarchy = np.asarray(hierarchy, dtype=str)
 
         nvox = self.nbins ** 3
         # masked_vox = np.arange(nvox)[self.mask_cut]
 
         select = np.zeros(rawdata.shape[0], dtype='int')
         fastmodules.voxelcluster_cuts(select, self.mask_cut, rawdata, self.min_dens_cut)
+        select = np.asarray(select, dtype=bool)
         rawdata = rawdata[select]
         densratio = densratio[select]
         hierarchy = hierarchy[select]
