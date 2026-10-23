@@ -204,7 +204,7 @@ def normalize_rho_box(np.ndarray [np.float64_t, ndim=3] rhog, int npart):
 
   return rhog
 
-def survey_mask(np.ndarray [np.int_t, ndim=1] mask, np.ndarray [np.float64_t, ndim=3] rhor, double ran_min):
+def survey_mask(np.ndarray [np.int64_t, ndim=1] mask, np.ndarray [np.float64_t, ndim=3] rhor, double ran_min):
 
   cdef int N = rhor.shape[0]
   cdef int ix, iy, iz
@@ -216,7 +216,7 @@ def survey_mask(np.ndarray [np.int_t, ndim=1] mask, np.ndarray [np.float64_t, nd
 
   return mask
 
-def survey_cuts_logical(np.ndarray [np.int_t, ndim=1] out, np.ndarray [np.float64_t, ndim=1] veto,
+def survey_cuts_logical(np.ndarray [np.int64_t, ndim=1] out, np.ndarray [np.float64_t, ndim=1] veto,
                         np.ndarray [np.float64_t, ndim=1] redshift, double zmin, double zmax):
 
   cdef int N = redshift.shape[0]
@@ -229,7 +229,7 @@ def survey_cuts_logical(np.ndarray [np.int_t, ndim=1] out, np.ndarray [np.float6
 
   return out
 
-def voxelvoid_cuts(np.ndarray [np.int_t, ndim=1] select, np.ndarray [np.int_t, ndim=1] mask,
+def voxelvoid_cuts(np.ndarray [np.int64_t, ndim=1] select, np.ndarray [np.int64_t, ndim=1] mask,
                    np.ndarray [np.float64_t, ndim=2] rawvoids, double min_dens_cut):
 
   cdef int N = rawvoids.shape[0]
@@ -244,7 +244,7 @@ def voxelvoid_cuts(np.ndarray [np.int_t, ndim=1] select, np.ndarray [np.int_t, n
 
   return select
 
-def voxelcluster_cuts(np.ndarray [np.int_t, ndim=1] select, np.ndarray [np.int_t, ndim=1] mask,
+def voxelcluster_cuts(np.ndarray [np.int64_t, ndim=1] select, np.ndarray [np.int64_t, ndim=1] mask,
                    np.ndarray [np.float64_t, ndim=2] rawclusters, double max_dens_cut):
 
   cdef int N = rawclusters.shape[0]
@@ -258,7 +258,7 @@ def voxelcluster_cuts(np.ndarray [np.int_t, ndim=1] select, np.ndarray [np.int_t
 
   return select
 
-def get_member_densities(np.ndarray [np.float64_t, ndim=1] member_dens, np.ndarray [np.int_t, ndim=1] voxels,
+def get_member_densities(np.ndarray [np.float64_t, ndim=1] member_dens, np.ndarray [np.int64_t, ndim=1] voxels,
                          np.ndarray [np.float64_t, ndim=1] rho):
 
   cdef int N = len(voxels)

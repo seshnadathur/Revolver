@@ -55,7 +55,7 @@ int main(int argc,char **argv) {
   ZONET *zt;
   char *prefix, *densfile, zonefile[FNL], voidfile[FNL], txtfile[FNL];
   int h, h2, hl, n, nzones, nrealzones, nhl, nhlcount, nhl2, minusone, adjcount, counter;
-  long i, Nvox, nbr_index;
+  long i, Nvox, nbr_index; /* changing type because why not */
   int ix, iy, iz, j, l, ind, Nside;
   int neighbours[18] = {0,0,1,0,0,-1,0,1,0,0,-1,0,1,0,0,-1,0,0};
   int nbrs[18];
@@ -103,8 +103,8 @@ int main(int argc,char **argv) {
     printf("Bad grid size.\n");
     exit(0);
   }
-  Nvox = Nside*Nside*Nside;	/* the total number of voxels (grid cells) */
-  printf("Total number of voxels: %ld\n",Nvox);
+  Nvox = (long)Nside*Nside*Nside;	/* the total number of voxels (grid cells) */
+  printf("Total number of voxels: %ul \n",Nvox);
 
   if (obo == 'v'){
     sprintf(zonefile,"%s.zone",prefix);
@@ -120,6 +120,7 @@ int main(int argc,char **argv) {
   /* Read the density data from file */
   printf("Reading in the dens data from file ...\n"); FF;
   p = (VOXEL *)malloc(Nvox*sizeof(VOXEL));
+  printf("Allocated memory \n"); 
   dens = fopen(densfile, "r");
   if (dens == NULL) {
     printf("Unable to open dens file %s.\n\n",densfile);
@@ -148,6 +149,7 @@ int main(int argc,char **argv) {
         nbrs[j*3+2] = neighbours[j*3+2] +iz;
       }
       /* adjust for periodic boundary conditions */
+      /* should it actually ? in survey case ? */
       for (j=0;j<18;j++) {
         if (nbrs[j]>=Nside) nbrs[j] -= Nside;
         if (nbrs[j]<0) nbrs[j] += Nside;
@@ -156,7 +158,7 @@ int main(int argc,char **argv) {
       adjcount = 0;
       for (j=0;j<6;j++) {
         ind = 3*j;
-        nbr_index = nbrs[ind]*Nside*Nside + nbrs[ind+1]*Nside + nbrs[ind+2];
+        nbr_index = (long)nbrs[ind]*Nside*Nside + (long)nbrs[ind+1]*Nside + nbrs[ind+2];
         /* count adjacencies to non-border voxels */
         if (p[nbr_index].dens < borderdens) {
           adjcount++;
@@ -168,7 +170,7 @@ int main(int argc,char **argv) {
       adjcount = 0;
       for (j=0;j<6;j++) {
         ind = 3*j;
-        nbr_index = nbrs[ind]*Nside*Nside + nbrs[ind+1]*Nside + nbrs[ind+2];
+        nbr_index = (long)nbrs[ind]*Nside*Nside + (long)nbrs[ind+1]*Nside + nbrs[ind+2];
         if (p[nbr_index].dens < borderdens) {
           p[i].adj[adjcount] = nbr_index;
           adjcount++;

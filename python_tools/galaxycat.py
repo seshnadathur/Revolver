@@ -77,7 +77,10 @@ class GalaxyCatalogue:
                 # assume all vetoes have already been applied (as for BOSS/eBOSS public catalogues)
                 self.veto = np.ones(self.size)  # all vetoes have already been applied!
                 # change the name 'z'-->'redshift' to avoid confusion
-                self.redshift = self.z.astype('float64')  # explicit float64 specification necessary for Cython use
+                if not hasattr(self, 'redshift'):
+                    self.redshift = self.z.astype('float64')  # explicit float64 specification necessary for Cython use
+                else : 
+                    self.redshift = self.redshift.astype('float64')
                 self.weights_model = parms.weights_model
                 # check if weights are provided; if not, initialize to defaults
                 if 'weight_cp' not in (name.casefold() for name in self.names):
@@ -210,6 +213,34 @@ class GalaxyCatalogue:
                 pixels = hp.ang2pix(nside, np.deg2rad(90 - self.dec), np.deg2rad(self.ra))
                 self.comp = completeness_mask[pixels]
 
+            elif input_file_type == 5 : 
+                with fits.open(input_file) as hdul:
+                    a = hdul[1].data
+                
+                if type(posn_cols) == dict : 
+                    for f in posn_cols.keys() :
+                        self.__dict__[posn_cols[f]] = a.field(f)
+                else : 
+                    for f in a.names:
+                        self.__dict__[f.lower()] = a.field(f)
+                self.size = self.ra.size
+                self.names = a.names
+                # assume all vetoes have already been applied (as for BOSS/eBOSS public catalogues)
+                self.veto = np.ones(self.size)  # all vetoes have already been applied!
+                # change the name 'z'-->'redshift' to avoid confusion
+                self.redshift = self.redshift.astype('float64')  # explicit float64 specification necessary for Cython use
+                self.weights_model = 3
+                if 'weight' in (name.casefold() for name in self.names):
+                    self.weight_all_nofkp = self.weight
+                    if 'weight' not in (name.casefold() for name in self.names):
+                        # set total systematic weights to 1 by default
+                        self.weight_all_nofkp = np.ones(self.size)
+                    if 'comp' not in (name.casefold() for name in self.names):
+                        self.comp = np.ones(self.size)
+                else :
+                    self.comp = np.ones(self.size)
+                    self.weight_all_nofkp =  np.ones(self.size)
+
             # now initialize Cartesian positions and observer distance
             cosmo = Cosmology(omega_m=parms.omega_m)
             self.dist = cosmo.get_comoving_distance(self.redshift)
@@ -220,6 +251,7 @@ class GalaxyCatalogue:
             self.newy = self.y * 1.
             self.newz = self.z * 1.
 
+            
     def cut(self, w):
         """Trim catalog columns using a boolean array"""
 
@@ -252,5 +284,5 @@ class GalaxyCatalogue:
             elif self.weights_model == 3:
                 # joint BOSS+eBOSS weights model; just use custom field
                 weights *= self.weight_all_nofkp
-
+            
         return weights.astype('float64')  # have to specify this because sometimes it was returning float32!
